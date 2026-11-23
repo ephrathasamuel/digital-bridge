@@ -664,6 +664,25 @@ const I18N_EN = {
   'ask.youAsked': 'You asked',
   'ask.suggested': 'Common questions',
   'ask.readAloud': 'Read the answer aloud',
+  'contact.open': 'Contact a person',
+  'contact.intro': 'Did the answer not help? Leave a message and a person from the help team will contact you.',
+  'contact.name': 'Your name (optional)',
+  'contact.contact': 'Phone number or email (required)',
+  'contact.contactHint': 'For example 0911 234 567 or name@example.com',
+  'contact.message': 'Your message (required)',
+  'contact.messageHint': 'Write your question in English or Amharic.',
+  'contact.consent': 'I agree that the help team may keep my message and contact details to reply to me. (required)',
+  'contact.consentHint': 'Your message is never shared with employers. You can ask us to delete it.',
+  'contact.send': 'Send message',
+  'contact.sending': 'Sending your message.',
+  'contact.sent': 'Message sent. Your reference is {ref}. A person from the help team will contact you.',
+  'contact.queued': 'You are offline. Your message is saved on this device and will be sent when you are back online.',
+  'contact.failed': 'We could not send your message. Check the fields and try again.',
+  'contact.fixErrors': 'Please fix the problems below.',
+  'contact.contactRequired': 'Enter a phone number or an email address so we can reply.',
+  'contact.contactInvalid': 'Enter a phone number like 0911 234 567 or an email like name@example.com.',
+  'contact.messageRequired': 'Write a short message.',
+  'contact.consentRequired': 'Tick the box so we are allowed to reply to you.',
   'field.jobTitle': 'Job title',
   'field.jobTitle.hint': 'For example Customer Support Agent',
   'field.employerName': 'Employer name',
@@ -1129,6 +1148,25 @@ const I18N_AM: Record<I18nKey, string> = {
   'ask.youAsked': 'የጠየቁት',
   'ask.suggested': 'የተለመዱ ጥያቄዎች',
   'ask.readAloud': 'መልሱን ጮክ ብለህ አንብብ',
+  'contact.open': 'ሰው ያነጋግሩ',
+  'contact.intro': 'መልሱ አልረዳዎትም? መልዕክት ይተዉ፣ ከእገዛ ቡድኑ አንድ ሰው ያገኝዎታል።',
+  'contact.name': 'ስምዎ (አማራጭ)',
+  'contact.contact': 'ስልክ ቁጥር ወይም ኢሜይል (ግዴታ)',
+  'contact.contactHint': 'ለምሳሌ 0911 234 567 ወይም name@example.com',
+  'contact.message': 'መልዕክትዎ (ግዴታ)',
+  'contact.messageHint': 'ጥያቄዎን በእንግሊዝኛ ወይም በአማርኛ ይጻፉ።',
+  'contact.consent': 'የእገዛ ቡድኑ መልስ ለመስጠት መልዕክቴን እና አድራሻዬን እንዲያስቀምጥ እስማማለሁ። (ግዴታ)',
+  'contact.consentHint': 'መልዕክትዎ ለቀጣሪዎች ፈጽሞ አይጋራም። እንዲሰረዝ መጠየቅ ይችላሉ።',
+  'contact.send': 'መልዕክት ላክ',
+  'contact.sending': 'መልዕክትዎ እየተላከ ነው።',
+  'contact.sent': 'መልዕክቱ ተልኳል። የማጣቀሻ ቁጥርዎ {ref} ነው። ከእገዛ ቡድኑ አንድ ሰው ያገኝዎታል።',
+  'contact.queued': 'ከመስመር ውጭ ነዎት። መልዕክትዎ በዚህ መሳሪያ ላይ ተቀምጧል፣ ኢንተርኔት ሲመለስ ይላካል።',
+  'contact.failed': 'መልዕክትዎን መላክ አልቻልንም። መስኮቹን አረጋግጠው እንደገና ይሞክሩ።',
+  'contact.fixErrors': 'እባክዎ ከታች ያሉትን ችግሮች ያስተካክሉ።',
+  'contact.contactRequired': 'መልስ እንድንሰጥዎ ስልክ ቁጥር ወይም ኢሜይል ያስገቡ።',
+  'contact.contactInvalid': 'እንደ 0911 234 567 ያለ ስልክ ወይም እንደ name@example.com ያለ ኢሜይል ያስገቡ።',
+  'contact.messageRequired': 'አጭር መልዕክት ይጻፉ።',
+  'contact.consentRequired': 'መልስ እንድንሰጥዎ ሳጥኑን ምልክት ያድርጉ።',
   'field.jobTitle': 'የሥራ መደብ',
   'field.jobTitle.hint': 'ለምሳሌ የደንበኞች አገልግሎት ሠራተኛ',
   'field.employerName': 'የቀጣሪው ስም',
@@ -1146,5 +1184,66 @@ const I18N_AM: Record<I18nKey, string> = {
 };
 
 export const I18N: Record<Lang, Record<I18nKey, string>> = { en: I18N_EN, am: I18N_AM };
+
+// "Contact a person" from the Ask box: POST /api/v1/help/contact. Shared so the widget and the API validate the same way.
+export const HELP_CONTACT_LIMITS = { name: 80, contact: 120, message: 1000 } as const;
+
+export interface HelpContactRequest {
+  name?: string;
+  /** Ethiopian phone number or email address, so the help team can reply. */
+  contact: string;
+  message: string;
+  lang: Lang;
+  /** Must be true: the learner agreed that the help team may keep the message to reply. */
+  consent: boolean;
+}
+
+export interface HelpContactReceipt {
+  reference: string;
+  receivedAt: string;
+}
+
+export type HelpContactField = 'contact' | 'message' | 'consent';
+export type HelpContactError = 'required' | 'invalid';
+
+export interface CleanHelpContact {
+  name?: string;
+  contact: string;
+  contactKind: 'phone' | 'email';
+  message: string;
+  lang: Lang;
+}
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/** A phone becomes +2519XXXXXXXX; an email is lower-cased. Anything else is null. */
+export function normaliseHelpContact(raw: string): { kind: 'phone' | 'email'; value: string } | null {
+  const value = raw.trim();
+  const phone = normaliseEtPhone(value);
+  if (phone) return { kind: 'phone', value: phone };
+  if (value.length <= HELP_CONTACT_LIMITS.contact && EMAIL_PATTERN.test(value)) return { kind: 'email', value: value.toLowerCase() };
+  return null;
+}
+
+/** Checks a contact request and returns clean values, or one error per field so the form can explain each problem. */
+export function validateHelpContact(
+  input: Partial<HelpContactRequest>,
+): { ok: true; value: CleanHelpContact } | { ok: false; errors: Partial<Record<HelpContactField, HelpContactError>> } {
+  const errors: Partial<Record<HelpContactField, HelpContactError>> = {};
+  const contactRaw = typeof input.contact === 'string' ? input.contact.trim() : '';
+  const message = typeof input.message === 'string' ? input.message.trim() : '';
+  const contact = contactRaw ? normaliseHelpContact(contactRaw) : null;
+  if (!contactRaw) errors.contact = 'required';
+  else if (!contact) errors.contact = 'invalid';
+  if (!message) errors.message = 'required';
+  else if (message.length > HELP_CONTACT_LIMITS.message) errors.message = 'invalid';
+  if (input.consent !== true) errors.consent = 'required';
+  if (!contact || Object.keys(errors).length) return { ok: false, errors };
+  const name = typeof input.name === 'string' ? input.name.trim().slice(0, HELP_CONTACT_LIMITS.name) : '';
+  return {
+    ok: true,
+    value: { ...(name ? { name } : {}), contact: contact.value, contactKind: contact.kind, message, lang: input.lang === 'am' ? 'am' : 'en' },
+  };
+}
 
 export * from './help';

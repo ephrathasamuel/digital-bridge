@@ -64,7 +64,8 @@ function databaseOptions(): TypeOrmModuleOptions {
 class HealthController {
   @Get()
   check() {
-    return { status: "ok", version: "v1" };
+    // Which kind of database is in use (never the address), so a deploy can be checked from outside.
+    return { status: "ok", version: "v1", database: process.env.DATABASE_URL ? "postgres" : "sqlite" };
   }
 }
 

@@ -5,38 +5,56 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Digital Bridge on a plain page</title>
     <style>
-      body { max-width: 56rem; margin: 2rem auto; padding: 0 1rem; font: 1rem/1.5 system-ui, sans-serif; color: #1c1917; }
-      :focus-visible { outline: 3px solid #7a2b18; outline-offset: 2px; }
-      #event-log { min-height: 8rem; padding: 1rem; border: 2px solid #7a2b18; overflow-wrap: anywhere; }
+      body { max-width: 56rem; margin: 2rem auto; padding: 0 1rem; font: 1.0625rem/1.6 system-ui, sans-serif; color: #0b0f19; background: #ffffff; }
+      :focus-visible { outline: 3px solid #082d6b; outline-offset: 2px; }
+      a { color: #0b3c8c; }
+      details { margin-top: 2rem; border: 2px solid #5f6b7d; border-radius: 0.75rem; padding: 0 1rem; }
+      summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
+      #event-log { padding-left: 1.5rem; }
+      #event-log li { margin-block: 0.5rem; }
+      #event-log code { font-size: 0.85rem; color: #2f3a4d; overflow-wrap: anywhere; }
     </style>
   </head>
   <body>
     <main>
-      <h1>Digital Bridge on a blank host</h1>
-      <p>This page has no Bootstrap or portal stylesheet. The widgets use host tokens when present and accessible defaults when they are not.</p>
+      <h1>Digital Bridge on a plain page</h1>
+      <p>This page has no stylesheet of its own: just one script and the widget tags, the way a partner first installs Digital Bridge. <a href="../index.html">Back to the home page</a></p>
       <section aria-labelledby="signup-title">
-        <h2 id="signup-title">Onboarding</h2>
+        <h2 id="signup-title">Sign up</h2>
         <db-signup lang="en"></db-signup>
       </section>
       <section aria-labelledby="career-title">
-        <h2 id="career-title">Career Gateway</h2>
+        <h2 id="career-title">Find a job</h2>
         <db-career-gateway lang="en"></db-career-gateway>
       </section>
-      <section aria-labelledby="event-log-title">
-        <h2 id="event-log-title">Widget events</h2>
+      <details>
+        <summary>For developers: what your site is told</summary>
+        <p>
+          The widgets tell the page around them about progress, so a site can, for example, show its own "well done"
+          page. Private details such as support needs are never included unless the learner agrees to share them.
+          Each message below appears as you use the sign up form.
+        </p>
         <ol id="event-log" aria-live="polite" aria-relevant="additions"></ol>
-      </section>
+      </details>
     </main>
     <script>
+      // Plain words for each event (db-signup:step, db-signup:done, db-signup:support), with the raw data underneath.
       const eventLog = document.getElementById('event-log');
-      for (const eventName of ['db-signup:step', 'db-signup:done', 'db-signup:support']) {
+      const explain = {
+        'db-signup:step': (d) => `Step ${d.step} of ${d.of} reached.`,
+        'db-signup:done': () => 'Sign up finished. The site can now welcome the learner.',
+        'db-signup:support': () => 'The learner chose to share their support needs.',
+      };
+      for (const eventName of Object.keys(explain)) {
         document.addEventListener(eventName, (event) => {
+          const detail = event.detail && typeof event.detail === 'object' ? { ...event.detail } : {};
+          if ('profile' in detail) detail.profile = { language: detail.profile.language };
           const item = document.createElement('li');
-          const detail = event.detail && typeof event.detail === 'object' ? { ...event.detail } : event.detail;
-          if (detail && typeof detail === 'object' && 'profile' in detail) {
-            detail.profile = { id: detail.profile.id, partnerId: detail.profile.partnerId, lang: detail.profile.lang };
-          }
-          item.textContent = `${eventName}: ${JSON.stringify(detail)}`;
+          const words = document.createElement('span');
+          words.textContent = explain[eventName](detail) + ' ';
+          const raw = document.createElement('code');
+          raw.textContent = `${eventName} ${JSON.stringify(detail)}`;
+          item.append(words, raw);
           eventLog.append(item);
         });
       }

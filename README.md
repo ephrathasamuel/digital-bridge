@@ -1,5 +1,14 @@
 # Digital Bridge Accessible Onboarding & Career Gateway (`<db-signup>` & `<db-career-gateway>`)
 
+> Open source and maintained by [Ephratha Samuel](https://github.com/ephrathasamuel). Contributions are welcome: see
+> [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## Project history and credits
+Digital Bridge started as the Track 1 entry of team **johny x** at the Digital Bridge Accessibility Hackathon 2026,
+built in the team repository [KaleabBantayehu/digital-bridge-track1](https://github.com/KaleabBantayehu/digital-bridge-track1)
+by Kaleab Bantayehu, Ephratha Samuel and teammates. This repository continues that work as an open source project, with
+the team's permission and the full commit history, so every original contributor keeps their credit.
+
 ## What it does
 Digital Bridge provides offline-first, bilingual (English and Amharic) onboarding and a privacy-preserving Career Gateway through Web Components, REST, and LTI 1.3. The same core capabilities work in partner pages, LMS hosts, Android WebViews, and low-connectivity environments.
 
@@ -185,7 +194,7 @@ Support preferences are stored separately and are never sent to employers or ana
 For 3,000 learners the target monthly cost is **$0–$5**: a static Web
 Component bundle, SQLite/Docker backend, zero-cost build-time neural TTS
 generation, and browser `MediaRecorder` / `SpeechRecognition`, with no paid AI
-or cloud lock-in. The bundle is **166 KB gzipped**, below the 250 KB target.
+or cloud lock-in. The bundle is **184 KB gzipped**, below the 250 KB target.
 
 ## Finished and not finished
 The API, compatibility routes, accessibility checks, offline behavior, i18n
@@ -195,3 +204,11 @@ voice experience still need co-designer validation.
 
 ## Libraries and their licences
 React, Vite, NestJS, TypeScript, Zod, Playwright, axe-core, lucide-react, and edge-tts are used under their respective permissive open-source licences. Verify current licence texts before redistribution.
+
+## Contributing
+Bug reports, accessibility barriers, Amharic wording fixes and pull requests are welcome. Read
+[CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md). Report security problems privately as
+described in [SECURITY.md](SECURITY.md).
+
+## Licence
+[MIT](LICENSE).

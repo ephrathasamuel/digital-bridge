@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Digital Bridge help bar",
+  "short_name": "Digital Bridge",
+  "version": "1.0.0",
+  "description": "Read form fields aloud, answer by voice, type Amharic with English letters and make any page easier to see.",
+  "content_scripts": [
+    {
+      "matches": ["http://*/*", "https://*/*"],
+      "js": ["config.js", "db-assist.js"],
+      "run_at": "document_idle",
+      "all_frames": false
+    }
+  ],
+  "homepage_url": "https://github.com/ephrathasamuel/digital-bridge"
+}

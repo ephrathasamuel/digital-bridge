@@ -89,7 +89,7 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
     setCamera((c) => (c === 'blocked' ? c : 'off'));
   };
 
-  // Camera and recorder are always released when the panel closes (CLAUDE.md §2.11).
+  // Camera and recorder are always released when the panel closes (ENGINEERING_RULES.md §2.11).
   useEffect(() => () => stopCamera(), []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => () => {
     if (previewUrl) URL.revokeObjectURL(previewUrl);

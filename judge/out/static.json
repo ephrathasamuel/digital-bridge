@@ -109,7 +109,7 @@
   ],
   "medicalWords": [
     "apps/web-components/src/i18n/en.json:250:  \"support.noProof\": \"No medical proof required. This stays private and is never shared without your permission.\",",
-    "apps/web-components/src/wizard/steps/SupportStep.tsx:20: * Private support request. Functional needs only; no diagnosis, no medical proof (CLAUDE.md §4).",
+    "apps/web-components/src/wizard/steps/SupportStep.tsx:20: * Private support request. Functional needs only; no diagnosis, no medical proof (ENGINEERING_RULES.md §4).",
     "packages/shared-schemas/src/index.ts:357:  'support.noProof': 'No medical proof required. This stays private and is never shared without your permission.',"
   ],
   "apiLogging": [

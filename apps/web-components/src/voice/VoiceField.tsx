@@ -49,7 +49,7 @@ const AM_EMPTY_TRANSCRIPT_MS = 5_000;
 const AM_FALLBACK_ERRORS = new Set(['no-speech', 'network', 'not-allowed', 'language-not-supported', 'service-not-allowed', 'audio-capture']);
 
 /**
- * Mic button + mandatory editable "Review what we heard" step with read-back (CLAUDE.md §3.8, Guide v2 §5),
+ * Mic button + mandatory editable "Review what we heard" step with read-back (ENGINEERING_RULES.md §3.8, Guide v2 §5),
  * plus a MediaRecorder voice-note fallback that works where speech-to-text does not.
  */
 export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse, targetRef, announce, voiceNoteKey, fidelHelper, spokenKind = 'text', liveFill = false, currentValue = '' }) => {
@@ -90,7 +90,7 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
     streamRef.current = null;
   };
 
-  // Stop the microphone, recorder and any read-back on unmount (CLAUDE.md §2.11).
+  // Stop the microphone, recorder and any read-back on unmount (ENGINEERING_RULES.md §2.11).
   useEffect(
     () => () => {
       recognitionRef.current?.abort();

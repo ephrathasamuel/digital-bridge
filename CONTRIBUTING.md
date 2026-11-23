@@ -32,7 +32,7 @@ More detail is in the [README](README.md).
    ```bash
    pnpm gate
    ```
-4. Follow the engineering rules in [CLAUDE.md](CLAUDE.md). The most important ones:
+4. Follow the [engineering rules](docs/ENGINEERING_RULES.md). The most important ones:
    * Native HTML controls only, with visible labels. No `div` buttons.
    * Every user facing string lives in `packages/shared-schemas` in both English and Amharic.
    * Errors use `aria-invalid`, an inline message and an error summary that receives focus.

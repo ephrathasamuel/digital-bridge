@@ -52,7 +52,7 @@ export const ContactPerson: React.FC<ContactPersonProps> = ({ lang, apiUrl, part
   // A fresh client per attempt: ApiClient stays in mock mode after one network failure, which would block retries.
   const sender: ContactSender = (payload) => new ApiClient({ apiUrl, partnerId }).contactPerson(payload);
 
-  // Send messages kept while offline: now, and whenever the connection comes back (CLAUDE.md 7).
+  // Send messages kept while offline: now, and whenever the connection comes back (ENGINEERING_RULES.md 7).
   useEffect(() => {
     if (!apiUrl) return undefined;
     const flush = () => void flushOutbox(sender);

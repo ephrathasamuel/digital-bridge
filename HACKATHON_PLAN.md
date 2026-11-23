@@ -1,7 +1,7 @@
 # HACKATHON_PLAN.md — Live Execution Plan (Sat 14 Nov 10:50 → Sun 15 Nov 16:30)
 
 **Audience: the 4 developers and every AI coding agent working in this repo.**
-Companion files: `CLAUDE.md` (coding law) · `TRACK_1_MASTER_REQUIREMENTS.md` (what we build) · `TEAM_TASKS_AND_ACCOUNTABILITY_CHARTER.md` (contracts, cards, fairness).
+Companion files: `docs/ENGINEERING_RULES.md` (coding law) · `TRACK_1_MASTER_REQUIREMENTS.md` (what we build) · `TEAM_TASKS_AND_ACCOUNTABILITY_CHARTER.md` (contracts, cards, fairness).
 **This file is the schedule. When it conflicts with the Charter's older Friday timeline, this file wins.** When it conflicts with the organisers' slides, the slides win.
 
 ---
@@ -11,7 +11,7 @@ Companion files: `CLAUDE.md` (coding law) · `TRACK_1_MASTER_REQUIREMENTS.md` (w
 1. Find your dev role (§4). Work **only** the first unticked box in your current sprint block. Tick it (`[x]`) in your PR when done.
 2. Stay inside your **Scope** paths. Need something in another dev's scope? Post `[BLOCKED]` or `[CONTRACT]` in chat; do not edit their files silently.
 3. Anything marked **★ MVP** is the bare minimum that survives a Yellow Card (Charter Rule 3). Do ★ items first, polish later.
-4. Before saying "done", run the checks in `CLAUDE.md` §9 and paste evidence in the PR.
+4. Before saying "done", run the checks in `docs/ENGINEERING_RULES.md` §9 and paste evidence in the PR.
 5. Agents: do not invent endpoints, fields, events or error codes. They are in `packages/shared-schemas` (Charter §0). If missing, add additively and announce.
 6. Never push to `main` directly. Branches: `feat/dev1-shadow-host`, `feat/dev2-wizard-a11y`, `feat/dev3-api-v1`, `feat/dev4-lti-qa`. Team lead squash-merges.
 

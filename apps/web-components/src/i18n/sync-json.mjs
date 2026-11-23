@@ -1,5 +1,5 @@
 // Writes en.json / am.json (Technical Guide v2 §3: "Text lives in language files") from the single source of truth
-// in @db/shared-schemas (CLAUDE.md §1: i18n strings live only there). Run after `pnpm build:schemas`:
+// in @db/shared-schemas (ENGINEERING_RULES.md §1: i18n strings live only there). Run after `pnpm build:schemas`:
 //   node apps/web-components/src/i18n/sync-json.mjs          -> regenerate
 //   node apps/web-components/src/i18n/sync-json.mjs --check  -> exit 1 if the JSON files are out of date
 import { readFileSync, writeFileSync } from 'node:fs';

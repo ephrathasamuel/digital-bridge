@@ -5,7 +5,7 @@ import { useOnboardingStore } from '../state/store';
 /**
  * Voice notes the learner chose to keep (Technical Guide v2 §5: "let the learner ... keep the voice note in its place").
  * Stored on this device only, under the `db:` prefix so "Delete my data" (services.deleteAllData) removes them too.
- * Key format follows CLAUDE.md §7: db:{partnerId}:{profileId}:voiceNotes.
+ * Key format follows ENGINEERING_RULES.md §7: db:{partnerId}:{profileId}:voiceNotes.
  */
 const EMPTY: VoiceNotes = {};
 let cache: { key: string; notes: VoiceNotes } | null = null;

@@ -42,7 +42,7 @@ type Mode = 'idle' | 'tts' | 'visual';
 const phraseMs = (phrase: string) => Math.max(2200, Array.from(phrase).length * 90);
 
 /**
- * Read aloud, never on page load (CLAUDE.md §3.8). The caption box below the toolbar ALWAYS shows the words, with the
+ * Read aloud, never on page load (ENGINEERING_RULES.md §3.8). The caption box below the toolbar ALWAYS shows the words, with the
  * current phrase highlighted, so it also works with the sound off (Guide §8 gate) and for Deaf learners. Sound:
  * 1. speechSynthesis with an installed voice for the language, one phrase at a time (highlight follows the voice);
  * 2. otherwise a bundled cue listed in the audio manifest (never requested unless listed, so no 404s),

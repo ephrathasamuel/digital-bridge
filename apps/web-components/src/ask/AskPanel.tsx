@@ -59,7 +59,7 @@ export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl, a
   const signButtonRef = useRef<HTMLButtonElement>(null);
   const canListen = getSpeechRecognition() !== null;
 
-  // Release the microphone and hand it back to voice control when the widget goes away (CLAUDE.md 2.11).
+  // Release the microphone and hand it back to voice control when the widget goes away (ENGINEERING_RULES.md 2.11).
   useEffect(() => () => {
     clearTimeout(silenceTimer.current);
     if (recognition.current) {
@@ -145,7 +145,7 @@ export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl, a
       setFieldListening(false); // voice control may listen again
       if (failed) return;
       if (lastText) {
-        // Never auto-submit speech: the words stay editable in the box and the learner presses Ask (CLAUDE.md 3.8).
+        // Never auto-submit speech: the words stay editable in the box and the learner presses Ask (ENGINEERING_RULES.md 3.8).
         setStatus(t('ask.heard', { text: lastText }));
         inputRef.current?.focus();
       } else if (!heardSpeech) setStatus(t('ask.voiceNothing'));

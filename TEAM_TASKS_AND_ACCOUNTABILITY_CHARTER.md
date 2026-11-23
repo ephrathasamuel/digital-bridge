@@ -1,6 +1,6 @@
 # TEAM_TASKS_AND_ACCOUNTABILITY_CHARTER.md — Playbook for 4 Developers
 
-Rules for AI agents: `CLAUDE.md`. What we build: `TRACK_1_MASTER_REQUIREMENTS.md`. This file: **who builds what, how, and what happens when things slip.**
+Engineering rules: `docs/ENGINEERING_RULES.md`. What we build: `TRACK_1_MASTER_REQUIREMENTS.md`. This file: **who builds what, how, and what happens when things slip.**
 
 Fixed points: **Friday build night → Saturday co-designer testing → Sunday 16:30 submission (code freeze 15:30).**
 Team lead: Kaleab (also fastest-available reassignment authority). Timekeeper: Ermiyas.
@@ -269,7 +269,7 @@ apps/savanna-host-demo/      # copy of Savanna pages + host-a11y-fixes.{js,css}
 **How**
 
 1. **Base class:** `class ReactShadowElement extends HTMLElement` → `connectedCallback` creates `this.attachShadow({mode:'open'})`, appends `<style>` (from `index.css?inline`) + a mount `<div lang=…>`; `createRoot(mount).render(<App host={this}/>)`. `static get observedAttributes()` → `api-url, partner-id, lang, theme, mode, lti-token, session-id`; `attributeChangedCallback` re-renders. `disconnectedCallback` unmounts. Expose `dispatch(name, detail)` that always uses `bubbles:true, composed:true`.
-2. **Tailwind in shadow DOM:** pin Tailwind v3 (`tailwindcss@3`) or fix v4 `:root`/`@property` as in CLAUDE.md §2. Test **inside Savanna**, not just standalone.
+2. **Tailwind in shadow DOM:** pin Tailwind v3 (`tailwindcss@3`) or fix v4 `:root`/`@property` as in ENGINEERING_RULES.md §2. Test **inside Savanna**, not just standalone.
 3. **Offline engine:** Zustand `persist` with an IndexedDB storage adapter (`idb-keyval`) falling back to `localStorage`; debounce 300 ms; key `db:{partnerId}:{sessionId}`. `syncQueue`: array of unsent patches; flush on load, on `window 'online'`, after each save; exponential backoff; reflect state in live region (`status` string from store).
 4. **ApiClient/Mock:** `ApiClient` tries real API with 4 s timeout; on network error/timeout/5xx/empty `api-url` → `MockApiService` (localStorage; deterministic job list, fake SMS token, fake vouch). Emits `db:error` with `NETWORK_FALLBACK` (no PII).
 5. **Standalone demo page** `apps/web-components/index.html` with all three tags + language/theme toggles (this is also the fallback demo).
@@ -322,7 +322,7 @@ scripts/test-api.ps1
 
 **How**
 
-1. **Bilingual error filter:** catches `BadRequestException`/`ValidationError`, maps `class-validator` constraints → `ErrorCode` → `Localized` messages; produces the envelope in CLAUDE.md §5. Unit-test: invalid phone yields exactly `INVALID_ET_PHONE` with the example text in en and am.
+1. **Bilingual error filter:** catches `BadRequestException`/`ValidationError`, maps `class-validator` constraints → `ErrorCode` → `Localized` messages; produces the envelope in ENGINEERING_RULES.md §5. Unit-test: invalid phone yields exactly `INVALID_ET_PHONE` with the example text in en and am.
 2. **Onboarding:** `PATCH` merges `step` data, increments `revision`, ignores stale revisions safely (idempotent). Store support data in its own table/column group; exclude from list/log queries.
 3. **Resume-SMS:** random 32-byte token (hash stored), TTL 24 h, single use; `ConsoleSmsProvider` logs and returns `devLink` in dev. Throttle 3/hour per phone.
 4. **Partner voucher:** validates partner exists, consent present (`given:true`, method, timestamp), stores agent id + evidence ref; status `vouched` immediately in demo mode; partner scopes `onboarding:write` + `partner:vouch`.
@@ -383,7 +383,7 @@ e2e/axe.spec.ts  e2e/keyboard.spec.ts  e2e/lti.spec.ts  playwright.config.ts   #
 | CP3 (Fri ~23:00) | Savanna host patched         | Voice/TTS/Ethiopian date    | Swagger + PS script       | AGS + NRPS, axe CI                        |
 | CP4 (Sat ~08:00) | Standalone + element stable  | Career UI + gate pass       | API stable                | Deep-link + Mock LMS polished             |
 
-**Rule 3 — Yellow Card** (60 min late on a milestone, or silent for 45 min): scope **auto-reduces to the bare MVP contract** (items marked ★ in the role lists: wizard shell, ErrorSummary, persistence, sessions endpoint, 401 launch path), plus a **mandatory 20-minute pair rescue**: another dev + Claude/Cursor writes the blocked code with the owner present. Owner explains what blocked them; no blame, just unblock.
+**Rule 3 — Yellow Card** (60 min late on a milestone, or silent for 45 min): scope **auto-reduces to the bare MVP contract** (items marked ★ in the role lists: wizard shell, ErrorSummary, persistence, sessions endpoint, 401 launch path), plus a **mandatory 20-minute pair rescue**: another dev writes the blocked code with the owner present. Owner explains what blocked them; no blame, just unblock.
 
 **Rule 4 — Red Card** (2.5 h late, or blocking integration before Saturday testing/Sunday freeze): immediate, no-argument **reassignment + fallback activation**. Team lead pulls the member's latest branch, switches the Mock adapter/simulated flow on for the missing pieces, and reassigns the critical path to the fastest available dev. The original owner moves to QA/docs/test-script duties (still counts as contribution if completed). Decision is the lead's; discussion after.
 

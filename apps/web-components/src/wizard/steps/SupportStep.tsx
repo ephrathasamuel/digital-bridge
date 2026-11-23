@@ -17,7 +17,7 @@ export const SUPPORT_NEEDS: SupportNeed[] = [
 ];
 
 /**
- * Private support request. Functional needs only; no diagnosis, no medical proof (CLAUDE.md §4).
+ * Private support request. Functional needs only; no diagnosis, no medical proof (ENGINEERING_RULES.md §4).
  * "Prefer not to say" is one tap, same size and place as every other choice (Guide v2 §5).
  */
 export const SupportStep: React.FC<StepProps> = ({ lang, t, idBase, profile, update, announce }) => {

@@ -52,7 +52,7 @@ async function attempt(send: ContactSender, payload: HelpContactRequest): Promis
   }
 }
 
-/** Sends a message, or keeps it on this device when it cannot be delivered now (CLAUDE.md 0.6, offline first). */
+/** Sends a message, or keeps it on this device when it cannot be delivered now (ENGINEERING_RULES.md 0.6, offline first). */
 export async function sendContact(send: ContactSender, payload: HelpContactRequest): Promise<ContactResult> {
   const result = await attempt(send, payload);
   if (result) return result;

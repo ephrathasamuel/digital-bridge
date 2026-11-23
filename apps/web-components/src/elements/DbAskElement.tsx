@@ -25,7 +25,9 @@ export class DbAskElement extends ReactShadowElement {
   }
 
   protected renderWidget(): void {
-    this.render(<AskPanel lang={this.currentLang} audioBaseUrl={this.audioBaseUrl} />);
+    this.render(
+      <AskPanel lang={this.currentLang} audioBaseUrl={this.audioBaseUrl} apiUrl={this.apiUrl} partnerId={this.partnerId} />,
+    );
   }
 
   protected async prepareRuntime(): Promise<void> {

@@ -1,6 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import {
-  Briefcase, Building2, CalendarDays, Clock, CreditCard, Hand, Info, Keyboard, Languages, Lock, MessageCircleQuestion, Mic, Square, WifiOff,
+  Briefcase, Building2, CalendarDays, Clock, CreditCard, Hand, Info, Keyboard, Languages, Lock, MessageCircleQuestion, Mic, UserRound, Square, WifiOff,
   type LucideIcon,
 } from 'lucide-react';
 import { answerHelpQuestion, HELP_ENTRIES, type HelpAnswer, type Lang } from '@db/shared-schemas';
@@ -12,10 +12,14 @@ import { getSpeechRecognition, setFieldListening, speechLocale, type SpeechRecog
 import { SignPanel } from '../voice/SignPanel';
 import { ReadAloudButton } from '../tts/ReadAloudButton';
 import { joinTranscripts } from './askVoice';
+import { ContactPerson } from './ContactPerson';
 
 export interface AskPanelProps {
   lang?: Lang;
   audioBaseUrl?: string;
+  /** API base (ends in /api/v1). Used only by Contact a person; answers never need the network. */
+  apiUrl?: string;
+  partnerId?: string;
 }
 
 const SUGGESTED = ['id', 'privacy', 'offline', 'jobs'];
@@ -32,9 +36,10 @@ const CARD_ICONS: Record<string, LucideIcon> = {
  * "Ask a question" help box. Answers come from the shared bilingual help core, so the widget answers instantly and
  * offline, and gives the same answer as POST /api/v1/help/ask. An Amharic question gets an Amharic answer.
  * Questions can be typed, spoken (written live into the box) or asked in sign language (picture cards, or a signed
- * video kept on this device for an interpreter). Questions are not stored on a server or sent anywhere.
+ * video kept on this device for an interpreter). Questions are not stored on a server or sent anywhere, except a
+ * message the learner chooses to send with Contact a person (with consent).
  */
-export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl }) => {
+export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl, apiUrl, partnerId }) => {
   const t = makeT(lang);
   const vision = useVisionMode();
   const idBase = `ask-${cleanId(useId())}`;
@@ -46,6 +51,7 @@ export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl })
   const [status, setStatus] = useState('');
   const [amFailed, setAmFailed] = useState(false);
   const [signOpen, setSignOpen] = useState(false);
+  const [contactOpen, setContactOpen] = useState(false);
   const recognition = useRef<SpeechRecognitionLike | null>(null);
   const silenceTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const answerRef = useRef<HTMLHeadingElement>(null);
@@ -180,6 +186,7 @@ export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl })
   const errorId = `${idBase}-error`;
   const signRegionId = `${idBase}-sign`;
   const cardsHeadingId = `${idBase}-cards`;
+  const contactRegionId = `${idBase}-contact`;
 
   return (
     <section
@@ -346,6 +353,25 @@ export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl })
           />
         </div>
       )}
+
+      <div className="mt-4">
+        <button
+          type="button"
+          aria-expanded={contactOpen}
+          aria-controls={contactRegionId}
+          onClick={() => setContactOpen((open) => !open)}
+          data-db-action="ask-contact"
+          className={cx(ui.btnToggle(contactOpen), 'mb-3')}
+        >
+          <UserRound aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
+          {t('contact.open')}
+        </button>
+        <div id={contactRegionId} hidden={!contactOpen}>
+          {contactOpen && (
+            <ContactPerson lang={lang} apiUrl={apiUrl} partnerId={partnerId} initialMessage={asked} announce={setStatus} />
+          )}
+        </div>
+      </div>
     </section>
   );
 };

@@ -20,6 +20,10 @@ services:
       # JSON with your own OAuth clients and secrets, e.g. the help-desk client that reads Contact a person messages.
       - key: PARTNER_CLIENTS
         sync: false
+      # Required in production: RSA private key (PKCS8 PEM) that signs LTI messages. Paste the whole key; multi-line is fine.
+      # Make one with: node -e "console.log(require('crypto').generateKeyPairSync('rsa',{modulusLength:2048,privateKeyEncoding:{type:'pkcs8',format:'pem'},publicKeyEncoding:{type:'spki',format:'pem'}}).privateKey)"
+      - key: LTI_TOOL_PRIVATE_KEY_PEM
+        sync: false
       # Where SMS resume links point, e.g. https://<your-vercel-site>/pages/signup.html
       - key: PUBLIC_RESUME_URL
         sync: false

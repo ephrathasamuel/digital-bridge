@@ -77,9 +77,18 @@ body {
   font-family: 'Noto Sans Ethiopic', 'Nyala', var(--bs-body-font-family);
 }
 
+/* No underlines: links are bold and in the brand colour, and underline on hover and keyboard focus. */
 a {
   color: var(--brand);
-  text-decoration-thickness: 2px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+main a:hover,
+main a:focus-visible,
+footer a:hover,
+footer a:focus-visible {
+  text-decoration: underline;
   text-underline-offset: 3px;
 }
 

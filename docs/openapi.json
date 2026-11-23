@@ -434,6 +434,46 @@
         ]
       }
     },
+    "/api/v1/voice": {
+      "get": {
+        "operationId": "VoiceController_status",
+        "summary": "Which read aloud voice provider this server has (none, mms or custom)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "voice"
+        ]
+      }
+    },
+    "/api/v1/voice/speak": {
+      "post": {
+        "operationId": "VoiceController_speak",
+        "summary": "Turn text into speech in any language; returns audio (501 when no provider is set)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpeakDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "voice"
+        ]
+      }
+    },
     "/api/v1/lti/jwks": {
       "get": {
         "operationId": "LtiController_getJwks",
@@ -866,6 +906,24 @@
           "contact",
           "message",
           "consent"
+        ]
+      },
+      "SpeakDto": {
+        "type": "object",
+        "properties": {
+          "text": {
+            "type": "string",
+            "example": "ለመመዝገብ መታወቂያ አያስፈልግም።",
+            "maxLength": 1000
+          },
+          "lang": {
+            "type": "string",
+            "example": "am",
+            "description": "BCP 47 or ISO 639 code. Defaults to en."
+          }
+        },
+        "required": [
+          "text"
         ]
       }
     }

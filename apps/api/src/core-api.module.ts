@@ -19,6 +19,7 @@ import { SmsResumeTokenEntity } from "./sms/entities/sms-resume-token.entity";
 import { SmsModule } from "./sms/sms.module";
 import { SeedModule } from "./seed/seed.module";
 import { PartnerVoucherEntity } from "./vouch/entities/partner-voucher.entity";
+import { VoiceModule } from "./voice/voice.module";
 import { VouchModule } from "./vouch/vouch.module";
 
 const dataDir = path.join(process.cwd(), "data");
@@ -58,6 +59,7 @@ class HealthController {
     PrivacyModule,
     SeedModule,
     HelpModule,
+    VoiceModule,
   ],
   controllers: [HealthController],
   providers: [

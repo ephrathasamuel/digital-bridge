@@ -63,6 +63,13 @@ the answer comes back in the language you used, offline, from the same bilingual
 `POST /api/v1/help/ask` (`{"question":"ለመመዝገብ መታወቂያ ያስፈልገኛል?"}`) and `GET /api/v1/help/faq?lang=am`. Questions are not
 stored or logged.
 
+Contact a person: when an answer does not help, the "Contact a person" button in `<db-ask>` opens a short form (phone or
+email, message, consent). It sends `POST /api/v1/help/contact`
+(`{"contact":"0911 234 567","message":"…","lang":"am","consent":true}`) and shows a reference such as `HELP-1A2B3C4D`.
+Without consent the API answers 422. Offline, the message waits on the device and is sent when the connection returns.
+The help team reads messages with `GET /api/v1/help/contact` and a token with the `help:admin` scope (demo client
+`help-desk`; set real secrets with `PARTNER_CLIENTS`). Messages are never logged or shared with employers.
+
 Install in an LMS: `GET /api/v1/lti/install` lists copy-ready values for Moodle (Tool URL, Public keyset, Initiate login
 URL, Redirection URIs). Canvas admins paste one URL, `/api/v1/lti/install/canvas.json`, into Developer Keys > LTI Key >
 Enter URL. Launches are then verified with RS256 once the platform is added to `LTI_PLATFORMS_JSON`.

@@ -1,0 +1,24 @@
+# Render Blueprint for the Digital Bridge API (free plan).
+# Render dashboard: New > Blueprint > pick this repository. Fill in the values marked sync: false.
+services:
+  - type: web
+    name: digital-bridge-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: main
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:schemas && pnpm -F @db/api build
+    startCommand: node apps/api/dist/main.js
+    healthCheckPath: /api/v1/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22.12.0
+      - key: JWT_SECRET
+        generateValue: true
+      # JSON with your own OAuth clients and secrets, e.g. the help-desk client that reads Contact a person messages.
+      - key: PARTNER_CLIENTS
+        sync: false
+      # Where SMS resume links point, e.g. https://<your-vercel-site>/pages/signup.html
+      - key: PUBLIC_RESUME_URL
+        sync: false

@@ -63,10 +63,18 @@ minutes on a slow laptop.
 Docker: `docker compose up --build -d` builds and serves the production web bundle on port 5173 and the NestJS API on port 3000.
 Verified with `http://127.0.0.1:3000/api/v1/health` returning `200 OK`; use `docker compose down` to stop the containers.
 
-Live hosted API: [Health](https://digital-bridge-track1.onrender.com/api/v1/health) and
-[Swagger UI](https://digital-bridge-track1.onrender.com/docs). Hosted widgets automatically use
-`https://digital-bridge-track1.onrender.com/api/v1`; localhost and `127.0.0.1` keep the local/mock behavior unless an
-explicit `api` or `api-url` attribute is provided.
+### Deploy your own
+
+* **API on Render:** `render.yaml` is a Render Blueprint (free plan). In Render choose New, then Blueprint, pick this
+  repository, and fill in `PARTNER_CLIENTS` (your own client secrets) and `PUBLIC_RESUME_URL`. Health check:
+  `/api/v1/health`, Swagger UI: `/docs`. The free plan has no permanent disk, so the SQLite data (including Contact a
+  person messages) is reset when the service restarts. Use a paid disk or a hosted database for real use.
+* **Pages and widgets on Vercel:** `vercel.json` builds `apps/web-components/dist`. Import the repository in Vercel
+  and keep the settings from the file. The API allows any `*.vercel.app` origin; set `CORS_ORIGINS` for other domains.
+
+Hosted widgets call `https://digital-bridge-api.onrender.com/api/v1` by default. Build with
+`VITE_DB_API_URL=https://your-api.example/api/v1` to use another API. On localhost and `127.0.0.1` the widgets stay
+offline (mock data) unless the page sets an `api` or `api-url` attribute.
 
 Ask a question (English or Amharic): `<db-ask>` sits on the signup, profile and jobs pages. Type or say a question and
 the answer comes back in the language you used, offline, from the same bilingual help core that serves

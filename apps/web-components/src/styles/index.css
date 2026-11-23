@@ -5,16 +5,17 @@
 
 /*
  * Host tokens. When the host page is Bootstrap/Savanna we follow its body font, text colour and primary colour;
- * on a blank page we fall back to the Digital Bridge palette (parchment #FAF7F2, ink #1C1917, terracotta #9E3B24).
+ * on a blank page we fall back to the Digital Bridge palette (surface #F4F6FA, ink #0b0f19, primary #0b3c8c),
+ * which is safe for every type of colour blindness.
  */
 :host {
   display: block;
   font-size: 16px;
-  --db-surface: #FAF7F2;
-  --db-border: #D6CFC2;
-  --db-fg: var(--bs-body-color, #1c1917);
-  --db-primary: var(--bs-primary, #7a2b18);
-  --db-focus-ring: #7A2B18;
+  --db-surface: #F4F6FA;
+  --db-border: #5F6B7D;
+  --db-fg: var(--bs-body-color, #0b0f19);
+  --db-primary: var(--bs-primary, #0b3c8c);
+  --db-focus-ring: #082d6b;
   --db-font: var(--bs-body-font-family, system-ui, 'Noto Sans Ethiopic', sans-serif);
   color: var(--db-fg);
   background-color: transparent;
@@ -77,12 +78,12 @@
   -webkit-appearance: none;
   border: 0;
   border-radius: 9999px;
-  background-color: #EFE9DF;
+  background-color: #E6EBF2;
   overflow: hidden;
 }
 
 :host progress::-webkit-progress-bar {
-  background-color: #EFE9DF;
+  background-color: #E6EBF2;
   border-radius: 9999px;
 }
 
@@ -98,10 +99,10 @@
 
 /* Read-aloud highlight: the phrase being "read" on screen. */
 :host mark.db-phrase-current {
-  background-color: #FCE9A8;
-  color: #1c1917;
+  background-color: #FFD43B;
+  color: #0b0f19;
   border-radius: 0.25rem;
-  box-shadow: 0 0 0 2px #7a2b18;
+  box-shadow: 0 0 0 2px #082d6b;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -139,7 +140,7 @@
   padding: 0 0.3rem;
   border: 2px solid #ffffff;
   border-radius: 9999px;
-  background: #1c1917;
+  background: #0b0f19;
   color: #ffffff;
   font: 700 0.8rem/1.25rem system-ui, sans-serif;
   text-align: center;
@@ -167,7 +168,7 @@
      dark             #fafafa on #09090b 19.1:1 · #f59e0b on #09090b 9.9:1 · button text #09090b on #f59e0b 9.9:1
    --------------------------------------------------------------------------------------------------------------- */
 :host {
-  --v-selected-bg: #1c1917;
+  --v-selected-bg: #0b0f19;
   --v-selected-text: #ffffff;
   --v-ring: #ffffff;
 }
@@ -306,12 +307,12 @@
 :host [data-vc-active='true'] {
   outline: 4px solid var(--db-focus-ring) !important;
   outline-offset: 3px;
-  box-shadow: 0 0 0 7px #fce9a8;
+  box-shadow: 0 0 0 7px #FFD43B;
 }
 
 :host [data-vc-reading='true'] {
   outline: 4px dashed var(--db-focus-ring) !important;
   outline-offset: 3px;
-  background-color: #fce9a8 !important;
-  color: #1c1917 !important;
+  background-color: #FFD43B !important;
+  color: #0b0f19 !important;
 }

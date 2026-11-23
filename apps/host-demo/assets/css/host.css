@@ -4,15 +4,18 @@
  * so the plug-in matches the host the same way it would on a Bootstrap site.
  */
 :root {
-  --ink: #1c1917;
-  --muted: #57534e;
-  --paper: #fbf7f2;
+  /* Safe for every type of colour blindness: blue and amber, also far apart in lightness. Text 17.7:1 or more. */
+  --ink: #0b0f19;
+  --muted: #2f3a4d;
+  --paper: #f4f6fa;
   --card: #ffffff;
-  --line: #d6cfc7;
-  --brand: #7a2b18;
+  --line: #5f6b7d;
+  --brand: #0b3c8c;
   --brand-ink: #ffffff;
-  --brand-soft: #f6e7df;
-  --focus: #0b3d91;
+  --brand-soft: #e4ecf8;
+  --accent: #ffd43b;
+  --accent-ink: #0b0f19;
+  --focus: #082d6b;
   --bs-primary: var(--brand);
   --bs-body-color: var(--ink);
   --bs-body-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Ethiopic', 'Nyala', sans-serif;
@@ -21,7 +24,7 @@
 
 body.db-colorblind-safe {
   --brand: #004488;
-  --brand-soft: #e3edf7;
+  --brand-soft: #fff4dc;
   --focus: #002244;
 }
 
@@ -33,19 +36,21 @@ body.db-high-contrast {
   --line: #000000;
   --brand: #000000;
   --brand-soft: #ffffff;
+  --accent: #ffff00;
   --focus: #000000;
 }
 
 body.db-dark {
-  --ink: #f5f0ea;
-  --muted: #d6cfc7;
-  --paper: #141210;
-  --card: #1f1c19;
-  --line: #57534e;
-  --brand: #f2a98a;
-  --brand-ink: #141210;
-  --brand-soft: #2d221d;
-  --focus: #9ec5ff;
+  --ink: #f5f7fa;
+  --muted: #d5dbe5;
+  --paper: #0b0f19;
+  --card: #151b28;
+  --line: #9aa5b8;
+  --brand: #ffd43b;
+  --brand-ink: #0b0f19;
+  --brand-soft: #1e2638;
+  --accent: #ffd43b;
+  --focus: #ffd43b;
   color-scheme: dark;
 }
 
@@ -125,7 +130,7 @@ db-employer-accommodations {
   padding: 0.75rem 1rem;
   background: var(--card);
   border-bottom: 1px solid var(--line);
-  border-top: 4px solid var(--brand);
+  border-top: 6px solid var(--accent);
 }
 
 .db-topbar-logo {

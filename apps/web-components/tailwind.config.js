@@ -1,17 +1,18 @@
 // apps/web-components/tailwind.config.js
-// Warm Ethiopian palette. Contrast (checked with the WCAG formula):
-//   ink #1C1917 on parchment #FAF7F2 = 16.4:1 · terracotta #9E3B24 on parchment = 6.3:1 · white on terracotta = 6.8:1
-//   terracotta-dark #7A2B18 on parchment = 9.0:1, on terracotta-tint #F6E7E1 = 8.0:1 · lagoon #0C4243 on lagoon-light #E3EFEE = 9.5:1
+// Default palette, safe for every type of colour blindness (Okabe-Ito blue and amber, told apart by lightness too).
+// Class names kept from the first palette. Contrast (WCAG formula):
+//   ink #0B0F19 on surface #F4F6FA = 17.7:1 · primary #0B3C8C on surface = 9.5:1 · white on primary = 10.3:1
+//   primary-dark #082D6B on tint #E4ECF8 = 11.0:1 · borders #5F6B7D on surface = 5.0:1 · chip #5A3A00 on #FFF0C2 = 9.1:1
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
   theme: {
     extend: {
       colors: {
-        parchment: '#FAF7F2',
-        sand: { DEFAULT: '#D6CFC2', light: '#EFE9DF' },
-        terracotta: { DEFAULT: '#9E3B24', dark: '#7A2B18', darker: '#5B1D13', tint: '#F6E7E1' },
-        lagoon: { DEFAULT: '#0C4243', light: '#E3EFEE' },
-        ink: '#1C1917',
+        parchment: '#F4F6FA',
+        sand: { DEFAULT: '#5F6B7D', light: '#E6EBF2' },
+        terracotta: { DEFAULT: '#0B3C8C', dark: '#082D6B', darker: '#051D47', tint: '#E4ECF8' },
+        lagoon: { DEFAULT: '#5A3A00', light: '#FFF0C2' },
+        ink: '#0B0F19',
       },
       fontFamily: {
         // --db-font follows the host's Bootstrap font when it has one (see styles/index.css).
@@ -19,7 +20,7 @@ export default {
         mono: ['JetBrains Mono', 'monospace'],
       },
       boxShadow: {
-        card: '0 1px 2px rgba(28, 25, 23, 0.06), 0 4px 16px rgba(28, 25, 23, 0.06)',
+        card: '0 1px 2px rgba(11, 15, 25, 0.08), 0 4px 16px rgba(11, 15, 25, 0.08)',
       },
     },
   },

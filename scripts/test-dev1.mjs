@@ -243,9 +243,9 @@ check('13 Signup aliases, guide pages and built-page axe audit', () => {
   assert.match(base, /this\.getAttribute\('api'\)\s*\|\|\s*this\.getAttribute\('api-url'\)/);
   assert.match(viteConfig, /module\/db-signup\.js/);
   assert.match(viteConfig, /assets\/js\/db-signup\.js/);
-  assert.match(baseStyle, /var\(--bs-primary,\s*#7a2b18\)/);
+  assert.match(baseStyle, /var\(--bs-primary,\s*#0b3c8c\)/);
   assert.match(baseStyle, /var\(--bs-body-font-family,\s*system-ui,\s*'Noto Sans Ethiopic',\s*sans-serif\)/);
-  assert.match(baseStyle, /var\(--bs-body-color,\s*#1c1917\)/);
+  assert.match(baseStyle, /var\(--bs-body-color,\s*#0b0f19\)/);
   assert.match(hostCss, /scroll-margin-top:\s*6rem/);
   assert.match(hostCss, /:focus-visible[\s\S]*outline:\s*3px\s+solid/);
   assert.match(hostCss, /--bs-primary:/);

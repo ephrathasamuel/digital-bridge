@@ -3,148 +3,251 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Digital Bridge Track 1 — demo pages</title>
+    <title>Digital Bridge: forms everyone can fill in</title>
+    <meta name="description" content="Open source plug-in that adds voice input, read aloud, Amharic and English, sign language help and colour modes to any form." />
     <style>
-      /* Self-contained: no external fonts, CSS or scripts. Contrast checked with the WCAG formula. */
+      /* Safe for every type of colour blindness: blue and amber, far apart in lightness. Body text 17.7:1 or more. */
       :root {
-        --ink: #1c1917;        /* on --paper 16.4:1 */
-        --muted: #44403c;      /* on --paper 9.6:1 */
-        --paper: #faf7f2;
-        --card: #ffffff;
-        --line: #d6cfc2;
-        --brand: #7a2b18;      /* on white 9.6:1; white on it 9.6:1 */
-        --brand-tint: #f6e7e1;
-        --lagoon: #0c4243;     /* on #e3efee 9.5:1 */
-        --lagoon-tint: #e3efee;
+        --ink: #0b0f19; --muted: #2f3a4d; --paper: #f4f6fa; --card: #ffffff; --line: #5f6b7d;
+        --brand: #0b3c8c; --brand-dark: #082d6b; --on-brand: #ffffff; --soft: #e4ecf8;
+        --accent: #ffd43b; --on-accent: #0b0f19; --focus: #082d6b; --code: #e6ebf2;
+        color-scheme: light;
       }
-      * { box-sizing: border-box; }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #f5f7fa; --muted: #d5dbe5; --paper: #0b0f19; --card: #151b28; --line: #9aa5b8;
+          --brand: #ffd43b; --brand-dark: #ffe58a; --on-brand: #0b0f19; --soft: #1e2638;
+          --accent: #ffd43b; --on-accent: #0b0f19; --focus: #ffd43b; --code: #1e2638;
+          color-scheme: dark;
+        }
+      }
+      *, *::before, *::after { box-sizing: border-box; }
       body {
-        margin: 0;
-        color: var(--ink);
-        background: var(--paper);
-        font: 1rem/1.6 system-ui, 'Segoe UI', 'Noto Sans Ethiopic', 'Nyala', sans-serif;
-        border-top: 6px solid var(--brand);
+        margin: 0; background: var(--paper); color: var(--ink); line-height: 1.6; font-size: 1.0625rem;
+        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Ethiopic', 'Nyala', sans-serif;
       }
+      [lang='am'] { font-family: 'Noto Sans Ethiopic', 'Nyala', system-ui, sans-serif; }
+      a { color: var(--brand); text-decoration-thickness: 2px; text-underline-offset: 3px; }
+      :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+      a, button, summary { scroll-margin: 6rem; }
       .skip-link {
-        position: absolute; left: 0.5rem; top: -4rem; padding: 0.75rem 1rem;
-        background: var(--brand); color: #fff; font-weight: 700; border-radius: 0.5rem; z-index: 10;
+        position: absolute; left: 1rem; top: -10rem; z-index: 10; padding: 0.75rem 1rem;
+        background: var(--card); color: var(--ink); border: 3px solid var(--ink); border-radius: 0.5rem; font-weight: 700;
       }
-      .skip-link:focus { top: 0.5rem; }
-      main { max-width: 64rem; margin: 0 auto; padding: 1.5rem 1rem 4rem; }
-      :focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
-      a { color: var(--brand); }
-      .hero {
-        background: var(--card); border: 1px solid var(--line); border-radius: 1.25rem; padding: 1.5rem;
-        box-shadow: 0 1px 2px rgba(28, 25, 23, 0.06), 0 4px 16px rgba(28, 25, 23, 0.06);
-      }
-      .eyebrow { margin: 0 0 0.25rem; font-weight: 700; color: var(--brand); text-transform: uppercase; letter-spacing: 0.04em; font-size: 0.875rem; }
-      h1 { margin: 0 0 0.5rem; font-size: clamp(1.6rem, 4vw, 2.25rem); line-height: 1.2; }
-      .lede { margin: 0 0 1rem; color: var(--muted); max-width: 46rem; }
-      .actions, .links { display: flex; flex-wrap: wrap; gap: 0.75rem; padding: 0; margin: 0; list-style: none; }
+      .skip-link:focus { top: 1rem; }
+      .wrap { width: 100%; max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
+
+      .site-header { background: var(--card); border-top: 6px solid var(--accent); border-bottom: 1px solid var(--line); }
+      .site-header .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; padding-block: 0.5rem; }
+      .logo { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; color: var(--ink); font-weight: 800; font-size: 1.2rem; text-decoration: none; }
+      .logo svg { width: 2.25rem; height: 2.25rem; color: var(--brand); }
+      .site-nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+      .site-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.75rem; border-radius: 0.5rem; color: var(--ink); font-weight: 600; text-decoration: none; }
+      .site-nav a:hover { background: var(--soft); text-decoration: underline; }
+
+      .hero { padding: 3.5rem 0 3rem; }
+      .eyebrow { display: inline-block; margin: 0 0 1rem; padding: 0.25rem 0.75rem; border: 2px solid var(--ink); border-radius: 999px; font-weight: 700; font-size: 0.95rem; }
+      h1 { margin: 0 0 1rem; font-size: clamp(2.1rem, 6vw, 3.5rem); line-height: 1.1; letter-spacing: -0.02em; max-width: 18ch; }
+      .lede { margin: 0 0 1.75rem; max-width: 46rem; font-size: 1.2rem; color: var(--muted); }
+      .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
       .button {
-        display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0.5rem 1rem;
-        border: 2px solid var(--brand); border-radius: 999px; font-weight: 700; text-decoration: none;
-        color: var(--brand); background: var(--card);
+        display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 48px; padding: 0 1.25rem;
+        border: 2px solid var(--brand); border-radius: 0.6rem; background: var(--card); color: var(--brand);
+        font-weight: 700; text-decoration: none;
       }
-      .button.primary { background: var(--brand); color: #fff; }
-      .button:hover { border-style: dashed; background: var(--brand-tint); color: var(--brand); }
-      .button.primary:hover { background: #5b1d13; color: #fff; }
-      .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr)); gap: 0.75rem; padding: 0; margin: 1.25rem 0 0; list-style: none; }
-      .metric { border: 2px solid var(--lagoon); background: var(--lagoon-tint); color: var(--lagoon); border-radius: 0.875rem; padding: 0.75rem 1rem; }
-      .metric strong { display: block; font-size: 1.25rem; }
-      h2 { margin: 2rem 0 0.75rem; font-size: 1.35rem; }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(17rem, 1fr)); gap: 1rem; padding: 0; margin: 0; list-style: none; }
-      .card { background: var(--card); border: 1px solid var(--line); border-radius: 1rem; padding: 1rem 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
-      .card h3 { margin: 0; font-size: 1.1rem; }
+      .button:hover { background: var(--soft); }
+      .button.primary { background: var(--brand); color: var(--on-brand); }
+      .button.primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
+      .button.accent { background: var(--accent); color: var(--on-accent); border-color: var(--ink); }
+
+      section { padding: 2.5rem 0; }
+      section + section { border-top: 1px solid var(--line); }
+      h2 { margin: 0 0 0.5rem; font-size: clamp(1.6rem, 4vw, 2.1rem); line-height: 1.2; }
+      .section-lede { margin: 0 0 1.5rem; max-width: 48rem; color: var(--muted); }
+      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
+      .card { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem; border: 2px solid var(--line); border-radius: 0.9rem; background: var(--card); }
+      .card h3 { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-size: 1.15rem; }
+      .card h3 svg { width: 1.6rem; height: 1.6rem; flex-shrink: 0; color: var(--brand); }
       .card p { margin: 0; color: var(--muted); }
       .card .button { align-self: flex-start; margin-top: auto; }
-      code { background: var(--card); color: var(--brand); padding: 0 0.25rem; border-radius: 0.25rem; overflow-wrap: anywhere; }
-      footer { margin-top: 2rem; color: var(--muted); }
-      @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+      .tag { align-self: flex-start; padding: 0 0.6rem; border: 2px solid var(--ink); border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 0.85rem; font-weight: 700; }
+      pre { margin: 0; padding: 1rem; overflow-x: auto; border: 2px solid var(--line); border-radius: 0.6rem; background: var(--code); color: var(--ink); font-size: 0.9rem; }
+      code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; overflow-wrap: anywhere; }
+      .steps { margin: 0; padding-left: 1.5rem; }
+      .steps li + li { margin-top: 0.4rem; }
+      footer { padding: 2rem 0 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.95rem; }
+      footer p { margin: 0 0 0.5rem; max-width: 60rem; }
+      @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
     </style>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="logo" href="#main">
+          <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M3 24h26v3H3zM5 24v-6M27 24v-6M16 24v-9" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M3 17c4-7 22-7 26 0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+          <span>Digital Bridge</span>
+        </a>
+        <nav class="site-nav" aria-label="Site">
+          <ul>
+            <li><a href="#features">What it does</a></li>
+            <li><a href="#anywhere">Use it anywhere</a></li>
+            <li><a href="#voices">Voices</a></li>
+            <li><a href="#demos">Try it</a></li>
+            <li><a href="https://github.com/ephrathasamuel/digital-bridge">GitHub</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
     <main id="main">
-      <section class="hero" aria-labelledby="hero-title">
-        <p class="eyebrow">Digital Bridge · Track 1 · <span lang="am">ዲጂታል ብሪጅ</span></p>
-        <h1 id="hero-title">Accessible onboarding and Career Gateway</h1>
+      <div class="hero wrap">
+        <p class="eyebrow">Open source · English and <span lang="am">አማርኛ</span></p>
+        <h1>Forms everyone can fill in.</h1>
         <p class="lede">
-          One plug-in for learners who cannot use a standard form: sign up by voice, keyboard, screen reader or sign
-          language video, in English or Amharic, then find and apply for jobs privately. These pages show it inside
-          Bridge Learning, a made up learning portal, and on a plain page.
+          Digital Bridge adds voice answers, read aloud, Amharic and English, sign language help and colour modes to
+          sign up and job forms, so disabled learners and job seekers can finish them without help. Use it as a
+          browser extension on any site, or add one line of code to your own.
         </p>
         <ul class="actions">
-          <li><a class="button primary" href="pages/signup.html">Start sign-up (demo portal)</a></li>
-          <li><a class="button" href="pages/jobs.html">Career Gateway</a></li>
-          <li><a class="button" href="demo/blank.html">Plain page, no portal styles</a></li>
+          <li><a class="button primary" href="pages/home.html">Try the demo portal</a></li>
+          <li><a class="button accent" href="#anywhere">Add it to any site</a></li>
+          <li><a class="button" href="https://github.com/ephrathasamuel/digital-bridge">View the code</a></li>
         </ul>
-        <ul class="metrics" aria-label="Verified results">
-          <li class="metric"><strong>0 axe violations</strong>55 states, English and Amharic, 4 colour modes</li>
-          <li class="metric"><strong>184 KB</strong>gzipped plug-in, 2 requests on a plain page</li>
-          <li class="metric"><strong>5.5 s on Slow 3G</strong>until the first question works (plain page, slow phone CPU)</li>
-          <li class="metric"><strong>WCAG 2.2 AA</strong>report in CONFORMANCE.md, honest about what is untested</li>
-        </ul>
+      </div>
+
+      <section id="features" aria-labelledby="features-title">
+        <div class="wrap">
+          <h2 id="features-title">What it does</h2>
+          <p class="section-lede">Built with disabled learners in Addis Ababa. Every feature works by keyboard, screen reader and touch.</p>
+          <ul class="grid">
+            <li class="card">
+              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg>Answer by voice</h3>
+              <p>Speak any answer, check what was heard, and change it before it is used. Nothing is sent without your OK.</p>
+            </li>
+            <li class="card">
+              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>Read aloud, any language</h3>
+              <p>Questions and answers are read aloud with the device's voices, open source voices or a voice service you choose.</p>
+            </li>
+            <li class="card">
+              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V6a2 2 0 0 1 4 0v5M11 10V4a2 2 0 0 1 4 0v6M15 10V6a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3l-2-4a2 2 0 0 1 3-2l1 2"/></svg>Sign language help</h3>
+              <p>Picture cards for common questions and a signed video you can keep on your device for an interpreter.</p>
+            </li>
+            <li class="card">
+              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Colours for every eye</h3>
+              <p>A default palette that works for all types of colour blindness, plus high contrast and dark. States never rely on colour alone.</p>
+            </li>
+            <li class="card">
+              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Private by design</h3>
+              <p>Support needs stay on your device and are never shared with employers unless you choose to share them.</p>
+            </li>
+            <li class="card">
+              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.6a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M3 3l18 18"/></svg>Works on slow internet</h3>
+              <p>Answers are saved on the device and sent when the connection returns. No time limits, nothing is lost.</p>
+            </li>
+          </ul>
+        </div>
       </section>
 
-      <h2 id="learner-pages">Learner pages inside the Bridge Learning demo portal</h2>
-      <ul class="grid" aria-labelledby="learner-pages">
-        <li class="card">
-          <h3>Learner home</h3>
-          <p>A portal home page with next steps, course progress and the Ask box, the way a school would link to the plug-in.</p>
-          <a class="button" href="pages/home.html">Open learner home</a>
-        </li>
-        <li class="card">
-          <h3>Sign up</h3>
-          <p>Seven short questions, voice on every field, private support needs, and a partner route for learners without an ID.</p>
-          <a class="button" href="pages/signup.html">Open sign-up</a>
-        </li>
-        <li class="card">
-          <h3>My profile (edit)</h3>
-          <p>The same plug-in in edit mode: review every answer, change it, download or delete your data.</p>
-          <a class="button" href="pages/profile.html">Open my profile</a>
-        </li>
-        <li class="card">
-          <h3>Jobs and employer form</h3>
-          <p>A private "support I need" filter that never leaves the browser, voice job applications, and the employer accommodations form.</p>
-          <a class="button" href="pages/jobs.html">Open jobs</a>
-        </li>
-      </ul>
+      <section id="anywhere" aria-labelledby="anywhere-title">
+        <div class="wrap">
+          <h2 id="anywhere-title">Use it anywhere</h2>
+          <p class="section-lede">Three ways in, from no code at all to a full integration.</p>
+          <ul class="grid">
+            <li class="card">
+              <span class="tag">No code</span>
+              <h3>Browser extension</h3>
+              <p>Adds a help bar to any form on any website, for example LinkedIn, a job board or a government form: voice answers, read aloud, Amharic typing and colour modes.</p>
+              <ol class="steps">
+                <li>Download the code from GitHub.</li>
+                <li>Open <code>chrome://extensions</code> or <code>edge://extensions</code> and turn on Developer mode.</li>
+                <li>Choose Load unpacked and pick the <code>apps/extension</code> folder.</li>
+              </ol>
+              <a class="button" href="https://github.com/ephrathasamuel/digital-bridge/tree/main/apps/extension">Get the extension</a>
+            </li>
+            <li class="card">
+              <span class="tag">One line</span>
+              <h3>Help bar on your own site</h3>
+              <p>Site owners add the same help bar to every form on their pages with one script tag.</p>
+              <pre><code>&lt;script src="https://digital-bridge-six.vercel.app/db-assist.js" defer&gt;&lt;/script&gt;</code></pre>
+            </li>
+            <li class="card">
+              <span class="tag">Full</span>
+              <h3>Widgets, API and LMS</h3>
+              <p>Ready made sign up, jobs and Ask widgets, a REST API, and LTI 1.3 for Moodle and Canvas.</p>
+              <pre><code>&lt;db-signup lang="am"&gt;&lt;/db-signup&gt;</code></pre>
+              <a class="button" href="https://github.com/ephrathasamuel/digital-bridge#install-level-1">Read the install guide</a>
+            </li>
+          </ul>
+        </div>
+      </section>
 
-      <h2 id="plug-in-pages">Plug-in on other hosts</h2>
-      <ul class="grid" aria-labelledby="plug-in-pages">
-        <li class="card">
-          <h3>Plain page</h3>
-          <p>No portal stylesheet at all: one script and one tag, the way a judge or partner installs it.</p>
-          <a class="button" href="demo/blank.html">Open the plain page</a>
-        </li>
-        <li class="card">
-          <h3>Standalone widgets</h3>
-          <p>All three elements on one page: onboarding, Career Gateway and employer accommodations.</p>
-          <a class="button" href="standalone.html">Open standalone</a>
-        </li>
-        <li class="card">
-          <h3>External partner demo</h3>
-          <p>How a partner organisation adds the plug-in and listens to its events.</p>
-          <a class="button" href="external-partner-demo.html">Open partner demo</a>
-        </li>
-        <li class="card">
-          <h3>Mock LMS (LTI 1.3)</h3>
-          <p>
-            Signs real LTI launches. Start it first with <code>node apps/host-demo/mock-lms/server.cjs</code>,
-            then open <code>http://127.0.0.1:4001/mock-lms</code>.
-          </p>
-          <a class="button" href="mock-lms/index.html">Open the Mock LMS page</a>
-        </li>
-      </ul>
+      <section id="voices" aria-labelledby="voices-title">
+        <div class="wrap">
+          <h2 id="voices-title">Voices for any language</h2>
+          <p class="section-lede">Choose where the read aloud voice comes from. Keys stay on your server, never in the browser.</p>
+          <ul class="grid">
+            <li class="card">
+              <h3>Device voices</h3>
+              <p>Free and offline. Uses the voices already on the phone or computer.</p>
+            </li>
+            <li class="card">
+              <h3>Open source voices</h3>
+              <p>Meta's MMS voices cover more than 1,100 languages, including Amharic, through your Digital Bridge API.</p>
+            </li>
+            <li class="card">
+              <h3>Your own voice service</h3>
+              <p>Connect any text to speech service with a URL, for example a self hosted Piper server or a paid provider.</p>
+            </li>
+          </ul>
+        </div>
+      </section>
 
-
-      <footer>
-        <p>
-          Bridge Learning is not a real school. Its pages use one small stylesheet, <code>assets/css/host.css</code>, and
-          <code>assets/js/host.js</code> for the language buttons and Colours menu. See <code>README.md</code> for details.
-        </p>
-      </footer>
+      <section id="demos" aria-labelledby="demos-title">
+        <div class="wrap">
+          <h2 id="demos-title">Try it</h2>
+          <p class="section-lede">Bridge Learning is a made up learning portal that shows the widgets on a real looking site.</p>
+          <ul class="grid">
+            <li class="card">
+              <h3>Learner home</h3>
+              <p>Next steps, course progress and the Ask box.</p>
+              <a class="button" href="pages/home.html">Open learner home</a>
+            </li>
+            <li class="card">
+              <h3>Sign up</h3>
+              <p>Seven short questions, voice on every field, private support needs, and a partner route for learners without an ID.</p>
+              <a class="button" href="pages/signup.html">Open sign up</a>
+            </li>
+            <li class="card">
+              <h3>My profile</h3>
+              <p>Review and change every answer, download or delete your data.</p>
+              <a class="button" href="pages/profile.html">Open my profile</a>
+            </li>
+            <li class="card">
+              <h3>Jobs</h3>
+              <p>Filter jobs by the support employers offer. The filter never leaves your device.</p>
+              <a class="button" href="pages/jobs.html">Open jobs</a>
+            </li>
+            <li class="card">
+              <h3>Plain page</h3>
+              <p>The widgets on a page with no styles at all, the way a partner first installs them.</p>
+              <a class="button" href="demo/blank.html">Open the plain page</a>
+            </li>
+            <li class="card">
+              <h3>Any form, with the help bar</h3>
+              <p>An ordinary form with the one line help bar added: voice, read aloud and colours on every field.</p>
+              <a class="button" href="demo/any-form.html">Open the form demo</a>
+            </li>
+          </ul>
+        </div>
+      </section>
     </main>
+
+    <footer>
+      <div class="wrap">
+        <p>Digital Bridge is open source under the MIT licence. It started at the Digital Bridge Accessibility Hackathon 2026 as the work of team johny x and is maintained on <a href="https://github.com/ephrathasamuel/digital-bridge">GitHub</a>.</p>
+        <p>More: <a href="standalone.html">all widgets on one page</a> · <a href="external-partner-demo.html">partner events demo</a> · <a href="mock-lms/index.html">mock LMS (LTI 1.3)</a></p>
+      </div>
+    </footer>
   </body>
 </html>

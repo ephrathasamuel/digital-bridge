@@ -30,7 +30,12 @@ export class KeysService implements OnModuleInit {
     }
 
     if (process.env.NODE_ENV === "production") {
-      throw new Error("LTI_TOOL_PRIVATE_KEY_PEM must be configured in production.");
+      // Demo deployments may opt in to a key made at startup. It changes on every restart, so LMS platforms that
+      // cached the old public key must fetch /lti/jwks again. Real deployments set LTI_TOOL_PRIVATE_KEY_PEM.
+      if (process.env.LTI_ALLOW_EPHEMERAL_KEY !== "true") {
+        throw new Error("LTI_TOOL_PRIVATE_KEY_PEM must be configured in production.");
+      }
+      console.warn("LTI_TOOL_PRIVATE_KEY_PEM is not set: using a temporary LTI key (LTI_ALLOW_EPHEMERAL_KEY=true).");
     }
 
     const { privateKey, publicKey } = await generateKeyPair("RS256", {

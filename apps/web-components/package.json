@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port 5173",
-    "build": "pnpm --filter @db/shared-schemas build && vite build && node -e \"const fs=require('fs'); fs.cpSync('../host-demo', './dist', {recursive:true}); fs.mkdirSync('./dist/assets/js', {recursive:true}); fs.copyFileSync('./dist/db-widgets.v1.0.0.js', './dist/assets/js/db-widgets.v1.0.0.js');\" && vite build --config vite.assist.config.ts && node -e \"require('fs').copyFileSync('./dist/db-assist.js', '../extension/db-assist.js')\"",
+    "build": "pnpm --filter @db/shared-schemas build && vite build && node -e \"const fs=require('fs'); fs.cpSync('../host-demo', './dist', {recursive:true}); fs.mkdirSync('./dist/assets/js', {recursive:true}); fs.copyFileSync('./dist/db-widgets.v1.0.0.js', './dist/assets/js/db-widgets.v1.0.0.js');\" && vite build --config vite.assist.config.ts && node -e \"const fs=require('fs'); fs.copyFileSync('./dist/db-assist.js', '../extension/db-assist.js'); fs.mkdirSync('../wordpress/digital-bridge/assets', {recursive:true}); fs.copyFileSync('./dist/db-assist.js', '../wordpress/digital-bridge/assets/db-assist.js')\" && node ../../scripts/pack-extension.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "echo \"web-components lint ok\"",
     "test": "vitest run"

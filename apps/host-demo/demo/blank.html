@@ -4,21 +4,25 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Digital Bridge on a plain page</title>
+    <link rel="stylesheet" href="../assets/css/site.css" />
     <style>
-      body { max-width: 56rem; margin: 2rem auto; padding: 0 1rem; font: 1.0625rem/1.6 system-ui, sans-serif; color: #0b0f19; background: #ffffff; }
-      :focus-visible { outline: 3px solid #082d6b; outline-offset: 2px; }
-      a { color: #0b3c8c; }
-      details { margin-top: 2rem; border: 2px solid #5f6b7d; border-radius: 0.75rem; padding: 0 1rem; }
-      summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; cursor: pointer; }
-      #event-log { padding-left: 1.5rem; }
-      #event-log li { margin-block: 0.5rem; }
-      #event-log code { font-size: 0.85rem; color: #2f3a4d; overflow-wrap: anywhere; }
+      details summary { min-height: 44px; display: flex; align-items: center; font-weight: 800; cursor: pointer; }
+      #event-log code { font-size: .85rem; color: #3a4659; overflow-wrap: anywhere; }
     </style>
   </head>
-  <body>
-    <main>
-      <h1>Digital Bridge on a plain page</h1>
-      <p>This page has no stylesheet of its own: just one script and the widget tags, the way a partner first installs Digital Bridge. <a href="../index.html">Back to the home page</a></p>
+  <body class="site">
+    <nav class="site-top" aria-label="Digital Bridge">
+      <div class="site-top-inner">
+        <span class="site-logo"><span class="site-logo-mark"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M3 24h26v3H3zM5 24v-6M27 24v-6M16 24v-9" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M3 17c4-7 22-7 26 0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span><span>Digital Bridge</span></span>
+        <a class="site-back" href="../index.html"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span>Back to home</span></a>
+      </div>
+    </nav>
+    <main id="main" class="page wide">
+      <div class="page-head">
+        <p class="kicker">Demo: plain page</p>
+        <h1>The widgets with no host styles</h1>
+        <p class="lede">Just one script and the widget tags, the way a partner first installs Digital Bridge. The page around them is styled; the widgets get nothing from it.</p>
+      </div>
       <section aria-labelledby="signup-title">
         <h2 id="signup-title">Sign up</h2>
         <db-signup lang="en"></db-signup>
@@ -27,7 +31,7 @@
         <h2 id="career-title">Find a job</h2>
         <db-career-gateway lang="en"></db-career-gateway>
       </section>
-      <details>
+      <details class="card">
         <summary>For developers: what your site is told</summary>
         <p>
           The widgets tell the page around them about progress, so a site can, for example, show its own "well done"

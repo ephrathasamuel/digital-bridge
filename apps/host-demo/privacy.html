@@ -4,18 +4,20 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Privacy: Digital Bridge help bar</title>
-    <style>
-      body { max-width: 46rem; margin: 2rem auto; padding: 0 1.25rem 4rem; font: 1.0625rem/1.65 system-ui, sans-serif; color: #0b0f19; background: #fff; }
-      a { color: #0b3c8c; font-weight: 700; text-decoration: none; }
-      a:hover, a:focus-visible { text-decoration: underline; }
-      :focus-visible { outline: 3px solid #ffd43b; outline-offset: 3px; box-shadow: 0 0 0 6px #0b0f19; }
-      h1 { line-height: 1.15; } h2 { margin-top: 2rem; }
-    </style>
+    <link rel="stylesheet" href="assets/css/site.css" />
   </head>
-  <body>
-    <main>
-      <h1>Privacy: Digital Bridge help bar</h1>
-      <p>This covers the Digital Bridge browser extension, the bookmark button and the <code>db-assist.js</code> script. Last updated 23 November 2026.</p>
+  <body class="site">
+    <nav class="site-top" aria-label="Digital Bridge">
+      <div class="site-top-inner">
+        <span class="site-logo"><span class="site-logo-mark"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M3 24h26v3H3zM5 24v-6M27 24v-6M16 24v-9" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M3 17c4-7 22-7 26 0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span><span>Digital Bridge</span></span>
+        <a class="site-back" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span>Back to home</span></a>
+      </div>
+    </nav>
+    <main id="main" class="page">
+      <div class="card">
+        <p class="kicker">Privacy</p>
+        <h1>Digital Bridge help bar</h1>
+        <p class="lede">This covers the Digital Bridge browser extension, the bookmark button and the <code>db-assist.js</code> script. Last updated 23 November 2026.</p>
       <h2>What stays on your device</h2>
       <ul>
         <li>Your answers in web forms. The help bar never sends, saves or submits them.</li>
@@ -31,7 +33,7 @@
       <p>The extension asks for no special permissions. It runs on the pages you visit so it can show the help bar there.</p>
       <h2>Contact</h2>
       <p>Questions or problems: open an issue on <a href="https://github.com/ephrathasamuel/digital-bridge/issues">GitHub</a>, or report privately through the repository's Security tab.</p>
-      <p><a href="index.html">Back to Digital Bridge</a></p>
+      </div>
     </main>
   </body>
 </html>

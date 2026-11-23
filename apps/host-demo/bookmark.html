@@ -4,43 +4,53 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Bookmark button: Digital Bridge help bar</title>
+    <link rel="stylesheet" href="assets/css/site.css" />
     <style>
-      body { max-width: 46rem; margin: 2rem auto; padding: 0 1.25rem 4rem; font: 1.0625rem/1.65 system-ui, sans-serif; color: #0b0f19; background: #fff; }
-      a { color: #0b3c8c; font-weight: 700; text-decoration: none; }
-      p a:hover, p a:focus-visible { text-decoration: underline; }
-      :focus-visible { outline: 3px solid #ffd43b; outline-offset: 3px; box-shadow: 0 0 0 6px #0b0f19; }
-      h1 { line-height: 1.15; } h2 { margin-top: 2rem; }
-      .bookmarklet { display: inline-flex; align-items: center; gap: .5rem; min-height: 52px; padding: 0 1.25rem; border-radius: .75rem;
-        background: #ffd43b; color: #0b0f19; border: 2px solid #0b0f19; font-size: 1.1rem; }
-      textarea { width: 100%; min-height: 7rem; padding: .6rem; border: 2px solid #5f6b7d; border-radius: .5rem; font: .85rem/1.4 ui-monospace, Consolas, monospace; }
-      button { min-height: 48px; padding: 0 1.1rem; border: 2px solid #0b3c8c; border-radius: .6rem; background: #0b3c8c; color: #fff; font: inherit; font-weight: 700; }
-      ol li + li { margin-top: .4rem; }
-      .note { padding: .75rem 1rem; border-left: 5px solid #ffd43b; background: #f4f6fa; }
+      .bookmarklet { display: inline-flex; align-items: center; gap: .5rem; min-height: 54px; padding: 0 1.4rem; border-radius: .8rem;
+        background: #ffd43b; color: #0b0f19 !important; border: 2px solid #0b0f19; font-size: 1.1rem; }
+      textarea#code { min-height: 7rem; font: .85rem/1.4 'Cascadia Code', ui-monospace, Consolas, monospace; }
     </style>
   </head>
-  <body>
-    <main>
-      <h1>Bookmark button</h1>
-      <p>Start the help bar on any page with one tap, with nothing to install. It works on phones too.</p>
+  <body class="site">
+    <nav class="site-top" aria-label="Digital Bridge">
+      <div class="site-top-inner">
+        <span class="site-logo"><span class="site-logo-mark"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M3 24h26v3H3zM5 24v-6M27 24v-6M16 24v-9" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M3 17c4-7 22-7 26 0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span><span>Digital Bridge</span></span>
+        <a class="site-back" href="index.html"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span>Back to home</span></a>
+      </div>
+    </nav>
+    <main id="main" class="page">
+      <div class="page-head">
+        <p class="kicker">One tap, no install</p>
+        <h1>Bookmark button</h1>
+        <p class="lede">Start the help bar on any page with one tap. Nothing to install, and it works on phones too.</p>
+      </div>
 
-      <h2>On a computer</h2>
-      <p>Show your bookmarks bar (Ctrl+Shift+B), then drag this button onto it:</p>
-      <p><a class="bookmarklet" id="bookmarklet" href="#">Digital Bridge help</a></p>
-      <p>On any page with a form, click <strong>Digital Bridge help</strong> in your bookmarks bar.</p>
+      <section class="card" aria-labelledby="computer">
+        <h2 id="computer">On a computer</h2>
+        <p>Show your bookmarks bar (Ctrl+Shift+B), then drag this button onto it:</p>
+        <p><a class="bookmarklet" id="bookmarklet" href="#">Digital Bridge help</a></p>
+        <p class="muted">Then, on any page with a form, click <strong>Digital Bridge help</strong> in your bookmarks bar.</p>
+      </section>
 
-      <h2>On a phone, or without dragging</h2>
-      <ol>
-        <li>Press <strong>Copy the code</strong>.</li>
-        <li>Bookmark this page, then edit the bookmark: name it <strong>Digital Bridge help</strong> and paste the code as its address (URL).</li>
-        <li>On any page, type <strong>Digital Bridge help</strong> in the address bar and tap the bookmark.</li>
-      </ol>
-      <label for="code"><strong>Bookmark code</strong></label>
-      <textarea id="code" readonly></textarea>
-      <p><button type="button" id="copy">Copy the code</button></p>
-      <p id="status" role="status" aria-live="polite"></p>
+      <section class="card" aria-labelledby="phone">
+        <h2 id="phone">On a phone, or without dragging</h2>
+        <ol>
+          <li>Press <strong>Copy the code</strong>.</li>
+          <li>Bookmark this page, then edit the bookmark: name it <strong>Digital Bridge help</strong> and paste the code as its address (URL).</li>
+          <li>On any page, type <strong>Digital Bridge help</strong> in the address bar and tap the bookmark.</li>
+        </ol>
+        <div class="field">
+          <label for="code">Bookmark code</label>
+          <textarea id="code" readonly></textarea>
+        </div>
+        <div class="row">
+          <button class="btn solid" type="button" id="copy">Copy the code</button>
+          <p id="status" role="status" aria-live="polite" style="margin:0"></p>
+        </div>
+      </section>
 
-      <p class="note">Some sites, such as LinkedIn, block scripts started this way. On those sites use the browser extension instead. <a href="index.html#anywhere">See all ways to install</a>.</p>
-      <p><a href="privacy.html">Privacy</a> · <a href="index.html">Back to Digital Bridge</a></p>
+      <p class="callout">Some sites, such as LinkedIn, block scripts started this way. Use the browser extension there. <a href="index.html#anywhere">See all ways to install</a>.</p>
+      <p class="muted"><a href="privacy.html">Privacy</a></p>
     </main>
     <script>
       // Built from this page's own address, so a copy of the site on another domain points at itself.

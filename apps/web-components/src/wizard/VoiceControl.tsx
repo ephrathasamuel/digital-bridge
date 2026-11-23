@@ -28,6 +28,10 @@ const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), summary, [tabindex]:not([tabindex="-1"])';
 /** Give up after this many recognition failures in a row without a single result (stops a restart loop). */
 const MAX_SILENT_FAILURES = 6;
+/** Links and controls in the host page's top bar. .db-savanna-topbar is the older class name, still supported. */
+const TOPBAR_CONTROLS = ['.db-host-topbar', '.db-savanna-topbar']
+  .map((bar) => `${bar} a[href], ${bar} button, ${bar} select`)
+  .join(', ');
 /** Host top-bar links get numbers from here up, so they never collide with the widget's own items. */
 const HOST_NUMBER_START = 91;
 
@@ -631,7 +635,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
         el.removeAttribute('data-vc-num');
         el.removeAttribute('data-vc-active');
       });
-      document.querySelectorAll('.db-savanna-topbar [data-vc-num], [data-vc-active]').forEach((el) => {
+      document.querySelectorAll('.db-host-topbar [data-vc-num], .db-savanna-topbar [data-vc-num], [data-vc-active]').forEach((el) => {
         el.removeAttribute('data-vc-num');
         el.removeAttribute('data-vc-active');
       });
@@ -655,7 +659,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
         numbersRef.current.set(n, el);
       });
       if (!dialog) {
-        const host = Array.from(document.querySelectorAll<HTMLElement>('.db-savanna-topbar a[href], .db-savanna-topbar button, .db-savanna-topbar select'))
+        const host = Array.from(document.querySelectorAll<HTMLElement>(TOPBAR_CONTROLS))
           .filter((el) => el.getClientRects().length > 0);
         host.forEach((el, index) => {
           const n = HOST_NUMBER_START + index;

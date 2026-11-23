@@ -223,6 +223,8 @@ check('12 Production bundle, copied pages, audio and gzip budget', () => {
     'apps/web-components/dist/standalone.html',
     'apps/web-components/dist/external-partner-demo.html',
     'apps/web-components/dist/pages/home.html',
+    'apps/web-components/dist/db-assist.js',
+    'apps/web-components/dist/demo/any-form.html',
     'apps/web-components/dist/assets/css/host.css',
     'apps/web-components/dist/pages/signup.html',
     'apps/web-components/dist/pages/profile.html',

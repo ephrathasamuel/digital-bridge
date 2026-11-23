@@ -1,7 +1,7 @@
 import { Controller, Get, Module } from "@nestjs/common";
 import { APP_FILTER, APP_GUARD } from "@nestjs/core";
 import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
-import { TypeOrmModule } from "@nestjs/typeorm";
+import { TypeOrmModule, type TypeOrmModuleOptions } from "@nestjs/typeorm";
 import * as fs from "fs";
 import * as path from "path";
 import { BilingualExceptionFilter } from "./common/filters/bilingual-exception.filter";
@@ -25,6 +25,41 @@ import { VouchModule } from "./vouch/vouch.module";
 const dataDir = path.join(process.cwd(), "data");
 if (!fs.existsSync(dataDir)) fs.mkdirSync(dataDir, { recursive: true });
 
+const ENTITIES = [
+  OnboardingSessionEntity,
+  SupportPreferenceEntity,
+  SmsResumeTokenEntity,
+  PartnerVoucherEntity,
+  JobEntity,
+  ApplicationEntity,
+  HelpContactRequestEntity,
+];
+
+/**
+ * DATABASE_URL set (for example a free Neon Postgres): data survives restarts, which Render's free plan needs.
+ * Not set: a local SQLite file in ./data, as before. Tables are created automatically in both cases.
+ */
+function databaseOptions(): TypeOrmModuleOptions {
+  const url = process.env.DATABASE_URL;
+  if (url) {
+    const local = /@(localhost|127\.0\.0\.1)[:/]/.test(url);
+    return {
+      type: "postgres",
+      url,
+      ssl: local || process.env.DATABASE_SSL === "false" ? false : { rejectUnauthorized: true },
+      synchronize: true,
+      entities: ENTITIES,
+    };
+  }
+  return {
+    type: "sqljs",
+    location: path.join(dataDir, "digital_bridge.sqlite"),
+    autoSave: true,
+    synchronize: true,
+    entities: ENTITIES,
+  };
+}
+
 @Controller("health")
 class HealthController {
   @Get()
@@ -37,21 +72,7 @@ class HealthController {
   imports: [
     ThrottlerModule.forRoot([{ ttl: 60000, limit: 30 }]),
     AuthModule,
-    TypeOrmModule.forRoot({
-      type: "sqljs",
-      location: path.join(dataDir, "digital_bridge.sqlite"),
-      autoSave: true,
-      synchronize: true,
-      entities: [
-        OnboardingSessionEntity,
-        SupportPreferenceEntity,
-        SmsResumeTokenEntity,
-        PartnerVoucherEntity,
-        JobEntity,
-        ApplicationEntity,
-        HelpContactRequestEntity,
-      ],
-    }),
+    TypeOrmModule.forRoot(databaseOptions()),
     OnboardingModule,
     SmsModule,
     VouchModule,

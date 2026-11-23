@@ -22,14 +22,15 @@ export function canTakeText(el: FormField): boolean {
 
 const clean = (text: string | null | undefined) => (text ?? '').replace(/\s+/g, ' ').trim();
 
-function textOfIds(ids: string | null, doc: Document): string {
-  return clean((ids ?? '').split(/\s+/).map((id) => (id ? doc.getElementById(id)?.textContent : '')).join(' '));
+/** Text of the elements named by aria-labelledby / aria-describedby, looked up in the same shadow root as the field. */
+function textOfIds(ids: string | null, el: Element): string {
+  const root = el.getRootNode() as Document | ShadowRoot;
+  return clean((ids ?? '').split(/\s+/).map((id) => (id ? root.getElementById?.(id)?.textContent : '')).join(' '));
 }
 
 /** The field's name as a screen reader would say it, with the usual fallbacks used by real sites. */
 export function fieldLabel(el: FormField): string {
-  const doc = el.ownerDocument;
-  const fromIds = textOfIds(el.getAttribute('aria-labelledby'), doc);
+  const fromIds = textOfIds(el.getAttribute('aria-labelledby'), el);
   if (fromIds) return fromIds;
   const aria = clean(el.getAttribute('aria-label'));
   if (aria) return aria;
@@ -41,7 +42,7 @@ export function fieldLabel(el: FormField): string {
 }
 
 export function fieldHint(el: FormField): string {
-  return textOfIds(el.getAttribute('aria-describedby'), el.ownerDocument);
+  return textOfIds(el.getAttribute('aria-describedby'), el);
 }
 
 export function fieldValue(el: FormField): string {
@@ -103,4 +104,63 @@ export function insertText(el: FormField, text: string): void {
     // execCommand is deprecated but is still the only way rich text editors treat inserted text as typing.
     if (!el.ownerDocument.execCommand?.('insertText', false, text)) el.append(text);
   }
+}
+
+// ---------- Read as I move: any focused item, and table cells ----------
+
+export type TableCell = HTMLTableCellElement;
+
+export function tableCellOf(el: Element | null): TableCell | null {
+  const cell = el?.closest?.('td, th');
+  return cell instanceof HTMLTableCellElement ? cell : null;
+}
+
+/** The column heading for a cell: the first row's cell in the same column, or the thead cell. */
+export function columnHeader(cell: TableCell): string {
+  const table = cell.closest('table');
+  if (!table) return '';
+  const headRow = table.tHead?.rows[0] ?? table.rows[0];
+  const head = headRow?.cells[cell.cellIndex];
+  return head && head !== cell ? clean(head.textContent) : '';
+}
+
+/** Neighbour cell in a direction, or null at the table edge. */
+export function neighbourCell(cell: TableCell, key: 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight'): TableCell | null {
+  const row = cell.parentElement as HTMLTableRowElement | null;
+  const table = cell.closest('table');
+  if (!row || !table) return null;
+  if (key === 'ArrowLeft') return row.cells[cell.cellIndex - 1] ?? null;
+  if (key === 'ArrowRight') return row.cells[cell.cellIndex + 1] ?? null;
+  const next = table.rows[row.rowIndex + (key === 'ArrowDown' ? 1 : -1)];
+  return next?.cells[Math.min(cell.cellIndex, next.cells.length - 1)] ?? null;
+}
+
+export interface DescribeWords {
+  field: { template: string; required: string; empty: string; unnamed: string };
+  button: string;
+  link: string;
+  cell: string;
+  headCell: string;
+  emptyCell: string;
+}
+
+const fill = (template: string, vars: Record<string, string>) =>
+  Object.entries(vars).reduce((text, [k, v]) => text.replace(`{${k}}`, v), template);
+
+/** What to read aloud when an item gets focus: a form field, a button, a link, a table cell, or its text. */
+export function describeElement(el: Element, words: DescribeWords): string {
+  if (isFormField(el)) {
+    return composeFieldText({ label: fieldLabel(el), hint: fieldHint(el), value: fieldValue(el), required: isRequired(el) }, words.field);
+  }
+  const cell = tableCellOf(el);
+  if (cell) {
+    const row = (cell.parentElement as HTMLTableRowElement | null)?.rowIndex ?? 0;
+    const column = columnHeader(cell);
+    if (!column) return fill(words.headCell, { text: clean(cell.textContent) || words.emptyCell });
+    return fill(words.cell, { text: clean(cell.textContent) || words.emptyCell, column, row: String(row + 1) });
+  }
+  const name = clean(el.getAttribute('aria-label')) || textOfIds(el.getAttribute('aria-labelledby'), el) || clean(el.textContent);
+  if (el instanceof HTMLButtonElement || el.getAttribute('role') === 'button') return fill(words.button, { text: name });
+  if (el instanceof HTMLAnchorElement) return fill(words.link, { text: name });
+  return name;
 }

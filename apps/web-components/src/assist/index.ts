@@ -17,13 +17,19 @@ import { toFidel } from '../i18n/fidel';
 import { normaliseSpoken } from '../voice/spokenInput';
 import { getSpeechRecognition, type SpeechRecognitionLike } from '../voice/speech';
 import { deviceVoiceFirst, fetchRemoteSpeech, parseVoiceSource, setVoiceConfig } from '../tts/voiceSource';
+import { joinTranscripts } from '../ask/askVoice';
 import {
-  canTakeText, composeFieldText, fieldHint, fieldLabel, fieldValue, insertText, isFormField, isRequired, spokenKindFor,
-  type FormField,
+  canTakeText, composeFieldText, describeElement, fieldHint, fieldLabel, fieldValue, insertText, isFormField, isRequired,
+  neighbourCell, spokenKindFor, tableCellOf, type FormField,
 } from './fields';
 
+/** Listening ends this long after the last word; the words then wait in the review box. */
+const PAUSE_MS = 2_000;
+/** Items the arrow keys step through in "Read as I move": controls, plus table cells so tables can be read. */
+const STOPS = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"]), td, th';
+
 interface AssistOptions { lang?: string; api?: string; voice?: string; voiceUrl?: string; position?: string }
-interface Settings { lang: Lang; open: boolean; bigText: boolean; focus: boolean; links: boolean; contrast: boolean }
+interface Settings { lang: Lang; open: boolean; bigText: boolean; focus: boolean; links: boolean; contrast: boolean; readMove: boolean }
 
 const HOST_ID = 'db-assist-host';
 const STORE_KEY = 'db-assist-settings';
@@ -38,7 +44,7 @@ function readOptions(): AssistOptions {
 }
 
 function loadSettings(options: AssistOptions): Settings {
-  const base: Settings = { lang: options.lang === 'am' ? 'am' : 'en', open: false, bigText: false, focus: false, links: false, contrast: false };
+  const base: Settings = { lang: options.lang === 'am' ? 'am' : 'en', open: false, bigText: false, focus: false, links: false, contrast: false, readMove: false };
   try {
     return { ...base, ...(JSON.parse(localStorage.getItem(STORE_KEY) ?? '{}') as Partial<Settings>) };
   } catch {
@@ -63,6 +69,7 @@ function pageCss(s: Settings): string {
       : '',
     s.links ? 'a, a * { text-decoration: underline !important; text-underline-offset: 3px; }' : '',
     s.contrast ? `body > *:not(#${HOST_ID}) { filter: contrast(1.35) saturate(1.15); }` : '',
+    s.readMove ? '[data-db-assist-stop]:focus { outline: 4px solid #0b3c8c !important; outline-offset: -2px !important; background: #fff4cc !important; color: #0b0f19 !important; }' : '',
   ].join('\n');
 }
 
@@ -91,6 +98,9 @@ p { margin: 0 0 .6rem; } .hint { color: #2f3a4d; font-size: .9rem; }
 label { display: block; font-weight: 700; margin-bottom: .25rem; }
 select, input { width: 100%; min-height: 44px; padding: 0 .6rem; border: 2px solid #5f6b7d; border-radius: .5rem; background: #fff; color: #0b0f19; }
 .fidel-out { min-height: 2rem; margin: .4rem 0; font-size: 1.3rem; font-family: 'Noto Sans Ethiopic', 'Nyala', sans-serif; }
+.review { margin: .25rem 0 .75rem; padding: .75rem; border: 2px solid #0b3c8c; border-radius: .6rem; background: #f4f6fa; }
+.review[hidden] { display: none; }
+textarea { width: 100%; min-height: 4.5rem; padding: .5rem .6rem; border: 2px solid #5f6b7d; border-radius: .5rem; font: inherit; color: #0b0f19; background: #fff; }
 .status { min-height: 1.5rem; margin-top: .75rem; padding: .5rem; border-left: 4px solid #0b3c8c; background: #f4f6fa; font-weight: 600; }
 .status:empty { display: none; }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
@@ -186,7 +196,27 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
   };
 
   const dictateButton = el('button', { type: 'button', 'aria-pressed': 'false' });
-  const stopDictation = () => recognition?.stop();
+  // Review box: live words while speaking, editable, and nothing reaches the page field until "Use this".
+  const review = el('div', { class: 'review', hidden: '' });
+  const reviewLabel = el('label', { for: 'db-assist-live' });
+  const reviewHint = el('p', { class: 'hint', id: 'db-assist-live-hint' });
+  const reviewText = el('textarea', { id: 'db-assist-live', 'aria-describedby': 'db-assist-live-hint' });
+  const useButton = el('button', { type: 'button', class: 'primary' });
+  const retryButton = el('button', { type: 'button' });
+  const reviewActions = el('div', { class: 'row', style: 'margin-top:.5rem' });
+  reviewActions.append(useButton, retryButton);
+  review.append(reviewLabel, reviewHint, reviewText, reviewActions);
+  let reviewTarget: FormField | null = null;
+  let silence: ReturnType<typeof setTimeout> | undefined;
+
+  const stopDictation = () => {
+    clearTimeout(silence);
+    recognition?.stop();
+  };
+  const closeReview = () => {
+    review.hidden = true;
+    reviewText.value = '';
+  };
   const dictate = () => {
     if (recognition) return stopDictation();
     const target = field();
@@ -196,22 +226,34 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     if (!Ctor) return announce(t('assist.noVoiceInput'));
     const engine = new Ctor();
     engine.lang = voiceLang();
-    engine.interimResults = false;
-    engine.maxAlternatives = 1;
+    engine.continuous = true; // keep listening through short pauses
+    engine.interimResults = true; // words appear while the person speaks
+    engine.maxAlternatives = 3;
+    reviewTarget = target;
+    review.hidden = false;
+    reviewText.value = '';
     let heard = '';
     engine.onresult = (event) => {
-      heard = Array.from({ length: event.results.length }, (_, i) => event.results[i][0]?.transcript ?? '').join(' ').trim();
+      heard = joinTranscripts(event.results);
+      reviewText.value = heard; // shown live; announced once at the end, not every guess
+      clearTimeout(silence);
+      silence = setTimeout(() => engine.stop(), PAUSE_MS);
     };
-    engine.onerror = () => announce(t('assist.noVoiceInput'));
+    engine.onerror = (event) => {
+      if (event.error !== 'aborted' && event.error !== 'no-speech') announce(t('assist.noVoiceInput'));
+    };
     engine.onend = () => {
+      clearTimeout(silence);
       recognition = null;
       dictateButton.setAttribute('aria-pressed', 'false');
       dictateButton.textContent = t('assist.dictate');
-      if (!heard) return;
-      const text = normaliseSpoken(heard, spokenKindFor(target));
-      insertText(target, text); // never submitted: the person checks the field and goes on themselves
-      announce(t('assist.heard', { text }));
-      target.focus();
+      if (!heard) {
+        closeReview();
+        return;
+      }
+      reviewText.value = normaliseSpoken(heard, spokenKindFor(target));
+      announce(`${t('assist.heard', { text: reviewText.value })} ${t('assist.checkWords')}`);
+      reviewText.focus();
     };
     recognition = engine;
     engine.start();
@@ -219,6 +261,84 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     dictateButton.textContent = t('assist.dictateStop');
     announce(t('assist.listening'));
   };
+  useButton.addEventListener('click', () => {
+    const text = reviewText.value.trim();
+    const target = reviewTarget;
+    closeReview();
+    if (!target?.isConnected || !text) return;
+    insertText(target, text); // never submitted: the person checks the page and goes on themselves
+    target.focus();
+  });
+  retryButton.addEventListener('click', () => {
+    closeReview();
+    dictate();
+  });
+
+  // ---------- Read as I move ----------
+  const describeWords = () => ({
+    field: { template: t('assist.fieldText'), required: t('assist.required'), empty: t('assist.empty'), unnamed: t('assist.unnamed') },
+    button: t('assist.button'),
+    link: t('assist.link'),
+    cell: t('assist.cell'),
+    headCell: t('assist.headCell'),
+    emptyCell: t('assist.emptyCell'),
+  });
+  const visible = (node: Element) => {
+    const box = node.getBoundingClientRect();
+    return box.width > 0 && box.height > 0 && !(node as HTMLInputElement).disabled;
+  };
+  const stops = () => Array.from(document.querySelectorAll<HTMLElement>(STOPS)).filter((n) => !host.contains(n) && visible(n));
+  const moveTo = (next: HTMLElement) => {
+    if (next.tabIndex < 0 || next instanceof HTMLTableCellElement) {
+      next.setAttribute('tabindex', '-1'); // cells take focus without joining the Tab order
+      next.setAttribute('data-db-assist-stop', '');
+    }
+    next.focus();
+    next.scrollIntoView?.({ block: 'nearest' });
+  };
+  const ARROW_ROLES = ['slider', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'grid', 'tree', 'combobox', 'spinbutton'];
+  const typingIn = (node: Element) =>
+    (node instanceof HTMLInputElement && !['checkbox', 'button', 'submit', 'reset'].includes(node.type)) ||
+    node instanceof HTMLTextAreaElement ||
+    node instanceof HTMLSelectElement ||
+    (node instanceof HTMLElement && node.isContentEditable) ||
+    ARROW_ROLES.includes(node.closest('[role]')?.getAttribute('role') ?? '');
+
+  document.addEventListener('focusin', (event) => {
+    if (!settings.readMove) return;
+    const path = event.composedPath();
+    const target = path[0] as Element | null;
+    if (!target || path.includes(host)) return;
+    void speak(describeElement(target, describeWords()));
+  }, true);
+
+  document.addEventListener('keydown', (event) => {
+    if (!settings.readMove || !event.key.startsWith('Arrow') || event.altKey || event.ctrlKey || event.metaKey) return;
+    const path = event.composedPath();
+    if (path.includes(host)) return;
+    const current = (path[0] as Element | null) ?? document.body;
+    if (current !== document.body && typingIn(current)) return; // arrows keep their normal job inside fields
+    const key = event.key as 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
+    const forward = key === 'ArrowDown' || key === 'ArrowRight';
+    const cell = tableCellOf(current);
+    let next: HTMLElement | null | undefined = cell ? neighbourCell(cell, key) : null;
+    if (!next && !(cell && (key === 'ArrowLeft' || key === 'ArrowRight'))) {
+      const list = stops();
+      const table = cell?.closest('table');
+      if (table) {
+        // From the top or bottom edge of a table, step out of it.
+        const inside = list.filter((n) => table.contains(n));
+        const edge = forward ? list.indexOf(inside[inside.length - 1]) : list.indexOf(inside[0]);
+        next = list[edge + (forward ? 1 : -1)];
+      } else {
+        const index = list.indexOf(current as HTMLElement);
+        next = index < 0 ? (forward ? list[0] : list[list.length - 1]) : list[index + (forward ? 1 : -1)];
+      }
+    }
+    if (!next) return;
+    event.preventDefault();
+    moveTo(next);
+  }, true);
 
   const render = () => {
     toggle.textContent = t('assist.open');
@@ -244,11 +364,26 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
       shadow.getElementById('db-assist-lang')?.focus();
     });
 
+    reviewLabel.textContent = t('assist.live');
+    reviewHint.textContent = t('assist.checkWords');
+    useButton.textContent = t('assist.useThis');
+    retryButton.textContent = t('assist.tryAgain');
+
+    const readMove = el('button', {
+      type: 'button', id: 'db-assist-move', 'aria-pressed': String(settings.readMove), 'aria-describedby': 'db-assist-move-hint',
+    }, t('assist.readMove'));
+    readMove.addEventListener('click', () => {
+      settings.readMove = !settings.readMove;
+      update();
+      (shadow.getElementById('db-assist-move') as HTMLElement | null)?.focus();
+    });
+    const readMoveHint = el('p', { class: 'hint', id: 'db-assist-move-hint' }, t('assist.readMoveHint'));
+
     const readButton = el('button', { type: 'button', class: 'primary' }, t('assist.read'));
     readButton.addEventListener('click', readField);
     dictateButton.textContent = recognition ? t('assist.dictateStop') : t('assist.dictate');
     dictateButton.onclick = dictate;
-    const actions = el('div', { class: 'row', style: 'margin-top:.75rem' });
+    const actions = el('div', { class: 'row', style: 'margin:.75rem 0' });
     actions.append(readButton, dictateButton);
 
     const fidelLabel = el('label', { for: 'db-assist-fidel', style: 'margin-top:1rem' }, t('assist.fidel'));
@@ -281,8 +416,8 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
       display.append(button);
     }
 
-    panel.append(title, intro, langLabel, langSelect, actions, fidelLabel, fidelHint, fidelInput, fidelOut,
-      fidelInsert, displayTitle, display, status);
+    panel.append(title, intro, langLabel, langSelect, actions, review, readMove, readMoveHint, fidelLabel, fidelHint,
+      fidelInput, fidelOut, fidelInsert, displayTitle, display, status);
   };
 
   const update = () => {

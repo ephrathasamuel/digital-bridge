@@ -2,7 +2,7 @@ import React, { useEffect, useId, useRef, useState } from 'react';
 import { AudioLines, Ear, EarOff, Loader, Mic, PauseCircle, Volume2 } from 'lucide-react';
 import { toAsciiDigits, type Lang } from '@db/shared-schemas';
 import { t as translate, type I18nKey } from '../i18n';
-import { matchCommand, matchNumber, type VoiceCommand } from '../voice/commands';
+import { guessCommand, isNo, isYes, matchCommand, matchNumber, type VoiceCommand } from '../voice/commands';
 import { parseMonthName, parseNumberWords } from '../voice/spokenInput';
 import {
   getSpeechRecognition, isFieldListening, onFieldListening, playChime, speakText, speechLocale, stopSpeaking,
@@ -73,6 +73,8 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
   const engineRef = useRef(speechLocale(lang));
   const failuresRef = useRef(0);
   const restartRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  /** A guessed command waiting for yes or no. */
+  const pendingRef = useRef<VoiceCommand | null>(null);
   const numbersRef = useRef(new Map<number, HTMLElement>());
   const idRef = useRef(Symbol(`voice-control-${kind}`));
   const guideRef = useRef<{ queue: HTMLElement[]; current: HTMLElement | null; awaiting: 'answer' | 'confirm' | null }>({
@@ -141,7 +143,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
         turnOff(false, t('vc.unsupported'));
         return;
       }
-      restartRef.current = setTimeout(listen, 300); // recognition stops after silence; keep listening
+      restartRef.current = setTimeout(listen, 120); // recognition stops after silence; restart quickly
     };
     recRef.current = rec;
     try {
@@ -314,6 +316,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
   /** Would this guess do something? Used to pick the best of several alternatives in a noisy room. */
   const understood = (text: string) => {
     if (matchNumber(text) !== null || matchCommand(text) !== null) return true;
+    if (pendingRef.current && (isYes(text) || isNo(text))) return true;
     const active = activeInRoot();
     return active instanceof HTMLSelectElement && /\d|[ሀ-፿]{2,}|[a-z]{4,}/i.test(text);
   };
@@ -553,6 +556,20 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
   };
 
   const handle = (text: string) => {
+    // Answer to "Did you mean …?": yes runs the guessed command, no cancels, anything else is a new command.
+    const pending = pendingRef.current;
+    pendingRef.current = null;
+    if (pending) {
+      if (isYes(text)) {
+        playChime('next');
+        run(pending, text);
+        return;
+      }
+      if (isNo(text)) {
+        feedback(t('vc.cancelled'));
+        return;
+      }
+    }
     const active = activeInRoot();
     const number = matchNumber(text);
     // On a focused list a bare value fills it ("15", "1995", "Meskerem"); "item 15" still jumps to item 15.
@@ -565,6 +582,13 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
     }
     const command = matchCommand(text);
     if (!command) {
+      // Close to a command but not exact ("nest" for next): check first instead of ignoring it or guessing wrong.
+      const guess = guessCommand(text);
+      if (guess) {
+        pendingRef.current = guess.command;
+        feedback(t('vc.didYouMean', { text, command: guess.phrase }));
+        return;
+      }
       feedback(t('vc.unknown', { text }));
       return;
     }

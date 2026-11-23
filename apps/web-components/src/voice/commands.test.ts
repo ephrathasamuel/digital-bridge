@@ -76,3 +76,33 @@ describe('round-2 commands (manual blind / voice testing)', () => {
     expect(matchNumber('no')).toBeNull();
   });
 });
+
+describe('near miss voice commands', () => {
+  it('acts at once on an exact command', async () => {
+    const { guessCommand } = await import('./commands');
+    expect(guessCommand('go back')).toEqual({ command: 'back', exact: true, phrase: 'back' });
+  });
+
+  it('asks before acting on a close mishearing', async () => {
+    const { guessCommand } = await import('./commands');
+    expect(guessCommand('nest')).toMatchObject({ command: 'next', exact: false, phrase: 'next' });
+    expect(guessCommand('repeet')).toMatchObject({ command: 'repeat', exact: false });
+    expect(guessCommand('ቀጥሉ')).toMatchObject({ command: 'next', exact: false });
+  });
+
+  it('never guesses from short words, long sentences or unrelated words', async () => {
+    const { guessCommand } = await import('./commands');
+    expect(guessCommand('na')).toBeNull();
+    expect(guessCommand('my name is hana and i live in addis')).toBeNull();
+    expect(guessCommand('banana')).toBeNull();
+  });
+
+  it('understands yes and no in English and Amharic', async () => {
+    const { isYes, isNo } = await import('./commands');
+    expect(isYes('yes please')).toBe(true);
+    expect(isYes('አዎ')).toBe(true);
+    expect(isNo('no')).toBe(true);
+    expect(isNo('አይደለም')).toBe(true);
+    expect(isYes('next')).toBe(false);
+  });
+});

@@ -1,3 +1,5 @@
+import { foldFidel } from './spokenInput';
+
 /**
  * Spoken commands for hands-free use (learners who cannot see the screen or cannot type / use a pointer).
  * Amharic and English words are both accepted whatever the UI language, because Amharic speech recognition is
@@ -54,6 +56,80 @@ export function matchCommand(transcript: string): VoiceCommand | null {
     }
   }
   return null;
+}
+
+/** Words that confirm or cancel a "Did you mean …?" question. */
+const YES = new Set(['yes', 'yeah', 'yep', 'ok', 'okay', 'sure', 'correct', 'right', 'እሺ', 'አዎ', 'አዎን', 'ትክክል']);
+const NO = new Set(['no', 'nope', 'cancel', 'wrong', 'አይ', 'አይደለም', 'ተው']);
+
+export function isYes(transcript: string): boolean {
+  const words = tokenise(transcript);
+  return words.length > 0 && words.length <= 3 && words.some((w) => YES.has(w));
+}
+
+export function isNo(transcript: string): boolean {
+  const words = tokenise(transcript);
+  return words.length > 0 && words.length <= 3 && words.some((w) => NO.has(w));
+}
+
+function editDistance(a: string, b: string): number {
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    let diag = prev[0];
+    prev[0] = i;
+    for (let j = 1; j <= b.length; j++) {
+      const up = prev[j];
+      prev[j] = Math.min(prev[j] + 1, prev[j - 1] + 1, diag + (a[i - 1] === b[j - 1] ? 0 : 1));
+      diag = up;
+    }
+  }
+  return prev[b.length];
+}
+
+/** How many letter mistakes a spoken word may have and still count as close: none for short words like "no". */
+const allowance = (word: string) => {
+  const length = Array.from(word).length;
+  if (/[ሀ-፿]/.test(word)) return length >= 3 ? 1 : 0; // one Fidel letter is a whole syllable
+  return length >= 7 ? 2 : length >= 4 ? 1 : 0;
+};
+
+export interface CommandGuess {
+  command: VoiceCommand;
+  /** true: the words matched exactly, act at once. false: close but not sure, ask "Did you mean …?" first. */
+  exact: boolean;
+  /** The command phrase that was matched, to say back to the learner. */
+  phrase: string;
+}
+
+/**
+ * Exact match first (fast path). Otherwise a short utterance that is one or two letters away from exactly one command
+ * phrase ("nest" -> next, "ቀጥሉ" -> ቀጥል) is a guess that should be confirmed. Ambiguous or long utterances give null.
+ */
+export function guessCommand(transcript: string): CommandGuess | null {
+  const exact = matchCommand(transcript);
+  if (exact) return { command: exact, exact: true, phrase: PHRASES[exact][0] };
+  const words = tokenise(transcript).map((w) => foldFidel(w));
+  if (!words.length || words.length > 4) return null;
+  let best: { command: VoiceCommand; phrase: string; cost: number } | null = null;
+  let tie = false;
+  for (const { command, tokens } of MATCHERS) {
+    if (tokens.length !== words.length) continue;
+    let cost = 0;
+    let fits = true;
+    tokens.forEach((token, i) => {
+      const d = editDistance(foldFidel(token), words[i]);
+      if (d > allowance(token)) fits = false;
+      cost += d;
+    });
+    if (!fits || cost === 0) continue;
+    if (!best || cost < best.cost) {
+      best = { command, phrase: tokens.join(' '), cost };
+      tie = false;
+    } else if (cost === best.cost && command !== best.command) {
+      tie = true;
+    }
+  }
+  return best && !tie ? { command: best.command, exact: false, phrase: best.phrase } : null;
 }
 
 const NUMBER_WORDS: Record<string, number> = {

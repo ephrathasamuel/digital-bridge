@@ -45,14 +45,15 @@ pnpm build
 npx serve apps/web-components/dist -l 5173
 ```
 
-Then open:
+Then open (Bridge Learning is a made up portal that shows the plug-in on a host site):
 
 | Page | Address |
 | --- | --- |
-| Sign-up inside Savanna | http://localhost:5173/pages/signup.html (add `?lang=am` for Amharic) |
+| Learner home (Bridge Learning demo portal) | http://localhost:5173/pages/home.html |
+| Sign-up | http://localhost:5173/pages/signup.html (add `?lang=am` for Amharic) |
 | My Profile (edit mode) | http://localhost:5173/pages/profile.html |
 | Career Gateway + employer form | http://localhost:5173/pages/jobs.html |
-| Outside Savanna (no Bootstrap) | http://localhost:5173/demo/blank.html |
+| Plain page (no stylesheet) | http://localhost:5173/demo/blank.html |
 | All demo pages | http://localhost:5173/ |
 
 The REST API (optional — the widgets work offline without it): `cd apps/api && node dist/main.js`, then
@@ -127,7 +128,7 @@ Use the REST API and LTI 1.3 integration under `/api/v1`, or host the generated 
 LTI 1.3 uses OIDC login initiation and verifies RS256 signatures, state, nonce,
 issuer, audience, expiry, and required claims; invalid launches return bilingual
 401 responses before the tool renders. The Mock LMS Judge Launchpad at
-`apps/savanna-host-demo/mock-lms/index.html` signs real launch tokens and
+`apps/host-demo/mock-lms/index.html` signs real launch tokens and
 exercises the verification path end to end.
 
 ## Languages
@@ -180,7 +181,7 @@ Each command has a visible confirmation and screen-reader announcement.
 Measured Slow 3G load on 15 Nov (time until the first question can be used, gzip as served by any web host,
 `db-signup.js` = **166 KB gzipped**, 2 requests on the blank page, 0 requests to other websites):
 
-| Profile | `demo/blank.html` | `pages/signup.html` (Savanna) |
+| Profile | `demo/blank.html` | `pages/signup.html` (old Savanna copy, since removed) |
 | --- | --- | --- |
 | Slow 3G (500 kbit/s, 400 ms, CPU 4× slower) | 5.5 s | 8.4 s (Savanna's own CSS is about 1.3 MB) |
 

@@ -2,8 +2,15 @@
   "manifest_version": 3,
   "name": "Digital Bridge help bar",
   "short_name": "Digital Bridge",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Read form fields aloud, answer by voice, type Amharic with English letters and make any page easier to see.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "96": "icons/icon-96.png",
+    "128": "icons/icon-128.png"
+  },
   "content_scripts": [
     {
       "matches": ["http://*/*", "https://*/*"],
@@ -12,5 +19,15 @@
       "all_frames": false
     }
   ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "help-bar@digital-bridge.extension",
+      "strict_min_version": "121.0",
+      "data_collection_permissions": { "required": ["none"] }
+    },
+    "gecko_android": {
+      "strict_min_version": "121.0"
+    }
+  },
   "homepage_url": "https://github.com/ephrathasamuel/digital-bridge"
 }

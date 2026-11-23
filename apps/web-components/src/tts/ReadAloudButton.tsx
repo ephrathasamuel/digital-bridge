@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import { cx, ui } from '../wizard/ui';
 import { findSynthVoice, playChime, splitPhrases } from '../voice/speech';
 import { resolvePromptClip } from './promptAudio';
+import { deviceVoiceFirst, fetchRemoteSpeech } from './voiceSource';
 import type { ScriptPhrase } from '../wizard/stepScript';
 
 export interface ReadAloudButtonProps {
@@ -119,7 +120,29 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
     const parts = script.length ? script.map((p) => p.text) : splitPhrases(text);
     elementsRef.current = script.map((p) => p.el);
     const shown = parts.length ? parts : [text];
-    const voice = findSynthVoice(lang);
+    const deviceFirst = deviceVoiceFirst();
+    const deviceVoice = findSynthVoice(lang);
+    // "server" or "custom": the chosen voice service first, a device voice only if it fails.
+    if (!deviceFirst || !deviceVoice) {
+      const remote = await fetchRemoteSpeech(shown.join(' '), lang);
+      if (run !== runRef.current) {
+        if (remote) URL.revokeObjectURL(remote);
+        return; // stopped while the voice was loading
+      }
+      if (remote) {
+        const audio = new Audio(remote);
+        audioRef.current = audio;
+        audio.onended = () => {
+          URL.revokeObjectURL(remote);
+          setClipPlaying(false);
+        };
+        setClipPlaying(true);
+        audio.play().catch(() => setClipPlaying(false));
+        startVisual(shown);
+        return;
+      }
+    }
+    const voice = deviceVoice;
     if (voice) {
       window.speechSynthesis.cancel();
       setPhrases(shown);

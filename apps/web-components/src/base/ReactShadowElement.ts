@@ -1,4 +1,5 @@
 import React, { type ReactNode } from 'react';
+import { parseVoiceSource, setVoiceConfig } from '../tts/voiceSource';
 import { createRoot, type Root } from 'react-dom/client';
 import { DB_EVENTS, type OnboardingProfile } from '@db/shared-schemas';
 import styles from '../styles/index.css?inline';
@@ -44,7 +45,7 @@ const HOSTED_API_URL: string = import.meta.env.VITE_DB_API_URL || 'https://digit
 export abstract class ReactShadowElement extends HTMLElement {
   static version = '1.0.0';
   static get observedAttributes(): string[] {
-    return ['api', 'api-url', 'partner-id', 'lang', 'theme', 'mode', 'lti-token', 'session-id', 'audio-base-url', 'vision'];
+    return ['api', 'api-url', 'partner-id', 'lang', 'theme', 'mode', 'lti-token', 'session-id', 'audio-base-url', 'vision', 'voice', 'voice-url'];
   }
 
   private reactRoot?: Root;
@@ -68,6 +69,7 @@ export abstract class ReactShadowElement extends HTMLElement {
 
     this.mountPoint.lang = this.currentLang;
     this.applyVisionAttribute();
+    this.applyVoiceAttributes();
     this.reactRoot ??= createRoot(this.mountPoint);
     this.renderWidget();
     void this.prepareRuntime();
@@ -75,11 +77,21 @@ export abstract class ReactShadowElement extends HTMLElement {
 
   attributeChangedCallback(): void {
     this.applyVisionAttribute();
+    this.applyVoiceAttributes();
     if (this.mountPoint && this.reactRoot) {
       this.mountPoint.lang = this.currentLang;
       this.renderWidget();
       void this.prepareRuntime();
     }
+  }
+
+  /** voice="auto|device|server|custom" and voice-url pick where read aloud audio comes from (tts/voiceSource.ts). */
+  private applyVoiceAttributes(): void {
+    setVoiceConfig({
+      source: parseVoiceSource(this.getAttribute('voice')),
+      apiUrl: this.apiUrl,
+      customUrl: this.getAttribute('voice-url') || undefined,
+    });
   }
 
   disconnectedCallback(): void {

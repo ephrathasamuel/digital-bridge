@@ -16,6 +16,10 @@
       input, select, textarea { width: 100%; min-height: 44px; padding: 0.4rem 0.6rem; border: 2px solid #5f6b7d; border-radius: 0.5rem; font: inherit; }
       .check { display: flex; gap: 0.6rem; align-items: flex-start; }
       .check input { width: 1.5rem; min-height: 1.5rem; margin-top: 0.2rem; }
+      table { width: 100%; border-collapse: collapse; margin: 0.5rem 0 1rem; }
+      caption { text-align: left; font-weight: 700; margin-bottom: 0.25rem; }
+      th, td { padding: 0.5rem; border: 1px solid #5f6b7d; text-align: left; vertical-align: top; }
+      th { background: #e6ebf2; }
       button { min-height: 48px; padding: 0 1.25rem; border: 2px solid #0b3c8c; border-radius: 0.6rem; background: #0b3c8c; color: #fff; font: inherit; font-weight: 700; }
     </style>
   </head>
@@ -25,8 +29,20 @@
       <p class="note">
         This is an ordinary form with one extra line: the Digital Bridge help bar script. Press <strong>Accessibility
         help</strong> at the bottom of the screen (or Alt+Shift+H), click a field, then read it aloud, answer by voice or
-        type Amharic. The same bar comes with the browser extension on any site. <a href="../index.html">Back to the home page</a>
+        type Amharic. Turn on <strong>Read as I move</strong> and use the arrow keys to hear the table cell by cell. The same bar comes with the browser extension on any site. <a href="../index.html">Back to the home page</a>
       </p>
+      <h2>About the job</h2>
+      <table>
+        <caption>Job details</caption>
+        <thead>
+          <tr><th scope="col">Detail</th><th scope="col">Answer</th><th scope="col">Support offered</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Hours</td><td>Monday to Friday, 9 to 5</td><td>Flexible hours</td></tr>
+          <tr><td>Place</td><td>Bole, Addis Ababa, or from home</td><td>Step free building</td></tr>
+          <tr><td>Pay</td><td>12,000 birr a month</td><td>Screen reader software provided</td></tr>
+        </tbody>
+      </table>
       <form id="apply" novalidate>
         <div class="field">
           <label for="full-name">Full name (required)</label>

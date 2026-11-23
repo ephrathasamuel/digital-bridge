@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Any form with the Digital Bridge help bar</title>
+    <style>
+      body { max-width: 44rem; margin: 2rem auto; padding: 0 1rem 6rem; font: 1.0625rem/1.6 system-ui, sans-serif; color: #0b0f19; background: #ffffff; }
+      :focus-visible { outline: 3px solid #082d6b; outline-offset: 2px; }
+      a { color: #0b3c8c; }
+      .note { padding: 0.75rem 1rem; border-left: 5px solid #ffd43b; background: #f4f6fa; }
+      form { margin-top: 1.5rem; padding: 1.25rem; border: 2px solid #5f6b7d; border-radius: 0.75rem; }
+      .field { margin-bottom: 1.1rem; }
+      label { display: block; font-weight: 700; margin-bottom: 0.25rem; }
+      .hint { margin: 0 0 0.25rem; font-size: 0.95rem; color: #2f3a4d; }
+      input, select, textarea { width: 100%; min-height: 44px; padding: 0.4rem 0.6rem; border: 2px solid #5f6b7d; border-radius: 0.5rem; font: inherit; }
+      .check { display: flex; gap: 0.6rem; align-items: flex-start; }
+      .check input { width: 1.5rem; min-height: 1.5rem; margin-top: 0.2rem; }
+      button { min-height: 48px; padding: 0 1.25rem; border: 2px solid #0b3c8c; border-radius: 0.6rem; background: #0b3c8c; color: #fff; font: inherit; font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Apply: Customer Support Agent</h1>
+      <p class="note">
+        This is an ordinary form with one extra line: the Digital Bridge help bar script. Press <strong>Accessibility
+        help</strong> at the bottom of the screen (or Alt+Shift+H), click a field, then read it aloud, answer by voice or
+        type Amharic. The same bar comes with the browser extension on any site. <a href="../index.html">Back to the home page</a>
+      </p>
+      <form id="apply" novalidate>
+        <div class="field">
+          <label for="full-name">Full name (required)</label>
+          <input id="full-name" name="name" autocomplete="name" required />
+        </div>
+        <div class="field">
+          <label for="phone">Phone number (required)</label>
+          <p class="hint" id="phone-hint">For example 0911 234 567</p>
+          <input id="phone" name="phone" type="tel" autocomplete="tel" aria-describedby="phone-hint" required />
+        </div>
+        <div class="field">
+          <label for="email">Email (optional)</label>
+          <input id="email" name="email" type="email" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="city">City</label>
+          <select id="city" name="city">
+            <option>Addis Ababa</option>
+            <option>Bahir Dar</option>
+            <option>Hawassa</option>
+            <option>Adama</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="why">Why do you want this job?</label>
+          <p class="hint" id="why-hint">A few sentences in English or Amharic.</p>
+          <textarea id="why" name="why" rows="4" aria-describedby="why-hint"></textarea>
+        </div>
+        <div class="field check">
+          <input id="agree" name="agree" type="checkbox" />
+          <label for="agree">I agree that the employer may contact me about this job.</label>
+        </div>
+        <button type="submit">Send application</button>
+        <p id="sent" role="status"></p>
+      </form>
+    </main>
+    <script>
+      document.getElementById('apply').addEventListener('submit', (event) => {
+        event.preventDefault(); // demo only: nothing is sent
+        document.getElementById('sent').textContent = 'Demo only: nothing was sent. Your answers stay on this page.';
+      });
+    </script>
+    <script src="../db-assist.js" data-api="https://digital-bridge-api.onrender.com/api/v1" defer></script>
+  </body>
+</html>

@@ -29,12 +29,13 @@ const PAUSE_MS = 2_000;
 const STOPS = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"]), td, th';
 
 interface AssistOptions { lang?: string; api?: string; voice?: string; voiceUrl?: string; position?: string }
-interface Settings { lang: Lang; open: boolean; bigText: boolean; focus: boolean; links: boolean; contrast: boolean; readMove: boolean }
+interface Settings { lang: Lang; open: boolean; bigText: boolean; focus: boolean; links: boolean; contrast: boolean; darkContrast: boolean; readMove: boolean }
 
 const HOST_ID = 'db-assist-host';
 const STORE_KEY = 'db-assist-settings';
 const DISPLAY: Array<[keyof Settings, I18nKey]> = [
   ['bigText', 'assist.bigText'], ['focus', 'assist.focus'], ['links', 'assist.links'], ['contrast', 'assist.contrast'],
+  ['darkContrast', 'assist.darkContrast'],
 ];
 
 function readOptions(): AssistOptions {
@@ -44,7 +45,7 @@ function readOptions(): AssistOptions {
 }
 
 function loadSettings(options: AssistOptions): Settings {
-  const base: Settings = { lang: options.lang === 'am' ? 'am' : 'en', open: false, bigText: false, focus: false, links: false, contrast: false, readMove: false };
+  const base: Settings = { lang: options.lang === 'am' ? 'am' : 'en', open: false, bigText: false, focus: false, links: false, contrast: false, darkContrast: false, readMove: false };
   try {
     return { ...base, ...(JSON.parse(localStorage.getItem(STORE_KEY) ?? '{}') as Partial<Settings>) };
   } catch {
@@ -60,6 +61,25 @@ function saveSettings(settings: Settings): void {
   }
 }
 
+/**
+ * A real high contrast mode for any site: every colour on the page is replaced (21:1 text, solid borders, underlined
+ * links, no background pictures behind text). Images and videos are left as they are.
+ */
+function highContrast(bg: string, fg: string, link: string, accent: string): string {
+  const all = `body *:not(#${HOST_ID}):not(img):not(video):not(picture):not(svg):not(svg *)`;
+  return [
+    `html, body { background: ${bg} !important; color: ${fg} !important; }`,
+    `${all} { background-color: transparent !important; background-image: none !important; color: ${fg} !important;`,
+    `  border-color: ${fg} !important; text-shadow: none !important; box-shadow: none !important; }`,
+    `body a, body a * { color: ${link} !important; text-decoration: underline !important; }`,
+    `body input, body textarea, body select, body button, body [role='button'] { background-color: ${bg} !important; color: ${fg} !important;`,
+    `  border: 2px solid ${accent} !important; }`,
+    `body ::placeholder { color: ${fg} !important; opacity: 0.8 !important; }`,
+    `body svg { fill: currentColor; }`,
+    `body *:focus, body *:focus-visible { outline: 4px solid ${accent} !important; outline-offset: 2px !important; }`,
+  ].join('\n');
+}
+
 /** Page wide display changes. The help bar itself is left out so it never moves or blurs. */
 function pageCss(s: Settings): string {
   return [
@@ -68,7 +88,8 @@ function pageCss(s: Settings): string {
       ? '*:focus-visible, *:focus { outline: 4px solid #ffd43b !important; outline-offset: 2px !important; box-shadow: 0 0 0 7px #0b0f19 !important; }'
       : '',
     s.links ? 'a, a * { text-decoration: underline !important; text-underline-offset: 3px; }' : '',
-    s.contrast ? `body > *:not(#${HOST_ID}) { filter: contrast(1.35) saturate(1.15); }` : '',
+    s.contrast ? highContrast('#ffffff', '#000000', '#0000cc', '#000000') : '',
+    s.darkContrast ? highContrast('#000000', '#ffffff', '#ffff00', '#ffff00') : '',
     s.readMove ? '[data-db-assist-stop]:focus { outline: 4px solid #0b3c8c !important; outline-offset: -2px !important; background: #fff4cc !important; color: #0b0f19 !important; }' : '',
   ].join('\n');
 }
@@ -409,6 +430,9 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
       const button = el('button', { type: 'button', 'aria-pressed': String(settings[key]) }, t(label));
       button.addEventListener('click', () => {
         (settings[key] as boolean) = !settings[key];
+        // The two contrast modes replace each other.
+        if (key === 'contrast' && settings.contrast) settings.darkContrast = false;
+        if (key === 'darkContrast' && settings.darkContrast) settings.contrast = false;
         update();
         (shadow.querySelectorAll('.display-toggle')[DISPLAY.findIndex(([k]) => k === key)] as HTMLElement | undefined)?.focus();
       });

@@ -83,7 +83,7 @@ async function overlaps(page) {
   });
 }
 
-const PAGES = ['pages/signup.html', 'pages/profile.html', 'pages/jobs.html', 'demo/blank.html', 'pages/homepage-v1-self-paced.html', 'pages/homepage-v1-paced.html'];
+const PAGES = ['pages/signup.html', 'pages/profile.html', 'pages/jobs.html', 'demo/blank.html', 'pages/home.html'];
 
 // 1) Layout + axe, every page, both viewports, both languages (lang via the host language switch / ?lang=am).
 for (const viewport of [{ width: 1280, height: 800 }, { width: 320, height: 640 }]) {

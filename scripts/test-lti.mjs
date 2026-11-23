@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const require = createRequire(import.meta.url);
-const { createMockLmsServer } = require("../apps/savanna-host-demo/mock-lms/server.cjs");
+const { createMockLmsServer } = require("../apps/host-demo/mock-lms/server.cjs");
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = 3099;
 const apiBaseUrl = `http://127.0.0.1:${port}`;

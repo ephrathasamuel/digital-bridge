@@ -62,7 +62,7 @@ function runTts(lang, key, text, output) {
 
 for (const lang of Object.keys(voices)) {
   const data = readLanguage(lang);
-  const outputDir = join(repo, 'apps/savanna-host-demo/assets/audio', lang);
+  const outputDir = join(repo, 'apps/host-demo/assets/audio', lang);
   const clips = {};
   for (const key of keys) {
     const file = `${key}.mp3`;

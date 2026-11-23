@@ -16,10 +16,10 @@ if (existsSync(zip)) {
   const list = sh(`tar -tf "${zip}"`).split('\n');
   for (const name of ['application_alx.css', 'app.css', 'static-page.js']) {
     const entry = list.find((l) => l.endsWith('/' + name));
-    const local = readdirSync(join(REPO, 'apps/savanna-host-demo/assets'), { recursive: true }).find((p) => p.endsWith(name));
+    const local = readdirSync(join(REPO, 'apps/host-demo/assets'), { recursive: true }).find((p) => p.endsWith(name));
     if (!entry || !local) { out.hostFiles[name] = `not found (zip entry ${entry}, local ${local})`; continue; }
     const original = execSync(`tar -xOf "${zip}" "${entry}"`, { cwd: REPO, maxBuffer: 64 * 1024 * 1024 });
-    const mine = readFileSync(join(REPO, 'apps/savanna-host-demo/assets', local));
+    const mine = readFileSync(join(REPO, 'apps/host-demo/assets', local));
     const norm = (b) => b.toString('utf8').replace(/\r\n/g, '\n');
     out.hostFiles[name] = md5(norm(original)) === md5(norm(mine)) ? 'unchanged' : `CHANGED (${original.length} -> ${mine.length} bytes)`;
   }

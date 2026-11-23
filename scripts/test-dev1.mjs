@@ -56,13 +56,8 @@ const persistence = read('apps/web-components/src/state/persistence.ts');
 const queue = read('apps/web-components/src/state/syncQueue.ts');
 const mockApi = read('apps/web-components/src/api/MockApiService.ts');
 const apiClient = read('apps/web-components/src/api/ApiClient.ts');
-const hostCss = read('apps/savanna-host-demo/assets/css/host-a11y-fixes.css');
-const docs = read('docs/SAVANNA_FIXES.md');
-const homepages = [
-  'apps/savanna-host-demo/pages/homepage-v1-self-paced.html',
-  'apps/savanna-host-demo/pages/homepage-v1-paced.html',
-];
-const concept = 'apps/savanna-host-demo/pages/concept-with-navigation.html';
+const hostCss = read('apps/host-demo/assets/css/host.css');
+const portalPages = ['home', 'signup', 'profile', 'jobs'].map((name) => `apps/host-demo/pages/${name}.html`);
 
 check('1 Custom elements and open Shadow DOM', () => {
   for (const tag of ['db-onboarding-wizard', 'db-signup', 'db-career-gateway', 'db-employer-accommodations']) {
@@ -150,26 +145,24 @@ check('7 Four-second API timeout and automatic mock fallback', () => {
   assert.match(apiClient, /this\.mock\.apply/);
 });
 
-check('8 Native homepage hamburger and named logo links', () => {
-  for (const file of homepages) {
-    const tags = scanHtml(read(file));
-    const hamburgers = tags.filter((tag) => !tag.closing && tag.attrs.class?.split(/\s+/).includes('hamburger'));
-    assert.ok(hamburgers.length > 0, `${file} has no hamburger`);
-    for (const button of hamburgers) {
-      assert.equal(button.name, 'button', `${file} has a non-button hamburger`);
-      assert.equal(button.attrs.type, 'button');
-      assert.ok(button.attrs['aria-label']);
-      assert.ok(button.attrs['aria-expanded']);
-      assert.equal(button.attrs['aria-controls'], 'sidebar');
-    }
-    const logos = tags.filter((tag) => !tag.closing && tag.name === 'a' && tag.attrs.class?.split(/\s+/).includes('logo-container'));
-    assert.ok(logos.length > 0, `${file} has no logo link`);
-    assert.ok(logos.every((tag) => tag.attrs['aria-label'] === 'ALX Savanna Home'));
+check('8 Portal top bar: named logo link, labelled navigation, language and colour controls', () => {
+  for (const file of portalPages) {
+    const html = read(file);
+    const tags = scanHtml(html);
+    assert.ok(tags.some((tag) => tag.name === 'header' && tag.attrs.class?.split(/\s+/).includes('db-host-topbar')), `${file} has no top bar`);
+    assert.ok(tags.some((tag) => tag.name === 'a' && tag.attrs.class?.includes('db-topbar-logo') && tag.attrs.href === 'home.html'), `${file} has no logo link`);
+    assert.match(html, /<span>Bridge Learning<\/span>/);
+    assert.ok(tags.some((tag) => tag.name === 'nav' && tag.attrs['aria-label']), `${file} nav has no name`);
+    assert.equal(tags.filter((tag) => tag.attrs['aria-current'] === 'page').length, 1, `${file} must mark one current page`);
+    assert.match(html, /data-db-lang="en"[\s\S]*data-db-lang="am"/);
+    assert.match(html, /<label for="db-vision">[\s\S]*<select id="db-vision" data-db-vision>/);
+    assert.match(html, /src="\.\.\/assets\/js\/host\.js"/);
+    assert.doesNotMatch(html, /application_alx|static-page|typekit|bootstrap|ALX Savanna/i);
   }
 });
 
 check('9 Skip links, main headings, hierarchy and widget embedding', () => {
-  for (const file of [...homepages, concept]) {
+  for (const file of portalPages) {
     const html = read(file);
     const tags = scanHtml(html);
     assert.ok(tags.some((tag) => tag.name === 'a' && tag.attrs.class?.split(/\s+/).includes('skip-link') && tag.attrs.href === '#main-content'), `${file} missing skip link`);
@@ -179,8 +172,7 @@ check('9 Skip links, main headings, hierarchy and widget embedding', () => {
     for (let index = 1; index < headings.length; index += 1) {
       assert.ok(headings[index] <= headings[index - 1] + 1, `${file} skips heading level h${headings[index - 1]} to h${headings[index]}`);
     }
-    assert.match(html, /<db-onboarding-wizard\b/);
-    assert.match(html, /<db-career-gateway\b/);
+    assert.match(html, /<db-(signup|career-gateway|ask)\b/);
   }
 });
 
@@ -191,20 +183,14 @@ check('10 Focus scroll margin and visible focus ring', () => {
 
 check('11 No duplicate IDs on required host and demo pages', () => {
   for (const file of [
-    ...homepages,
-    concept,
-    'apps/savanna-host-demo/pages/signup.html',
-    'apps/savanna-host-demo/pages/profile.html',
-    'apps/savanna-host-demo/pages/jobs.html',
-    'apps/savanna-host-demo/demo/blank.html',
-    'apps/savanna-host-demo/standalone.html',
-    'apps/savanna-host-demo/index.html',
-    'apps/savanna-host-demo/external-partner-demo.html',
+    ...portalPages,
+    'apps/host-demo/demo/blank.html',
+    'apps/host-demo/standalone.html',
+    'apps/host-demo/index.html',
+    'apps/host-demo/external-partner-demo.html',
   ]) {
     assertUniqueIds(file);
   }
-  assert.match(read('apps/savanna-host-demo/pages/homepage-v1-paced.html'), /id="markdown-guide-modal"/);
-  assert.match(docs, /before host patches[\s\S]*after host patches/i);
 });
 
 check('12 Production bundle, copied pages, audio and gzip budget', () => {
@@ -236,7 +222,8 @@ check('12 Production bundle, copied pages, audio and gzip budget', () => {
     'apps/web-components/dist/index.html',
     'apps/web-components/dist/standalone.html',
     'apps/web-components/dist/external-partner-demo.html',
-    'apps/web-components/dist/pages/homepage-v1-self-paced.html',
+    'apps/web-components/dist/pages/home.html',
+    'apps/web-components/dist/assets/css/host.css',
     'apps/web-components/dist/pages/signup.html',
     'apps/web-components/dist/pages/profile.html',
     'apps/web-components/dist/pages/jobs.html',
@@ -261,17 +248,16 @@ check('13 Signup aliases, guide pages and built-page axe audit', () => {
   assert.match(baseStyle, /var\(--bs-body-color,\s*#1c1917\)/);
   assert.match(hostCss, /scroll-margin-top:\s*6rem/);
   assert.match(hostCss, /:focus-visible[\s\S]*outline:\s*3px\s+solid/);
-  assert.doesNotMatch(read('apps/savanna-host-demo/assets/css/static-page.css'), /scroll-margin-top|focus-visible/);
-  assert.ok(!read('apps/savanna-host-demo/assets/js/static-page.js').includes('host-a11y-fixes'));
+  assert.match(hostCss, /--bs-primary:/);
 
-  const signup = read('apps/savanna-host-demo/pages/signup.html');
-  const profile = read('apps/savanna-host-demo/pages/profile.html');
-  const jobs = read('apps/savanna-host-demo/pages/jobs.html');
-  const blank = read('apps/savanna-host-demo/demo/blank.html');
-  assert.match(signup, /<db-signup\b[^>]*lang="en"[^>]*partner-id="alx-savanna"/);
+  const signup = read('apps/host-demo/pages/signup.html');
+  const profile = read('apps/host-demo/pages/profile.html');
+  const jobs = read('apps/host-demo/pages/jobs.html');
+  const blank = read('apps/host-demo/demo/blank.html');
+  assert.match(signup, /<db-signup\b[^>]*lang="en"[^>]*partner-id="demo-portal"/);
   assert.match(signup, /db-signup:done/);
   assert.match(signup, /db:onboarding-completed/);
-  assert.match(signup, /homepage-v1-self-paced\.html/);
+  assert.match(signup, /href="home\.html"/);
   assert.match(profile, /<db-signup\b[^>]*mode="edit"/);
   assert.match(jobs, /<db-career-gateway\b/);
   assert.match(jobs, /<db-employer-accommodations\b/);
@@ -285,11 +271,11 @@ check('13 Signup aliases, guide pages and built-page axe audit', () => {
   assert.match(blank, /db-signup:done/);
   assert.match(blank, /db-signup:support/);
   assert.doesNotMatch(blank, /application_alx\.css|app\.css|static-page\.css/);
-  for (const file of [...homepages, concept, 'apps/savanna-host-demo/pages/signup.html', 'apps/savanna-host-demo/pages/jobs.html']) {
+  for (const file of portalPages) {
     assert.match(read(file), /href="profile\.html"[^>]*[\s\S]{0,300}My Profile/);
   }
-  for (const link of ['pages/signup.html', 'pages/profile.html', 'pages/jobs.html', 'demo/blank.html']) {
-    assert.ok(read('apps/savanna-host-demo/index.html').includes(`href="${link}"`), `Missing index link ${link}`);
+  for (const link of ['pages/home.html', 'pages/signup.html', 'pages/profile.html', 'pages/jobs.html', 'demo/blank.html']) {
+    assert.ok(read('apps/host-demo/index.html').includes(`href="${link}"`), `Missing index link ${link}`);
   }
 
   const auditSource = `
@@ -307,7 +293,7 @@ check('13 Signup aliases, guide pages and built-page axe audit', () => {
       try { response.writeHead(200, { 'content-type': mime[extname(file)] ?? 'application/octet-stream' }); response.end(readFileSync(file)); }
       catch { response.writeHead(404).end(); }
     });
-    const pages = ['/pages/signup.html', '/pages/profile.html', '/pages/jobs.html', '/demo/blank.html'];
+    const pages = ['/pages/home.html', '/pages/signup.html', '/pages/profile.html', '/pages/jobs.html', '/demo/blank.html'];
     const close = async (browser) => { if (browser) await browser.close(); await new Promise(resolve => server.close(resolve)); };
     server.listen(0, '127.0.0.1', async () => {
       let browser;
@@ -330,9 +316,9 @@ check('13 Signup aliases, guide pages and built-page axe audit', () => {
             return route.continue();
           });
           await page.goto('http://127.0.0.1:' + port + path, { waitUntil: 'networkidle' });
-          await page.waitForFunction(() => [...document.querySelectorAll('db-signup,db-career-gateway,db-employer-accommodations')].every(node => node.shadowRoot?.querySelector('[part=root]')?.textContent?.trim()), { timeout: 10000 });
+          await page.waitForFunction(() => [...document.querySelectorAll('db-signup,db-career-gateway,db-employer-accommodations,db-ask')].every(node => node.shadowRoot?.querySelector('[part=root]')?.textContent?.trim()), { timeout: 10000 });
           const results = await new AxeBuilder({ page }).analyze();
-          const widgets = await page.locator('db-signup,db-career-gateway,db-employer-accommodations').count();
+          const widgets = await page.locator('db-signup,db-career-gateway,db-employer-accommodations,db-ask').count();
           if (!widgets || results.violations.length || errors.length) {
             console.error(path + ': ' + results.violations.length + ' axe violations; ' + errors.length + ' runtime errors');
             for (const violation of results.violations) console.error(violation.impact + ' ' + violation.id);

@@ -10,7 +10,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '..');
-const outBase = join(root, 'apps/savanna-host-demo/assets/audio');
+const outBase = join(root, 'apps/host-demo/assets/audio');
 const RATE = 8000;
 
 function tone(samples, start, freq, seconds, volume) {

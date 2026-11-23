@@ -15,7 +15,7 @@ const record = async (page, surface, state) => {
 
 // ---------- G2: static surfaces ----------
 const SURFACES = ['index.html', 'standalone.html', 'external-partner-demo.html', 'demo/blank.html', 'pages/signup.html', 'pages/profile.html',
-  'pages/jobs.html', 'pages/homepage-v1-self-paced.html', 'pages/homepage-v1-paced.html', 'pages/concept-with-navigation.html'];
+  'pages/jobs.html', 'pages/home.html'];
 for (const s of SURFACES) {
   for (const lang of ['en', 'am']) {
     if (lang === 'am' && !s.startsWith('pages/s') && !s.startsWith('pages/p') && !s.startsWith('pages/j')) continue;
@@ -257,7 +257,7 @@ for (const lang of ['en', 'am']) {
 // ---------- G5: reflow + 320 px screenshots of every step ----------
 const reflow = [];
 for (const vp of [{ width: 640, height: 800, tag: '200%' }, { width: 320, height: 640, tag: '400%' }, { width: 360, height: 640, tag: 'phone 360', mobile: true }]) {
-  for (const s of ['pages/signup.html', 'pages/profile.html', 'pages/jobs.html', 'demo/blank.html', 'pages/homepage-v1-self-paced.html']) {
+  for (const s of ['pages/signup.html', 'pages/profile.html', 'pages/jobs.html', 'demo/blank.html', 'pages/home.html']) {
     const page = await newPage(browser, { viewport: { width: vp.width, height: vp.height } });
     await page.goto(`${srv.base}/${s}`, { waitUntil: 'networkidle' });
     await sleep(400);

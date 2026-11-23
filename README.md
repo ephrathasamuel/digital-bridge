@@ -36,7 +36,7 @@ Learners can complete onboarding by keyboard, screen reader, typing, voice with 
 - **A partner registers a learner with consent without learning a password:** The partner uses the partner-vouch route with explicit learner consent; the learner receives a session and can resume through the one-time SMS link, with no password disclosed.
 
 ## Run it
-Node 20+ and pnpm (`corepack enable`). The demo pages are static files, so build once and serve `dist/`:
+Node 22.12+ and pnpm (`corepack enable`). The demo pages are static files, so build once and serve `dist/`:
 
 ```bash
 corepack enable

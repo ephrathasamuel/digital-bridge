@@ -13,7 +13,7 @@ slow connections.
 
 ## Set up
 
-Node 20 or newer and pnpm (do not use npm or yarn).
+Node 22.12 or newer and pnpm (do not use npm or yarn).
 
 ```bash
 corepack enable

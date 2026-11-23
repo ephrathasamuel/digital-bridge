@@ -24,6 +24,14 @@ services:
       # Make one with: node -e "console.log(require('crypto').generateKeyPairSync('rsa',{modulusLength:2048,privateKeyEncoding:{type:'pkcs8',format:'pem'},publicKeyEncoding:{type:'spki',format:'pem'}}).privateKey)"
       - key: LTI_TOOL_PRIVATE_KEY_PEM
         sync: false
+      # Demo only: start with a temporary LTI key when LTI_TOOL_PRIVATE_KEY_PEM is empty. Remove for real use.
+      - key: LTI_ALLOW_EPHEMERAL_KEY
+        value: "true"
+      # Read aloud voices for any language: mms (open source, needs HF_TOKEN) or custom (TTS_URL). See README.
+      - key: TTS_PROVIDER
+        sync: false
+      - key: HF_TOKEN
+        sync: false
       # Where SMS resume links point, e.g. https://<your-vercel-site>/pages/signup.html
       - key: PUBLIC_RESUME_URL
         sync: false

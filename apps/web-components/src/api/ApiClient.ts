@@ -1,4 +1,6 @@
-import type { JobApplication, JobListing, Lang, OnboardingProfile, SupportFilter } from '@db/shared-schemas';
+import type {
+  HelpContactReceipt, HelpContactRequest, JobApplication, JobListing, Lang, OnboardingProfile, SupportFilter,
+} from '@db/shared-schemas';
 import { MockApiService } from './MockApiService';
 
 type SyncStep = 'consent' | 'name' | 'contact' | 'dob' | 'identity' | 'support';
@@ -109,6 +111,23 @@ export class ApiClient {
       throw new TypeError('The application response did not match the API contract.');
     }
     return response;
+  }
+
+  /**
+   * Contact a person from the Ask box (POST /help/contact). Returns null when the message could not be delivered
+   * (no API, offline, timeout or server error): the caller keeps it on the device and retries. There is no mock
+   * receipt, because a learner must never be told a person got a message that never left the device.
+   */
+  async contactPerson(payload: HelpContactRequest): Promise<HelpContactReceipt | null> {
+    const response = await this.request<Partial<HelpContactReceipt>>('/help/contact', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    if (!response) return null;
+    if (typeof response.reference !== 'string' || typeof response.receivedAt !== 'string') {
+      throw new TypeError('The contact response did not contain a reference.');
+    }
+    return { reference: response.reference, receivedAt: response.receivedAt };
   }
 
   async createJob(payload: Omit<JobListing, 'id' | 'createdAt'>): Promise<JobListing> {

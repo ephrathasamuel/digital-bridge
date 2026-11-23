@@ -59,6 +59,7 @@ export class AuthController {
       "partner-demo": { secret: "partner-demo-secret", scopes: ["onboarding:read", "onboarding:write", "partner:vouch"] },
       aaapd: { secret: "aaapd-secret", scopes: ["onboarding:read", "onboarding:write", "partner:vouch"] },
       snv: { secret: "snv-secret", scopes: ["onboarding:read", "onboarding:write", "partner:vouch"] },
+      "help-desk": { secret: "help-desk-secret", scopes: ["help:admin"] },
     };
     const raw = process.env.PARTNER_CLIENTS;
     if (!raw) return defaults;

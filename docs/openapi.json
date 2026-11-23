@@ -391,6 +391,49 @@
         ]
       }
     },
+    "/api/v1/help/contact": {
+      "post": {
+        "operationId": "HelpController_contact",
+        "summary": "Contact a person: leave a message and a phone or email for the help team (consent required)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ContactPersonDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "help"
+        ]
+      },
+      "get": {
+        "operationId": "HelpController_listContacts",
+        "summary": "Help team: list Contact a person messages, newest first (scope help:admin)",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "help"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/v1/lti/jwks": {
       "get": {
         "operationId": "LtiController_getJwks",
@@ -787,6 +830,42 @@
         },
         "required": [
           "question"
+        ]
+      },
+      "ContactPersonDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "example": "Hana",
+            "maxLength": 80
+          },
+          "contact": {
+            "type": "string",
+            "example": "0911 234 567",
+            "description": "Ethiopian phone number or email address, so the help team can reply."
+          },
+          "message": {
+            "type": "string",
+            "example": "I cannot find the sign language option.",
+            "maxLength": 1000
+          },
+          "lang": {
+            "type": "string",
+            "enum": [
+              "en",
+              "am"
+            ]
+          },
+          "consent": {
+            "type": "boolean",
+            "description": "Must be true: the learner agreed that the help team may keep the message to reply."
+          }
+        },
+        "required": [
+          "contact",
+          "message",
+          "consent"
         ]
       }
     }

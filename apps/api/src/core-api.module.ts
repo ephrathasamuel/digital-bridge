@@ -9,6 +9,7 @@ import { AuthModule } from "./auth/auth.module";
 import { ApplicationEntity } from "./career/entities/application.entity";
 import { JobEntity } from "./career/entities/job.entity";
 import { CareerModule } from "./career/career.module";
+import { HelpContactRequestEntity } from "./help/entities/help-contact-request.entity";
 import { HelpModule } from "./help/help.module";
 import { OnboardingSessionEntity } from "./onboarding/entities/onboarding-session.entity";
 import { SupportPreferenceEntity } from "./onboarding/entities/support-preference.entity";
@@ -47,6 +48,7 @@ class HealthController {
         PartnerVoucherEntity,
         JobEntity,
         ApplicationEntity,
+        HelpContactRequestEntity,
       ],
     }),
     OnboardingModule,

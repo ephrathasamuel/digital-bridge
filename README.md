@@ -63,6 +63,33 @@ minutes on a slow laptop.
 Docker: `docker compose up --build -d` builds and serves the production web bundle on port 5173 and the NestJS API on port 3000.
 Verified with `http://127.0.0.1:3000/api/v1/health` returning `200 OK`; use `docker compose down` to stop the containers.
 
+### Help bar for any form (any website)
+
+`db-assist.js` adds an "Accessibility help" button to every form on a page: read a field aloud (name, hint,
+required, current answer), answer by voice (the words go into the field to check; nothing is submitted), type Amharic
+with English letters, and display options (bigger text, strong focus outline, underlined links, more contrast).
+Alt+Shift+H opens it, Esc closes it, settings are remembered per site. Try it on `demo/any-form.html`.
+
+* **On your own site:** `<script src="https://digital-bridge-six.vercel.app/db-assist.js" data-lang="am" defer></script>`.
+  Options: `data-lang` (`en`, `am`), `data-api` (your Digital Bridge API for voices), `data-voice`
+  (`auto`, `device`, `server`, `custom`), `data-voice-url`, `data-position` (`right`, `left`).
+* **On sites you do not own (LinkedIn, job boards):** the browser extension in `apps/extension` (see its README).
+
+### Voices for any language
+
+Read aloud uses the device's voices first. Where the device has none (Amharic on most phones), it asks the API:
+`POST /api/v1/voice/speak` with `{"text","lang"}` returns audio. Configure the API with:
+
+* `TTS_PROVIDER=mms` and `HF_TOKEN`: Meta's open source MMS voices (1,100+ languages, model
+  `facebook/mms-tts-{iso639-3}`). `TTS_MMS_URL` can point at a self hosted copy instead of Hugging Face.
+* `TTS_PROVIDER=custom` and `TTS_URL`: any text to speech service. With `{text}` and `{lang}` in the URL it is a GET
+  (for example an OpenTTS or Piper server), otherwise a POST of `{"text","lang"}`. `TTS_AUTH_HEADER` is sent as
+  `Authorization`.
+* Nothing set: the route answers 501 and the widgets show captions and use device voices.
+
+Widgets and the help bar also accept `voice="device|server|custom"` and `voice-url="https://…?text={text}&lang={lang}"`
+to call a voice service directly. Keys never go in the browser: put them on the API.
+
 ### Deploy your own
 
 * **API on Render:** `render.yaml` is a Render Blueprint (free plan). In Render choose New, then Blueprint, pick this

@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Bookmark button: Digital Bridge help bar</title>
+    <style>
+      body { max-width: 46rem; margin: 2rem auto; padding: 0 1.25rem 4rem; font: 1.0625rem/1.65 system-ui, sans-serif; color: #0b0f19; background: #fff; }
+      a { color: #0b3c8c; font-weight: 700; text-decoration: none; }
+      p a:hover, p a:focus-visible { text-decoration: underline; }
+      :focus-visible { outline: 3px solid #ffd43b; outline-offset: 3px; box-shadow: 0 0 0 6px #0b0f19; }
+      h1 { line-height: 1.15; } h2 { margin-top: 2rem; }
+      .bookmarklet { display: inline-flex; align-items: center; gap: .5rem; min-height: 52px; padding: 0 1.25rem; border-radius: .75rem;
+        background: #ffd43b; color: #0b0f19; border: 2px solid #0b0f19; font-size: 1.1rem; }
+      textarea { width: 100%; min-height: 7rem; padding: .6rem; border: 2px solid #5f6b7d; border-radius: .5rem; font: .85rem/1.4 ui-monospace, Consolas, monospace; }
+      button { min-height: 48px; padding: 0 1.1rem; border: 2px solid #0b3c8c; border-radius: .6rem; background: #0b3c8c; color: #fff; font: inherit; font-weight: 700; }
+      ol li + li { margin-top: .4rem; }
+      .note { padding: .75rem 1rem; border-left: 5px solid #ffd43b; background: #f4f6fa; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Bookmark button</h1>
+      <p>Start the help bar on any page with one tap, with nothing to install. It works on phones too.</p>
+
+      <h2>On a computer</h2>
+      <p>Show your bookmarks bar (Ctrl+Shift+B), then drag this button onto it:</p>
+      <p><a class="bookmarklet" id="bookmarklet" href="#">Digital Bridge help</a></p>
+      <p>On any page with a form, click <strong>Digital Bridge help</strong> in your bookmarks bar.</p>
+
+      <h2>On a phone, or without dragging</h2>
+      <ol>
+        <li>Press <strong>Copy the code</strong>.</li>
+        <li>Bookmark this page, then edit the bookmark: name it <strong>Digital Bridge help</strong> and paste the code as its address (URL).</li>
+        <li>On any page, type <strong>Digital Bridge help</strong> in the address bar and tap the bookmark.</li>
+      </ol>
+      <label for="code"><strong>Bookmark code</strong></label>
+      <textarea id="code" readonly></textarea>
+      <p><button type="button" id="copy">Copy the code</button></p>
+      <p id="status" role="status" aria-live="polite"></p>
+
+      <p class="note">Some sites, such as LinkedIn, block scripts started this way. On those sites use the browser extension instead. <a href="index.html#anywhere">See all ways to install</a>.</p>
+      <p><a href="privacy.html">Privacy</a> · <a href="index.html">Back to Digital Bridge</a></p>
+    </main>
+    <script>
+      // Built from this page's own address, so a copy of the site on another domain points at itself.
+      const base = new URL('.', location.href).href.replace(/\/$/, '');
+      const code = `javascript:(()=>{if(document.getElementById('db-assist-host'))return;const s=document.createElement('script');s.src='${base}/db-assist.js';s.dataset.api='https://digital-bridge-api.onrender.com/api/v1';document.body.appendChild(s);})();`;
+      document.getElementById('bookmarklet').href = code;
+      document.getElementById('bookmarklet').addEventListener('click', (event) => {
+        event.preventDefault();
+        document.getElementById('status').textContent = 'Drag this button to your bookmarks bar instead of clicking it.';
+      });
+      document.getElementById('code').value = code;
+      document.getElementById('copy').addEventListener('click', async () => {
+        try {
+          await navigator.clipboard.writeText(code);
+          document.getElementById('status').textContent = 'Copied. Now paste it as the address of a new bookmark.';
+        } catch {
+          document.getElementById('code').select();
+          document.getElementById('status').textContent = 'Could not copy automatically. The code is selected: copy it yourself.';
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -17,6 +17,10 @@ services:
         value: 22.12.0
       - key: JWT_SECRET
         generateValue: true
+      # Postgres connection string (for example from a free Neon project) so data survives restarts.
+      # Empty: a SQLite file on the free plan's temporary disk, wiped on every restart.
+      - key: DATABASE_URL
+        sync: false
       # JSON with your own OAuth clients and secrets, e.g. the help-desk client that reads Contact a person messages.
       - key: PARTNER_CLIENTS
         sync: false

@@ -94,8 +94,9 @@ to call a voice service directly. Keys never go in the browser: put them on the 
 
 * **API on Render:** `render.yaml` is a Render Blueprint (free plan). In Render choose New, then Blueprint, pick this
   repository, and fill in `PARTNER_CLIENTS` (your own client secrets) and `PUBLIC_RESUME_URL`. Health check:
-  `/api/v1/health`, Swagger UI: `/docs`. The free plan has no permanent disk, so the SQLite data (including Contact a
-  person messages) is reset when the service restarts. Use a paid disk or a hosted database for real use.
+  `/api/v1/health`, Swagger UI: `/docs`. Set `DATABASE_URL` to a Postgres connection string (a free Neon project works) so
+  data, including Contact a person messages, survives restarts; tables are created automatically. Without it the API
+  uses a SQLite file, which the free plan wipes on every restart.
 * **Pages and widgets on Vercel:** `vercel.json` builds `apps/web-components/dist`. Import the repository in Vercel
   and keep the settings from the file. The API allows any `*.vercel.app` origin; set `CORS_ORIGINS` for other domains.
 

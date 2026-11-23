@@ -11,6 +11,7 @@ import {
 import { hasVoiceNote, removeVoiceNote, setVoiceNote, useVoiceNotes } from './voiceNotes';
 import { FidelHelper } from '../fields/FidelHelper';
 import { normaliseSpoken, spellOut, type SpokenKind } from './spokenInput';
+import { joinTranscripts } from '../ask/askVoice';
 
 export interface VoiceFieldProps {
   lang: Lang;
@@ -43,6 +44,8 @@ type Phase = 'idle' | 'listening' | 'review' | 'recording' | 'preview';
 
 /** Longest voice note we keep on the device (keeps a note well inside localStorage limits). */
 const MAX_RECORDING_MS = 60_000;
+/** Stop listening this long after the last word, then show the review box. */
+const PAUSE_MS = 2_000;
 /** Amharic: if speech-to-text has produced nothing after this long, switch to a voice note. */
 const AM_EMPTY_TRANSCRIPT_MS = 5_000;
 /** Speech-to-text errors that mean "Amharic recognition will not work here" (Guide §5 traps). */
@@ -58,6 +61,11 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
   const signBtnRef = useRef<HTMLButtonElement>(null);
   const [heard, setHeard] = useState('');
   const [note, setNote] = useState('');
+  /** Words heard so far, shown while listening (the final words are announced once, not every guess). */
+  const [live, setLive] = useState('');
+  const lastRawRef = useRef('');
+  const silenceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const finishRef = useRef<() => void>(() => undefined);
   const [reviewNote, setReviewNote] = useState('');
   const [previewUrl, setPreviewUrl] = useState('');
   const [recordSupported, setRecordSupported] = useState(false);
@@ -170,17 +178,19 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
     try {
       const recognition = new Recognition();
       recognition.lang = spokenKind === 'email' ? 'en-US' : speechLocale(lang);
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+      // Words appear live while the learner speaks; listening ends after a short pause, then the review box opens.
+      recognition.continuous = true;
+      recognition.interimResults = true;
+      recognition.maxAlternatives = 3;
       gotResult.current = false;
-      recognition.onresult = (event) => {
-        const raw = Array.from({ length: event.results.length }, (_, i) => event.results[i][0]?.transcript ?? '').join(' ').trim();
+      lastRawRef.current = '';
+      setLive('');
+      const finish = () => {
+        const raw = lastRawRef.current;
         // "ዜሮ ዘጠኝ አንድ…" -> "091…", "name at gmail dot com" -> "name@gmail.com" (still editable before use).
         const transcript = normaliseSpoken(raw, spokenKind);
+        setLive('');
         if (!transcript) return;
-        clearTimeout(amTimerRef.current);
-        gotResult.current = true;
         setHeard(transcript);
         if (liveFill) {
           if (beforeLiveFill.current === null) beforeLiveFill.current = currentValue;
@@ -188,6 +198,17 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
         }
         setPhase('review');
         say(t(lang, 'voice.heard', { text: transcript }));
+      };
+      finishRef.current = finish;
+      recognition.onresult = (event) => {
+        const raw = joinTranscripts(event.results);
+        if (!raw) return;
+        clearTimeout(amTimerRef.current);
+        gotResult.current = true;
+        lastRawRef.current = raw;
+        setLive(raw);
+        clearTimeout(silenceRef.current);
+        silenceRef.current = setTimeout(() => recognition.stop(), PAUSE_MS);
       };
       recognition.onerror = (event) => {
         if (recognitionRef.current !== recognition) return; // already switched to a voice note
@@ -207,9 +228,11 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
       recognition.onend = () => {
         if (recognitionRef.current !== recognition) return; // already switched to a voice note
         clearTimeout(amTimerRef.current);
+        clearTimeout(silenceRef.current);
         recognitionRef.current = null;
         setPhase((p) => (p === 'listening' ? 'idle' : p));
         if (!gotResult.current) say(t(lang, 'voice.nothing'));
+        else finish();
       };
       recognitionRef.current = recognition;
       recognition.onspeechend = () => setNote(t(lang, 'vc.state.processing'));
@@ -237,8 +260,11 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
 
   const stopListening = () => {
     clearTimeout(amTimerRef.current);
+    clearTimeout(silenceRef.current);
     recognitionRef.current?.stop();
   };
+
+  useEffect(() => () => clearTimeout(silenceRef.current), []);
 
   const useAnswer = () => {
     if (speakingRef.current) stopSpeaking();
@@ -443,6 +469,12 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
       )}
 
       {note && phase !== 'review' && <p className="mt-1 text-sm text-stone-800">{note}</p>}
+      {/* Live words while speaking. Shown, not announced: screen readers get the final words once, in the review. */}
+      {listening && live && (
+        <p aria-hidden="true" data-db-live-words="" className="mt-1 rounded-lg border-2 border-terracotta bg-terracotta-tint px-3 py-2 text-base font-semibold text-ink">
+          {live}
+        </p>
+      )}
 
       {phase === 'review' && (
         <div className="mt-3 rounded-xl border-2 border-terracotta bg-white p-3 shadow-card" data-db-aux="">

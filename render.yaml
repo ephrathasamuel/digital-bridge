@@ -7,7 +7,8 @@ services:
     plan: free
     region: frankfurt
     branch: main
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm build:schemas && pnpm -F @db/api build
+    # pnpm comes from npm: the corepack bundled with Node 22.12 has outdated signing keys and cannot download pnpm.
+    buildCommand: npm install --global pnpm@9.12.0 && pnpm install --frozen-lockfile && pnpm build:schemas && pnpm -F @db/api build
     startCommand: node apps/api/dist/main.js
     healthCheckPath: /api/v1/health
     autoDeploy: true

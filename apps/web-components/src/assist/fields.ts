@@ -72,7 +72,10 @@ export function composeFieldText(
   parts: { label: string; hint: string; value: string; required: boolean },
   words: { template: string; required: string; empty: string; unnamed: string },
 ): string {
-  const hint = [parts.required ? words.required : '', parts.hint ? `${parts.hint}.` : ''].filter(Boolean).join(' ');
+  const saysRequired = /required|ግዴታ/i.test(parts.label);
+  const hint = [parts.required && !saysRequired ? words.required : '', parts.hint ? `${parts.hint}.` : '']
+    .filter(Boolean)
+    .join(' ');
   return words.template
     .replace('{label}', parts.label || words.unnamed)
     .replace('{hint}', hint)

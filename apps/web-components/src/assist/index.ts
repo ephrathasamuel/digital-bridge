@@ -122,8 +122,10 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
 
   // Remember the last form field used on the page, so a click on the bar still knows which field is meant.
   document.addEventListener('focusin', (event) => {
-    const target = event.composedPath()[0] as Element | null;
-    if (target && !host.contains(target) && isFormField(target)) lastField = target;
+    const path = event.composedPath();
+    const target = path[0] as Element | null;
+    // composedPath crosses shadow roots; host.contains() does not, so it would count the bar's own inputs.
+    if (target && !path.includes(host) && isFormField(target)) lastField = target;
   }, true);
 
   const style = el('style', {}, BAR_CSS);
@@ -249,8 +251,7 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     const actions = el('div', { class: 'row', style: 'margin-top:.75rem' });
     actions.append(readButton, dictateButton);
 
-    const fidelTitle = el('h3', {}, t('assist.fidel'));
-    const fidelLabel = el('label', { for: 'db-assist-fidel' }, t('assist.fidel'));
+    const fidelLabel = el('label', { for: 'db-assist-fidel', style: 'margin-top:1rem' }, t('assist.fidel'));
     const fidelHint = el('p', { class: 'hint', id: 'db-assist-fidel-hint' }, t('assist.fidelHint'));
     const fidelInput = el('input', { id: 'db-assist-fidel', type: 'text', autocomplete: 'off', 'aria-describedby': 'db-assist-fidel-hint' });
     const fidelOut = el('p', { class: 'fidel-out', lang: 'am', 'aria-live': 'polite' });
@@ -280,7 +281,7 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
       display.append(button);
     }
 
-    panel.append(title, intro, langLabel, langSelect, actions, fidelTitle, fidelLabel, fidelHint, fidelInput, fidelOut,
+    panel.append(title, intro, langLabel, langSelect, actions, fidelLabel, fidelHint, fidelInput, fidelOut,
       fidelInsert, displayTitle, display, status);
   };
 

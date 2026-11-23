@@ -12,7 +12,7 @@ not intended for production.
 From the repository root, start the simulator:
 
 ```powershell
-node apps/savanna-host-demo/mock-lms/server.cjs
+node apps/host-demo/mock-lms/server.cjs
 ```
 
 The command starts a local website on port `4001` and prints the platform registration details.
@@ -37,7 +37,7 @@ key it trusts.
 From the repository root, run:
 
 ```powershell
-node --test apps/savanna-host-demo/mock-lms/server.test.cjs
+node --test apps/host-demo/mock-lms/server.test.cjs
 ```
 
 These tests verify the public JWKS contains no private key fields, check a signed token's real

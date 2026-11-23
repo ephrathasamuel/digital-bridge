@@ -72,23 +72,28 @@
         <p class="lede">
           One plug-in for learners who cannot use a standard form: sign up by voice, keyboard, screen reader or sign
           language video, in English or Amharic, then find and apply for jobs privately. These pages show it inside
-          ALX Savanna and on a plain page.
+          Bridge Learning, a made up learning portal, and on a plain page.
         </p>
         <ul class="actions">
-          <li><a class="button primary" href="pages/signup.html">Start sign-up (inside Savanna)</a></li>
+          <li><a class="button primary" href="pages/signup.html">Start sign-up (demo portal)</a></li>
           <li><a class="button" href="pages/jobs.html">Career Gateway</a></li>
-          <li><a class="button" href="demo/blank.html">Plain page, no Savanna</a></li>
+          <li><a class="button" href="demo/blank.html">Plain page, no portal styles</a></li>
         </ul>
         <ul class="metrics" aria-label="Verified results">
           <li class="metric"><strong>0 axe violations</strong>55 states, English and Amharic, 4 colour modes</li>
-          <li class="metric"><strong>166 KB</strong>gzipped plug-in, 2 requests on a plain page</li>
+          <li class="metric"><strong>184 KB</strong>gzipped plug-in, 2 requests on a plain page</li>
           <li class="metric"><strong>5.5 s on Slow 3G</strong>until the first question works (plain page, slow phone CPU)</li>
           <li class="metric"><strong>WCAG 2.2 AA</strong>report in CONFORMANCE.md, honest about what is untested</li>
         </ul>
       </section>
 
-      <h2 id="learner-pages">Learner pages inside Savanna</h2>
+      <h2 id="learner-pages">Learner pages inside the Bridge Learning demo portal</h2>
       <ul class="grid" aria-labelledby="learner-pages">
+        <li class="card">
+          <h3>Learner home</h3>
+          <p>A portal home page with next steps, course progress and the Ask box, the way a school would link to the plug-in.</p>
+          <a class="button" href="pages/home.html">Open learner home</a>
+        </li>
         <li class="card">
           <h3>Sign up</h3>
           <p>Seven short questions, voice on every field, private support needs, and a partner route for learners without an ID.</p>
@@ -110,7 +115,7 @@
       <ul class="grid" aria-labelledby="plug-in-pages">
         <li class="card">
           <h3>Plain page</h3>
-          <p>No Bootstrap and no Savanna CSS: one script and one tag, the way a judge or partner installs it.</p>
+          <p>No portal stylesheet at all: one script and one tag, the way a judge or partner installs it.</p>
           <a class="button" href="demo/blank.html">Open the plain page</a>
         </li>
         <li class="card">
@@ -126,37 +131,18 @@
         <li class="card">
           <h3>Mock LMS (LTI 1.3)</h3>
           <p>
-            Signs real LTI launches. Start it first with <code>node apps/savanna-host-demo/mock-lms/server.cjs</code>,
+            Signs real LTI launches. Start it first with <code>node apps/host-demo/mock-lms/server.cjs</code>,
             then open <code>http://127.0.0.1:4001/mock-lms</code>.
           </p>
           <a class="button" href="mock-lms/index.html">Open the Mock LMS page</a>
         </li>
       </ul>
 
-      <h2 id="savanna-pages">Original Savanna pages (patched only by sidecar files)</h2>
-      <ul class="grid" aria-labelledby="savanna-pages">
-        <li class="card">
-          <h3>Learner homepage — self-paced</h3>
-          <p>Module switcher, progression gauge and the plug-in in the dashboard.</p>
-          <a class="button" href="pages/homepage-v1-self-paced.html">Open self-paced homepage</a>
-        </li>
-        <li class="card">
-          <h3>Learner homepage — paced</h3>
-          <p>Week strip, deliverables, scores and upcoming events.</p>
-          <a class="button" href="pages/homepage-v1-paced.html">Open paced homepage</a>
-        </li>
-        <li class="card">
-          <h3>Concept page with navigation</h3>
-          <p>A module concept page with the curriculum panel beside it.</p>
-          <a class="button" href="pages/concept-with-navigation.html">Open concept page</a>
-        </li>
-      </ul>
 
       <footer>
         <p>
-          Savanna's own <code>application_alx.css</code>, <code>app.css</code> and <code>static-page.js</code> are unchanged;
-          fixes live in <code>assets/css/host-a11y-fixes.css</code> and <code>assets/js/host-a11y-fixes.js</code>.
-          See <code>README.md</code> for what is real, what was substituted, and how to regenerate.
+          Bridge Learning is not a real school. Its pages use one small stylesheet, <code>assets/css/host.css</code>, and
+          <code>assets/js/host.js</code> for the language buttons and Colours menu. See <code>README.md</code> for details.
         </p>
       </footer>
     </main>

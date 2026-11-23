@@ -25,7 +25,7 @@ export default defineConfig({
   },
   webServer: [
     {
-      command: "node apps/savanna-host-demo/mock-lms/server.cjs",
+      command: "node apps/host-demo/mock-lms/server.cjs",
       url: `${mockLmsOrigin}/mock-lms/config`,
       timeout: 10_000,
       reuseExistingServer: !process.env.CI,

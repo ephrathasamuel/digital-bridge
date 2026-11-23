@@ -1,0 +1,367 @@
+/*
+ * Bridge Learning: a made up learning portal that hosts the Digital Bridge plug-in in these demo pages.
+ * Plain CSS, no framework. The --bs-* tokens are read by the widgets (see web-components/src/styles/index.css),
+ * so the plug-in matches the host the same way it would on a Bootstrap site.
+ */
+:root {
+  --ink: #1c1917;
+  --muted: #57534e;
+  --paper: #fbf7f2;
+  --card: #ffffff;
+  --line: #d6cfc7;
+  --brand: #7a2b18;
+  --brand-ink: #ffffff;
+  --brand-soft: #f6e7df;
+  --focus: #0b3d91;
+  --bs-primary: var(--brand);
+  --bs-body-color: var(--ink);
+  --bs-body-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Ethiopic', 'Nyala', sans-serif;
+  color-scheme: light;
+}
+
+body.db-colorblind-safe {
+  --brand: #004488;
+  --brand-soft: #e3edf7;
+  --focus: #002244;
+}
+
+body.db-high-contrast {
+  --ink: #000000;
+  --muted: #000000;
+  --paper: #ffffff;
+  --card: #ffffff;
+  --line: #000000;
+  --brand: #000000;
+  --brand-soft: #ffffff;
+  --focus: #000000;
+}
+
+body.db-dark {
+  --ink: #f5f0ea;
+  --muted: #d6cfc7;
+  --paper: #141210;
+  --card: #1f1c19;
+  --line: #57534e;
+  --brand: #f2a98a;
+  --brand-ink: #141210;
+  --brand-soft: #2d221d;
+  --focus: #9ec5ff;
+  color-scheme: dark;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--bs-body-font-family);
+  font-size: 1rem;
+  line-height: 1.55;
+}
+
+[lang='am'] {
+  font-family: 'Noto Sans Ethiopic', 'Nyala', var(--bs-body-font-family);
+}
+
+a {
+  color: var(--brand);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+/* Visible focus everywhere, never hidden under the top bar (2.4.7, 2.4.11). */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 2px;
+}
+
+a,
+button,
+input,
+select,
+textarea,
+summary,
+[tabindex],
+db-signup,
+db-ask,
+db-career-gateway,
+db-employer-accommodations {
+  scroll-margin-top: 6rem;
+  scroll-margin-bottom: 6rem;
+}
+
+.skip-link {
+  position: absolute;
+  left: 1rem;
+  top: -10rem;
+  z-index: 10;
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 0.5rem;
+  font-weight: 700;
+}
+
+.skip-link:focus {
+  top: 1rem;
+}
+
+/* Top bar. Not sticky, so it can never cover the focused field (2.4.11). */
+.db-host-topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--card);
+  border-bottom: 1px solid var(--line);
+  border-top: 4px solid var(--brand);
+}
+
+.db-topbar-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  color: var(--ink);
+  font-size: 1.125rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.db-topbar-logo svg {
+  width: 2rem;
+  height: 2rem;
+  color: var(--brand);
+  flex-shrink: 0;
+}
+
+.db-demo-tag {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0 0.5rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.db-topbar-nav ul {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.db-topbar-nav a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.75rem;
+  border-radius: 0.5rem;
+  color: var(--ink);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.db-topbar-nav a:hover {
+  background: var(--brand-soft);
+}
+
+.db-topbar-nav a[aria-current='page'] {
+  color: var(--brand);
+  text-decoration: underline;
+  text-decoration-thickness: 3px;
+}
+
+.db-topbar-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  margin-left: auto;
+}
+
+.db-topbar-lang {
+  display: inline-flex;
+  border: 2px solid var(--ink);
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.db-topbar-lang button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 0.875rem;
+  border: 0;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.db-topbar-lang button + button {
+  border-left: 2px solid var(--ink);
+}
+
+.db-topbar-lang button[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--card);
+}
+
+.db-topbar-lang button[aria-pressed='true']::before {
+  content: '\2713\00a0';
+}
+
+.db-topbar-vision {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.db-topbar-vision select {
+  min-height: 44px;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0 0.5rem;
+  border: 2px solid var(--ink);
+  border-radius: 0.5rem;
+  background: var(--card);
+  color: var(--ink);
+  font: inherit;
+}
+
+/* Page body: one fluid column that reflows at 320px (1.4.10). */
+main.db-host-main {
+  width: 100%;
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+main.db-host-main > h1 {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.25;
+}
+
+.db-host-lede {
+  margin: 0 0 1.5rem;
+  color: var(--muted);
+  font-size: 1.0625rem;
+}
+
+.db-host-confirmation {
+  margin: 0 0 1rem;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--brand);
+  border-radius: 0.75rem;
+  background: var(--brand-soft);
+  font-weight: 600;
+}
+
+.db-host-section {
+  margin: 2rem 0;
+}
+
+.db-host-section > h2 {
+  margin: 0 0 0.75rem;
+  font-size: 1.375rem;
+}
+
+.db-host-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.db-host-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--card);
+}
+
+.db-host-card h3 {
+  margin: 0;
+  font-size: 1.125rem;
+}
+
+.db-host-card p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.db-host-button {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: 44px;
+  margin-top: auto;
+  padding: 0 1rem;
+  border: 2px solid var(--brand);
+  border-radius: 0.5rem;
+  background: var(--brand);
+  color: var(--brand-ink);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.db-host-button.secondary {
+  background: var(--card);
+  color: var(--brand);
+}
+
+.db-host-progress {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.db-host-progress progress {
+  width: 100%;
+  height: 0.75rem;
+  accent-color: var(--brand);
+}
+
+.db-host-footer {
+  max-width: 60rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 2.5rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+db-employer-accommodations {
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto !important;
+    transition: none !important;
+    animation: none !important;
+  }
+}

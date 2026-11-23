@@ -18,8 +18,8 @@ function copySignupAliases() {
       }
 
       // Read-aloud cues + manifests: served at dist/audio/{lang}/ as well as dist/assets/audio/{lang}/
-      // (the latter arrives with the copied savanna-host-demo folder), so either audio-base-url works.
-      const audioRoot = join(__dirname, '../savanna-host-demo/assets/audio');
+      // (the latter arrives with the copied host-demo folder), so either audio-base-url works.
+      const audioRoot = join(__dirname, '../host-demo/assets/audio');
       for (const lang of ['am', 'en']) {
         for (const name of readdirSync(join(audioRoot, lang))) {
           this.emitFile({ type: 'asset', fileName: `audio/${lang}/${name}`, source: readFileSync(join(audioRoot, lang, name)) });

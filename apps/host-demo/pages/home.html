@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Learner home | Bridge Learning (demo)</title>
+    <link rel="stylesheet" href="../assets/css/host.css" />
+  </head>
+  <body class="db-host-body">
+    <a class="skip-link" href="#main-content">Skip to main content</a>
+    <header class="db-host-topbar">
+      <a class="db-topbar-logo" href="home.html">
+        <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M3 24h26v3H3zM5 24v-6M27 24v-6M16 24v-9" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M3 17c4-7 22-7 26 0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+        <span>Bridge Learning</span>
+        <span class="db-demo-tag">Demo portal</span>
+      </a>
+      <nav class="db-topbar-nav" aria-label="Learner navigation">
+        <ul>
+          <li><a href="home.html" aria-current="page">Home</a></li>
+          <li><a href="signup.html">Sign up</a></li>
+          <li><a href="profile.html">My Profile (edit)</a></li>
+          <li><a href="jobs.html">Career Gateway (jobs)</a></li>
+          <li><a href="../demo/blank.html">Plain page</a></li>
+        </ul>
+      </nav>
+      <div class="db-topbar-tools">
+        <div class="db-topbar-lang" role="group" aria-label="Widget language">
+          <button type="button" data-db-lang="en" aria-pressed="true">English</button>
+          <button type="button" data-db-lang="am" aria-pressed="false"><span lang="am">አማርኛ</span></button>
+        </div>
+        <span class="db-topbar-vision">
+          <label for="db-vision">Colours</label>
+          <select id="db-vision" data-db-vision>
+            <option value="terracotta">Warm (default)</option>
+            <option value="colorblind-safe">Colour-blind safe (blue and gold)</option>
+            <option value="high-contrast">High contrast (black and white)</option>
+            <option value="dark">Dark (low glare)</option>
+          </select>
+        </span>
+      </div>
+    </header>
+    <main class="db-host-main" id="main-content">
+      <h1>Welcome to Bridge Learning</h1>
+      <p class="db-host-lede">Free short courses that help you start working. Create your profile once, then learn and find jobs that offer the support you need.</p>
+
+      <section class="db-host-section" aria-labelledby="next-steps">
+        <h2 id="next-steps">Your next steps</h2>
+        <ol class="db-host-grid">
+          <li class="db-host-card">
+            <h3>1. Create your learner profile</h3>
+            <p>Seven short questions. Answer by typing, by voice or with a helper. No ID is required and your support needs stay private.</p>
+            <a class="db-host-button" href="signup.html">Start sign up</a>
+          </li>
+          <li class="db-host-card">
+            <h3>2. Check your answers</h3>
+            <p>Change any answer, download your data or delete it at any time.</p>
+            <a class="db-host-button secondary" href="profile.html">Open My Profile</a>
+          </li>
+          <li class="db-host-card">
+            <h3>3. Find a job that fits</h3>
+            <p>Filter jobs by the support employers offer. Your filter never leaves this device.</p>
+            <a class="db-host-button secondary" href="jobs.html">Open Career Gateway</a>
+          </li>
+        </ol>
+      </section>
+
+      <section class="db-host-section" aria-labelledby="courses">
+        <h2 id="courses">Your courses</h2>
+        <ul class="db-host-grid">
+          <li class="db-host-card">
+            <h3>Digital Skills 101</h3>
+            <p>Email, the web and staying safe online.</p>
+            <div class="db-host-progress">
+              <label for="progress-digital">Progress: 4 of 10 lessons</label>
+              <progress id="progress-digital" max="10" value="4">4 of 10 lessons</progress>
+            </div>
+          </li>
+          <li class="db-host-card">
+            <h3>Customer Service Basics</h3>
+            <p>Helping customers by phone, chat and in person.</p>
+            <div class="db-host-progress">
+              <label for="progress-service">Progress: 1 of 8 lessons</label>
+              <progress id="progress-service" max="8" value="1">1 of 8 lessons</progress>
+            </div>
+          </li>
+          <li class="db-host-card">
+            <h3>Introduction to Spreadsheets</h3>
+            <p>Tables, simple sums and clear weekly reports.</p>
+            <div class="db-host-progress">
+              <label for="progress-sheets">Progress: not started</label>
+              <progress id="progress-sheets" max="6" value="0">not started</progress>
+            </div>
+          </li>
+        </ul>
+      </section>
+
+      <db-ask lang="en" partner-id="demo-portal" audio-base-url="../assets"></db-ask>
+    </main>
+    <footer class="db-host-footer">
+      <p>Bridge Learning is a made up learning portal. It only exists to show how a school or training site can add the Digital Bridge plug-in. The courses and jobs on these pages are examples.</p>
+    </footer>
+    <script src="../assets/js/host.js"></script>
+    <script type="module" src="../assets/js/db-widgets.v1.0.0.js"></script>
+  </body>
+</html>

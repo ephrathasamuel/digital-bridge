@@ -35,6 +35,12 @@ function redactPrivateSupportData(value: unknown, visited = new WeakMap<object, 
   return copy;
 }
 
+/**
+ * API used by hosted pages that set no api-url. Build with VITE_DB_API_URL=https://your-api.example/api/v1 to point
+ * the widgets at your own deployment.
+ */
+const HOSTED_API_URL: string = import.meta.env.VITE_DB_API_URL || 'https://digital-bridge-api.onrender.com/api/v1';
+
 export abstract class ReactShadowElement extends HTMLElement {
   static version = '1.0.0';
   static get observedAttributes(): string[] {
@@ -98,7 +104,7 @@ export abstract class ReactShadowElement extends HTMLElement {
     if (typeof window === 'undefined') return undefined;
     const hostname = window.location.hostname.toLowerCase();
     const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '[::1]';
-    return isLocalhost ? undefined : 'https://digital-bridge-track1.onrender.com/api/v1';
+    return isLocalhost ? undefined : HOSTED_API_URL;
   }
 
   protected get partnerId(): string {

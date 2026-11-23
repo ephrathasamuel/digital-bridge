@@ -10,6 +10,17 @@ government forms. Click a form field, then:
 
 Alt+Shift+H opens and closes the bar. Esc closes it. Settings are remembered per website.
 
+## Install from a store
+
+Firefox Add-ons (desktop and Android) and Microsoft Edge Add-ons are free stores; publishing steps are in
+[STORE.md](STORE.md). Until the listings are live, install it yourself as below.
+
+## Install in Firefox (for testing)
+
+1. Download `digital-bridge-help-bar.zip` from https://digital-bridge-six.vercel.app/downloads/digital-bridge-help-bar.zip.
+2. Open `about:debugging#/runtime/this-firefox`, choose **Load Temporary Add-on** and pick the zip.
+   (Temporary add-ons are removed when Firefox closes; the store version stays.)
+
 ## Install (Chrome or Edge)
 
 1. Download this repository (Code, then Download ZIP) and unzip it.

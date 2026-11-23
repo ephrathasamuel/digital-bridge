@@ -1,0 +1,97 @@
+/*
+ * Digital Bridge site styles, shared by every page so they match the landing page.
+ * .site-top (the dark bar with "Back to home") works on any page; the rest applies only with <body class="site">,
+ * so demo "partner" sites keep their own look and only gain the bar.
+ * Blue and amber: told apart by every type of colour blindness, and far apart in lightness. Text 17:1 or more.
+ */
+:root {
+  --dbs-night: #0a1a36; --dbs-night-2: #10264d; --dbs-on-night: #ffffff; --dbs-on-night-muted: #c9d5ea;
+  --dbs-ink: #0b0f19; --dbs-muted: #3a4659; --dbs-paper: #f5f7fb; --dbs-card: #ffffff; --dbs-line: #d3dae6; --dbs-line-strong: #5f6b7d;
+  --dbs-brand: #0b3c8c; --dbs-brand-dark: #082d6b; --dbs-tint: #e6eefb; --dbs-amber: #ffd43b; --dbs-amber-dark: #e9b800;
+  --dbs-shadow: 0 1px 2px rgba(10, 26, 54, 0.06), 0 8px 24px rgba(10, 26, 54, 0.08);
+  --dbs-font: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Noto Sans Ethiopic', 'Nyala', sans-serif;
+}
+
+/* ---------- Shared top bar ---------- */
+.site-top {
+  background: linear-gradient(180deg, var(--dbs-night) 0%, var(--dbs-night-2) 100%);
+  color: var(--dbs-on-night);
+  font: 600 1rem/1.4 var(--dbs-font);
+}
+.site-top-inner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem;
+  width: 100%; max-width: 74rem; margin: 0 auto; padding: 0.65rem 1.25rem;
+}
+.site-logo { display: inline-flex; align-items: center; gap: 0.6rem; min-height: 44px; color: var(--dbs-on-night); font-weight: 800; font-size: 1.1rem; text-decoration: none; }
+.site-logo-mark { display: grid; place-items: center; width: 2.2rem; height: 2.2rem; border-radius: 0.65rem; background: var(--dbs-amber); color: var(--dbs-night); }
+.site-logo-mark svg { width: 1.45rem; height: 1.45rem; }
+.site-back {
+  display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 1.1rem 0 0.85rem;
+  border: 2px solid rgba(255, 255, 255, 0.6); border-radius: 999px; color: var(--dbs-on-night); font-weight: 700; text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+.site-back svg { width: 1.2rem; height: 1.2rem; flex-shrink: 0; }
+.site-back:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--dbs-amber); }
+/* Stronger than any page's own link colour (body.site a, host.css a), so the button never turns dark on the dark bar. */
+html body .site-top a.site-back, html body .site-top a.site-back:visited { color: var(--dbs-on-night); text-decoration: none; }
+.site-top :focus-visible { outline: 3px solid var(--dbs-amber); outline-offset: 3px; box-shadow: none; }
+
+/* ---------- Full site look (body.site) ---------- */
+body.site { margin: 0; background: var(--dbs-paper); color: var(--dbs-ink); font: 1.0625rem/1.65 var(--dbs-font); -webkit-font-smoothing: antialiased; }
+body.site [lang='am'] { font-family: 'Noto Sans Ethiopic', 'Nyala', system-ui, sans-serif; }
+body.site *, body.site *::before, body.site *::after { box-sizing: border-box; }
+body.site :focus-visible { outline: 3px solid var(--dbs-amber); outline-offset: 3px; box-shadow: 0 0 0 6px var(--dbs-ink); }
+body.site a { color: var(--dbs-brand); font-weight: 700; text-decoration: none; }
+body.site p a:hover, body.site p a:focus-visible, body.site li a:hover, body.site li a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+body.site a, body.site button, body.site input, body.site select, body.site textarea { scroll-margin: 6rem; }
+
+.page { width: 100%; max-width: 50rem; margin: 0 auto; padding: 2.5rem 1.25rem 4rem; }
+.page.wide { max-width: 64rem; }
+.page-head { margin-bottom: 2rem; }
+.kicker { margin: 0 0 0.4rem; color: var(--dbs-brand); font-weight: 800; font-size: 0.9rem; letter-spacing: 0.08em; text-transform: uppercase; }
+body.site h1 { margin: 0 0 0.75rem; font: 800 clamp(2rem, 5vw, 2.8rem)/1.1 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif; letter-spacing: -0.02em; }
+body.site h2 { margin: 2.25rem 0 0.75rem; font-size: clamp(1.35rem, 3vw, 1.7rem); line-height: 1.2; letter-spacing: -0.01em; }
+body.site h3 { margin: 0 0 0.5rem; font-size: 1.15rem; }
+.lede { margin: 0; max-width: 42rem; font-size: 1.15rem; color: var(--dbs-muted); }
+.card { margin: 0 0 1.25rem; padding: 1.5rem; background: var(--dbs-card); border: 1px solid var(--dbs-line); border-radius: 1rem; box-shadow: var(--dbs-shadow); }
+.card > :first-child { margin-top: 0; }
+.card > :last-child { margin-bottom: 0; }
+.callout { padding: 1rem 1.25rem; border-left: 6px solid var(--dbs-amber); border-radius: 0.6rem; background: var(--dbs-card); box-shadow: var(--dbs-shadow); }
+.muted { color: var(--dbs-muted); }
+
+/* Buttons */
+.btn { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 48px; padding: 0 1.25rem;
+  border: 2px solid var(--dbs-brand); border-radius: 0.75rem; background: var(--dbs-card); color: var(--dbs-brand);
+  font: inherit; font-weight: 700; text-decoration: none; cursor: pointer; }
+.btn:hover { background: var(--dbs-tint); }
+.btn.solid { background: var(--dbs-brand); color: #ffffff; }
+.btn.solid:hover { background: var(--dbs-brand-dark); border-color: var(--dbs-brand-dark); }
+.btn.amber { background: var(--dbs-amber); color: var(--dbs-ink); border-color: var(--dbs-ink); }
+.btn.amber:hover { background: var(--dbs-amber-dark); }
+.btn svg { width: 1.2rem; height: 1.2rem; }
+.row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+/* Forms and tables */
+body.site label { display: block; margin-bottom: 0.3rem; font-weight: 700; }
+.field { margin-bottom: 1.15rem; }
+.hint { margin: 0 0 0.3rem; font-size: 0.95rem; color: var(--dbs-muted); }
+body.site input:not([type='checkbox']):not([type='radio']), body.site select, body.site textarea {
+  width: 100%; min-height: 46px; padding: 0.45rem 0.75rem; border: 2px solid var(--dbs-line-strong); border-radius: 0.6rem;
+  background: #ffffff; color: var(--dbs-ink); font: inherit; }
+body.site input[type='checkbox'] { width: 1.4rem; height: 1.4rem; margin-top: 0.15rem; accent-color: var(--dbs-brand); }
+.check { display: flex; gap: 0.65rem; align-items: flex-start; }
+.check label { font-weight: 600; }
+body.site table { width: 100%; border-collapse: separate; border-spacing: 0; margin: 0.5rem 0 1rem; background: var(--dbs-card);
+  border: 1px solid var(--dbs-line); border-radius: 0.8rem; overflow: hidden; }
+body.site caption { text-align: left; font-weight: 800; padding-bottom: 0.4rem; }
+body.site th, body.site td { padding: 0.65rem 0.85rem; text-align: left; vertical-align: top; border-bottom: 1px solid var(--dbs-line); }
+body.site tr:last-child td { border-bottom: 0; }
+body.site th { background: var(--dbs-tint); }
+body.site code { font-family: 'Cascadia Code', ui-monospace, Consolas, monospace; font-size: 0.92em; padding: 0.05rem 0.35rem; border-radius: 0.35rem; background: var(--dbs-tint); }
+body.site ul, body.site ol { padding-left: 1.4rem; }
+body.site li + li { margin-top: 0.35rem; }
+
+.site-foot { border-top: 1px solid var(--dbs-line); color: var(--dbs-muted); font-size: 0.95rem; }
+.site-foot .page { padding-top: 1.5rem; padding-bottom: 2.5rem; }
+
+@media (prefers-reduced-motion: reduce) { .site-back, .btn { transition: none; } }

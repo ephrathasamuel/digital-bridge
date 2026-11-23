@@ -4,6 +4,7 @@ import { NestFactory } from '@nestjs/core';
 import * as fs from 'fs';
 import * as path from 'path';
 import { Module, ValidationPipe } from '@nestjs/common';
+import type { CorsOptionsDelegate } from "@nestjs/common/interfaces/external/cors-options.interface";
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { CoreApiModule } from './core-api.module';
 import { LtiModule } from './lti/lti.module';
@@ -22,19 +23,26 @@ async function bootstrap() {
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-  app.enableCors({
-    origin: (origin, callback) => {
-      let hostedVercel = false;
-      try {
-        hostedVercel = new URL(origin).hostname.endsWith('.vercel.app');
-      } catch {
-        hostedVercel = false;
-      }
-      if (!origin || corsOrigins.includes(origin) || hostedVercel) callback(null, true);
-      else callback(new Error('Origin not allowed by CORS'), false);
-    },
-    credentials: true,
-  });
+  const allowedOrigin = (origin: string | undefined): boolean => {
+    if (!origin || corsOrigins.includes(origin)) return true;
+    try {
+      return new URL(origin).hostname.endsWith('.vercel.app');
+    } catch {
+      return false;
+    }
+  };
+  // The read aloud route is public, rate limited and cookie free, so the help bar may call it from any website
+  // (the browser extension runs on LinkedIn, job boards, etc.). Every other route keeps the allow-list above.
+  const corsFor: CorsOptionsDelegate<{ url?: string; headers: { origin?: string } }> = (req, callback) => {
+    const origin = req.headers.origin;
+    if ((req.url ?? '').startsWith('/api/v1/voice')) {
+      callback(null, { origin: true, credentials: false });
+      return;
+    }
+    if (allowedOrigin(origin)) callback(null, { origin: true, credentials: true });
+    else callback(new Error('Origin not allowed by CORS'), { origin: false });
+  };
+  app.enableCors(corsFor);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
 
   const config = new DocumentBuilder()

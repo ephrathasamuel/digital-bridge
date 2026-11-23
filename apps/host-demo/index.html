@@ -4,250 +4,427 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Digital Bridge: forms everyone can fill in</title>
-    <meta name="description" content="Open source plug-in that adds voice input, read aloud, Amharic and English, sign language help and colour modes to any form." />
+    <meta name="description" content="Open source help bar and widgets that add voice answers, read aloud in any language, Amharic typing and colour modes to any form." />
     <style>
-      /* Safe for every type of colour blindness: blue and amber, far apart in lightness. Body text 17.7:1 or more. */
+      /* Blue and amber: told apart by every type of colour blindness, and far apart in lightness too. */
       :root {
-        --ink: #0b0f19; --muted: #2f3a4d; --paper: #f4f6fa; --card: #ffffff; --line: #5f6b7d;
-        --brand: #0b3c8c; --brand-dark: #082d6b; --on-brand: #ffffff; --soft: #e4ecf8;
-        --accent: #ffd43b; --on-accent: #0b0f19; --focus: #082d6b; --code: #e6ebf2;
+        --night: #0a1a36; --night-2: #10264d; --on-night: #ffffff; --on-night-muted: #c9d5ea;
+        --ink: #0b0f19; --muted: #3a4659; --paper: #f5f7fb; --card: #ffffff; --line: #d3dae6; --line-strong: #5f6b7d;
+        --brand: #0b3c8c; --brand-dark: #082d6b; --tint: #e6eefb;
+        --amber: #ffd43b; --amber-dark: #e9b800; --on-amber: #0b0f19;
+        --focus: #ffd43b; --focus-ring: #0b0f19;
+        --radius: 1rem; --shadow: 0 1px 2px rgba(10, 26, 54, 0.06), 0 8px 24px rgba(10, 26, 54, 0.08);
         color-scheme: light;
       }
       @media (prefers-color-scheme: dark) {
         :root {
-          --ink: #f5f7fa; --muted: #d5dbe5; --paper: #0b0f19; --card: #151b28; --line: #9aa5b8;
-          --brand: #ffd43b; --brand-dark: #ffe58a; --on-brand: #0b0f19; --soft: #1e2638;
-          --accent: #ffd43b; --on-accent: #0b0f19; --focus: #ffd43b; --code: #1e2638;
+          --ink: #f3f6fb; --muted: #c4cedd; --paper: #0b1220; --card: #121b2e; --line: #26334d; --line-strong: #8d9ab0;
+          --brand: #ffd43b; --brand-dark: #ffe17a; --tint: #1a2740; --shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
           color-scheme: dark;
         }
       }
       *, *::before, *::after { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
       body {
         margin: 0; background: var(--paper); color: var(--ink); line-height: 1.6; font-size: 1.0625rem;
-        font-family: system-ui, -apple-system, 'Segoe UI', Roboto, 'Noto Sans Ethiopic', 'Nyala', sans-serif;
+        font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, Roboto, 'Noto Sans Ethiopic', 'Nyala', sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
       [lang='am'] { font-family: 'Noto Sans Ethiopic', 'Nyala', system-ui, sans-serif; }
-      a { color: var(--brand); text-decoration-thickness: 2px; text-underline-offset: 3px; }
-      :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
-      a, button, summary { scroll-margin: 6rem; }
+      h1, h2, h3 { font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif; letter-spacing: -0.02em; }
+
+      /* Links: no underline. Inline links are bold and coloured, and underline on hover and keyboard focus. */
+      a { color: var(--brand); text-decoration: none; font-weight: 700; }
+      p a:hover, p a:focus-visible { text-decoration: underline; text-underline-offset: 3px; }
+      :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; box-shadow: 0 0 0 6px var(--focus-ring); border-radius: 0.4rem; }
+      a, button { scroll-margin: 6rem; }
       .skip-link {
         position: absolute; left: 1rem; top: -10rem; z-index: 10; padding: 0.75rem 1rem;
-        background: var(--card); color: var(--ink); border: 3px solid var(--ink); border-radius: 0.5rem; font-weight: 700;
+        background: var(--amber); color: var(--on-amber); border-radius: 0.5rem;
       }
       .skip-link:focus { top: 1rem; }
-      .wrap { width: 100%; max-width: 72rem; margin: 0 auto; padding: 0 1rem; }
+      .wrap { width: 100%; max-width: 74rem; margin: 0 auto; padding: 0 1.25rem; }
+      .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
-      .site-header { background: var(--card); border-top: 6px solid var(--accent); border-bottom: 1px solid var(--line); }
-      .site-header .wrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 1.5rem; padding-block: 0.5rem; }
-      .logo { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; color: var(--ink); font-weight: 800; font-size: 1.2rem; text-decoration: none; }
-      .logo svg { width: 2.25rem; height: 2.25rem; color: var(--brand); }
-      .site-nav ul { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
-      .site-nav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.75rem; border-radius: 0.5rem; color: var(--ink); font-weight: 600; text-decoration: none; }
-      .site-nav a:hover { background: var(--soft); text-decoration: underline; }
-
-      .hero { padding: 3.5rem 0 3rem; }
-      .eyebrow { display: inline-block; margin: 0 0 1rem; padding: 0.25rem 0.75rem; border: 2px solid var(--ink); border-radius: 999px; font-weight: 700; font-size: 0.95rem; }
-      h1 { margin: 0 0 1rem; font-size: clamp(2.1rem, 6vw, 3.5rem); line-height: 1.1; letter-spacing: -0.02em; max-width: 18ch; }
-      .lede { margin: 0 0 1.75rem; max-width: 46rem; font-size: 1.2rem; color: var(--muted); }
+      /* ---------- Hero ---------- */
+      .hero { position: relative; overflow: hidden; color: var(--on-night);
+        background: radial-gradient(60rem 30rem at 85% -10%, #1d3f7a 0%, transparent 60%), linear-gradient(180deg, var(--night) 0%, var(--night-2) 100%); }
+      .hero a:not(.button) { color: var(--on-night); }
+      .topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1.5rem; padding-block: 1rem; }
+      .logo { display: inline-flex; align-items: center; gap: 0.6rem; min-height: 44px; font-size: 1.2rem; font-weight: 800; }
+      .logo-mark { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 0.7rem; background: var(--amber); color: var(--night); }
+      .logo-mark svg { width: 1.6rem; height: 1.6rem; }
+      .topnav ul { display: flex; flex-wrap: wrap; gap: 0.25rem; margin: 0; padding: 0; list-style: none; }
+      .topnav a { display: inline-flex; align-items: center; min-height: 44px; padding: 0 0.85rem; border-radius: 0.6rem; font-weight: 600; color: var(--on-night-muted); }
+      .topnav a:hover { color: var(--on-night); background: rgba(255, 255, 255, 0.08); }
+      .hero-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr); gap: 3rem; align-items: center; padding: 3.5rem 0 6.5rem; }
+      .pill { display: inline-flex; align-items: center; gap: 0.5rem; margin: 0 0 1.25rem; padding: 0.3rem 0.85rem; border-radius: 999px;
+        background: rgba(255, 212, 59, 0.12); border: 1px solid rgba(255, 212, 59, 0.5); color: var(--amber); font-size: 0.95rem; font-weight: 700; }
+      .hero h1 { margin: 0 0 1.25rem; font-size: clamp(2.4rem, 6.2vw, 4.25rem); line-height: 1.04; font-weight: 800; }
+      .hero h1 em { font-style: normal; color: var(--amber); }
+      .hero .lede { margin: 0 0 2rem; max-width: 36rem; font-size: 1.2rem; color: var(--on-night-muted); }
       .actions { display: flex; flex-wrap: wrap; gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
-      .button {
-        display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-height: 48px; padding: 0 1.25rem;
-        border: 2px solid var(--brand); border-radius: 0.6rem; background: var(--card); color: var(--brand);
-        font-weight: 700; text-decoration: none;
-      }
-      .button:hover { background: var(--soft); }
-      .button.primary { background: var(--brand); color: var(--on-brand); }
-      .button.primary:hover { background: var(--brand-dark); border-color: var(--brand-dark); }
-      .button.accent { background: var(--accent); color: var(--on-accent); border-color: var(--ink); }
+      .button { display: inline-flex; align-items: center; justify-content: center; gap: 0.55rem; min-height: 50px; padding: 0 1.4rem;
+        border-radius: 0.75rem; font-weight: 700; border: 2px solid transparent; transition: transform 0.15s ease, background-color 0.15s ease; }
+      .button svg { width: 1.2rem; height: 1.2rem; }
+      .button:hover { transform: translateY(-1px); }
+      .button.amber { background: var(--amber); color: var(--on-amber); }
+      .button.amber:hover { background: var(--amber-dark); }
+      .button.ghost { color: var(--on-night); border-color: rgba(255, 255, 255, 0.55); }
+      .button.ghost:hover { background: rgba(255, 255, 255, 0.08); }
+      .button.solid { background: var(--brand); color: #ffffff; }
+      .button.line { color: var(--brand); border-color: var(--brand); background: var(--card); }
+      @media (prefers-color-scheme: dark) { .button.solid { color: var(--night); } }
 
-      section { padding: 2.5rem 0; }
-      section + section { border-top: 1px solid var(--line); }
-      h2 { margin: 0 0 0.5rem; font-size: clamp(1.6rem, 4vw, 2.1rem); line-height: 1.2; }
-      .section-lede { margin: 0 0 1.5rem; max-width: 48rem; color: var(--muted); }
-      .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
-      .card { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem; border: 2px solid var(--line); border-radius: 0.9rem; background: var(--card); }
-      .card h3 { display: flex; align-items: center; gap: 0.6rem; margin: 0; font-size: 1.15rem; }
-      .card h3 svg { width: 1.6rem; height: 1.6rem; flex-shrink: 0; color: var(--brand); }
-      .card p { margin: 0; color: var(--muted); }
-      .card .button { align-self: flex-start; margin-top: auto; }
-      .tag { align-self: flex-start; padding: 0 0.6rem; border: 2px solid var(--ink); border-radius: 999px; background: var(--accent); color: var(--on-accent); font-size: 0.85rem; font-weight: 700; }
-      pre { margin: 0; padding: 1rem; white-space: pre-wrap; overflow-wrap: anywhere; border: 2px solid var(--line); border-radius: 0.6rem; background: var(--code); color: var(--ink); font-size: 0.9rem; }
-      code { font-family: ui-monospace, 'Cascadia Code', Consolas, monospace; overflow-wrap: anywhere; }
-      .steps { margin: 0; padding-left: 1.5rem; }
-      .steps li + li { margin-top: 0.4rem; }
-      footer { padding: 2rem 0 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.95rem; }
-      footer p { margin: 0 0 0.5rem; max-width: 60rem; }
-      @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; transition: none !important; } }
+      /* Product preview: a picture of the help bar at work (decorative; described in text). */
+      .preview { position: relative; }
+      .mock-form { padding: 1.5rem; border-radius: 1.25rem; background: #ffffff; color: #0b0f19; box-shadow: 0 30px 60px rgba(0, 0, 0, 0.35); }
+      .mock-title { margin: 0 0 1rem; font-weight: 800; font-size: 1.1rem; }
+      .mock-label { display: block; margin-bottom: 0.3rem; font-weight: 700; font-size: 0.95rem; }
+      .mock-input { display: flex; align-items: center; justify-content: space-between; min-height: 46px; margin-bottom: 1rem; padding: 0 0.8rem;
+        border: 2px solid #5f6b7d; border-radius: 0.6rem; font-size: 1rem; }
+      .mock-input.active { border-color: #0b3c8c; box-shadow: 0 0 0 4px #ffd43b; }
+      .mock-input .am { font-family: 'Noto Sans Ethiopic', 'Nyala', sans-serif; font-size: 1.15rem; }
+      .mic { display: grid; place-items: center; width: 2rem; height: 2rem; border-radius: 50%; background: #0b3c8c; color: #fff; }
+      .mic svg { width: 1.1rem; height: 1.1rem; }
+      .heard { display: inline-flex; align-items: center; gap: 0.4rem; margin: -0.4rem 0 1rem; padding: 0.3rem 0.7rem; border-radius: 0.5rem;
+        background: #fff4cc; color: #4a3500; font-size: 0.9rem; font-weight: 700; }
+      .mock-bar { position: absolute; right: -1.5rem; bottom: -4rem; width: min(16rem, 70%); padding: 1rem; border-radius: 1rem;
+        background: #0b3c8c; color: #ffffff; box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35); }
+      .mock-bar strong { display: block; margin-bottom: 0.6rem; }
+      .mock-chip { display: flex; align-items: center; gap: 0.5rem; margin-top: 0.4rem; padding: 0.45rem 0.6rem; border-radius: 0.5rem;
+        background: rgba(255, 255, 255, 0.12); font-size: 0.9rem; font-weight: 600; }
+      .mock-chip.on { background: #ffd43b; color: #0b0f19; }
+      .mock-chip svg { width: 1rem; height: 1rem; flex-shrink: 0; }
+
+      /* ---------- Stats ---------- */
+      .stats { position: relative; margin-top: -2.5rem; }
+      .stats ul { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin: 0; padding: 0; list-style: none;
+        background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); }
+      .stats li { padding: 1.4rem 1.5rem; }
+      .stats li + li { border-left: 1px solid var(--line); }
+      .stats strong { display: block; font-size: 1.8rem; line-height: 1.1; font-weight: 800; color: var(--brand); }
+      .stats span { color: var(--muted); font-size: 0.98rem; }
+
+      /* ---------- Sections ---------- */
+      section { padding: 5rem 0 0; }
+      .kicker { margin: 0 0 0.5rem; color: var(--brand); font-weight: 800; font-size: 0.9rem; letter-spacing: 0.08em; text-transform: uppercase; }
+      h2 { margin: 0 0 0.75rem; font-size: clamp(1.9rem, 4.2vw, 2.75rem); line-height: 1.12; font-weight: 800; max-width: 22ch; }
+      .section-lede { margin: 0 0 2.25rem; max-width: 42rem; font-size: 1.125rem; color: var(--muted); }
+      .grid { display: grid; gap: 1.25rem; margin: 0; padding: 0; list-style: none; }
+      .grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .tile { display: flex; flex-direction: column; gap: 0.6rem; padding: 1.6rem; background: var(--card); border: 1px solid var(--line);
+        border-radius: var(--radius); box-shadow: var(--shadow); }
+      .tile h3 { margin: 0; font-size: 1.2rem; }
+      .tile p { margin: 0; color: var(--muted); }
+      .icon { display: grid; place-items: center; width: 3rem; height: 3rem; border-radius: 0.85rem; background: var(--tint); color: var(--brand); }
+      .icon svg { width: 1.5rem; height: 1.5rem; }
+      .icon.amber { background: var(--amber); color: var(--night); }
+
+      .steps { counter-reset: step; }
+      .steps .tile::before { counter-increment: step; content: counter(step); display: grid; place-items: center; width: 2.6rem; height: 2.6rem;
+        border-radius: 50%; background: var(--brand); color: #ffffff; font-weight: 800; font-size: 1.1rem; }
+      @media (prefers-color-scheme: dark) { .steps .tile::before { color: var(--night); } }
+
+      .way { gap: 0.9rem; }
+      .badge { align-self: flex-start; padding: 0.2rem 0.7rem; border-radius: 999px; background: var(--amber); color: var(--on-amber); font-size: 0.85rem; font-weight: 800; }
+      .code { position: relative; margin-top: auto; border-radius: 0.75rem; background: #0a1a36; color: #e8eefb; }
+      .code pre { margin: 0; padding: 1rem 1rem 3.5rem; white-space: pre-wrap; overflow-wrap: anywhere; font-size: 0.88rem; line-height: 1.5; }
+      .code code { font-family: 'Cascadia Code', ui-monospace, Consolas, monospace; }
+      .copy { position: absolute; right: 0.6rem; bottom: 0.6rem; min-height: 40px; min-width: 44px; padding: 0 0.8rem; border: 2px solid #ffd43b;
+        border-radius: 0.5rem; background: transparent; color: #ffd43b; font: inherit; font-weight: 700; cursor: pointer; }
+      .copy:hover { background: rgba(255, 212, 59, 0.12); }
+      .install { margin: 0; padding-left: 1.25rem; color: var(--muted); }
+      .install li + li { margin-top: 0.3rem; }
+      kbd, .path { font-family: 'Cascadia Code', ui-monospace, Consolas, monospace; font-size: 0.9em; padding: 0.05rem 0.35rem; border-radius: 0.35rem; background: var(--tint); color: var(--ink); }
+
+      .chain { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; margin: 0; padding: 0; list-style: none; }
+      .chain .tile { position: relative; }
+      .chain .tile:not(:last-child)::after { content: '→'; position: absolute; right: -1.05rem; top: 50%; transform: translateY(-50%);
+        font-size: 1.4rem; font-weight: 800; color: var(--brand); }
+      .chain small { color: var(--muted); font-weight: 700; }
+
+      .demos { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem; margin: 0; padding: 0; list-style: none; }
+      .demo { display: flex; align-items: center; justify-content: space-between; gap: 1rem; min-height: 5rem; padding: 1.1rem 1.25rem;
+        border-radius: var(--radius); background: var(--card); border: 1px solid var(--line); box-shadow: var(--shadow); color: var(--ink); }
+      .demo:hover { border-color: var(--brand); }
+      .demo span { display: flex; flex-direction: column; }
+      .demo small { color: var(--muted); font-weight: 400; font-size: 0.95rem; }
+      .demo svg { width: 1.4rem; height: 1.4rem; flex-shrink: 0; color: var(--brand); }
+
+      .cta { margin: 5rem 0 0; padding: 3rem 2rem; border-radius: 1.5rem; background: var(--amber); color: var(--on-amber); text-align: center; }
+      .cta h2 { margin: 0 auto 0.75rem; max-width: 24ch; }
+      .cta p { margin: 0 auto 1.75rem; max-width: 38rem; font-size: 1.125rem; }
+      .cta .actions { justify-content: center; }
+      .cta .button.dark { background: #0a1a36; color: #ffffff; }
+      .cta .button.outline { border-color: #0a1a36; color: #0a1a36; }
+
+      footer { margin-top: 4rem; padding: 2.5rem 0 3rem; border-top: 1px solid var(--line); color: var(--muted); font-size: 0.98rem; }
+      footer .wrap { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 1.5rem; }
+      footer p { margin: 0 0 0.4rem; max-width: 40rem; }
+      footer ul { display: flex; flex-wrap: wrap; gap: 0.25rem 1.25rem; margin: 0; padding: 0; list-style: none; }
+      footer ul a { display: inline-flex; align-items: center; min-height: 44px; }
+      footer ul a:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+      @media (max-width: 60rem) {
+        .hero-grid { grid-template-columns: 1fr; padding-bottom: 5.5rem; }
+        .mock-bar { right: 0.5rem; }
+        .grid.three, .demos { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .stats ul { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .stats li:nth-child(3) { border-left: 0; }
+        .stats li:nth-child(n + 3) { border-top: 1px solid var(--line); }
+        .chain { grid-template-columns: 1fr; }
+        .chain .tile:not(:last-child)::after { content: '↓'; right: auto; left: 50%; top: auto; bottom: -1.15rem; transform: translateX(-50%); }
+      }
+      @media (max-width: 40rem) {
+        .grid.three, .demos, .stats ul { grid-template-columns: 1fr; }
+        .stats li + li { border-left: 0; border-top: 1px solid var(--line); }
+        .mock-bar { position: static; width: auto; margin-top: 1rem; }
+        .hero-grid { padding-bottom: 4rem; }
+        section { padding-top: 3.5rem; }
+        .cta { padding: 2.25rem 1.25rem; }
+      }
+      @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } * { transition: none !important; } .button:hover { transform: none; } }
     </style>
   </head>
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
-    <header class="site-header">
+
+    <header class="hero">
       <div class="wrap">
-        <a class="logo" href="#main">
-          <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M3 24h26v3H3zM5 24v-6M27 24v-6M16 24v-9" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round"/><path d="M3 17c4-7 22-7 26 0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
-          <span>Digital Bridge</span>
-        </a>
-        <nav class="site-nav" aria-label="Site">
-          <ul>
-            <li><a href="#features">What it does</a></li>
-            <li><a href="#anywhere">Use it anywhere</a></li>
-            <li><a href="#voices">Voices</a></li>
-            <li><a href="#demos">Try it</a></li>
-            <li><a href="https://github.com/ephrathasamuel/digital-bridge">GitHub</a></li>
-          </ul>
-        </nav>
+        <div class="topbar">
+          <a class="logo" href="#main">
+            <span class="logo-mark"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M3 24h26v3H3zM5 24v-6M27 24v-6M16 24v-9" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M3 17c4-7 22-7 26 0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span>
+            <span>Digital Bridge</span>
+          </a>
+          <nav class="topnav" aria-label="Site">
+            <ul>
+              <li><a href="#features">Features</a></li>
+              <li><a href="#anywhere">Use it anywhere</a></li>
+              <li><a href="#voices">Voices</a></li>
+              <li><a href="#demos">Demos</a></li>
+              <li><a href="https://github.com/ephrathasamuel/digital-bridge">GitHub</a></li>
+            </ul>
+          </nav>
+        </div>
+
+        <div class="hero-grid">
+          <div>
+            <p class="pill">Open source · English and <span lang="am">አማርኛ</span></p>
+            <h1>Forms <em>everyone</em> can fill&nbsp;in.</h1>
+            <p class="lede">
+              Speak your answers, hear every question, type Amharic with English letters, and pick colours that work for
+              your eyes. On any website, from LinkedIn to a school sign up form.
+            </p>
+            <ul class="actions">
+              <li><a class="button amber" href="#anywhere">Add it to any site
+                <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></li>
+              <li><a class="button ghost" href="demo/any-form.html">See it on a form</a></li>
+            </ul>
+          </div>
+
+          <figure class="preview" aria-labelledby="preview-caption">
+            <figcaption id="preview-caption" class="sr-only">
+              Example: a job form where the phone number was answered by voice and the name typed in Amharic, with the
+              Accessibility help bar open beside it.
+            </figcaption>
+            <div aria-hidden="true">
+              <div class="mock-form">
+                <p class="mock-title">Apply: Customer Support Agent</p>
+                <span class="mock-label">Full name</span>
+                <div class="mock-input"><span class="am">ሐና በቀለ</span></div>
+                <span class="mock-label">Phone number</span>
+                <div class="mock-input active"><span>0911 234 567</span><span class="mic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span></div>
+                <span class="heard">Heard: “zero nine one one…” Check it</span>
+                <span class="mock-label">Why do you want this job?</span>
+                <div class="mock-input"><span>I like helping people…</span></div>
+              </div>
+              <div class="mock-bar">
+                <strong>Accessibility help</strong>
+                <div class="mock-chip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7"/></svg>Read this field aloud</div>
+                <div class="mock-chip on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0"/></svg>Answer by voice</div>
+                <div class="mock-chip"><span lang="am">ሀ</span>Amharic typing</div>
+              </div>
+            </div>
+          </figure>
+        </div>
       </div>
     </header>
 
     <main id="main">
-      <div class="hero wrap">
-        <p class="eyebrow">Open source · English and <span lang="am">አማርኛ</span></p>
-        <h1>Forms everyone can fill in.</h1>
-        <p class="lede">
-          Digital Bridge adds voice answers, read aloud, Amharic and English, sign language help and colour modes to
-          sign up and job forms, so disabled learners and job seekers can finish them without help. Use it as a
-          browser extension on any site, or add one line of code to your own.
-        </p>
-        <ul class="actions">
-          <li><a class="button primary" href="pages/home.html">Try the demo portal</a></li>
-          <li><a class="button accent" href="#anywhere">Add it to any site</a></li>
-          <li><a class="button" href="https://github.com/ephrathasamuel/digital-bridge">View the code</a></li>
+      <div class="stats wrap">
+        <ul aria-label="Digital Bridge in numbers">
+          <li><strong>1,100+</strong><span>languages for read aloud with open source voices</span></li>
+          <li><strong>0</strong><span>automated accessibility errors on our demo pages</span></li>
+          <li><strong>33 KB</strong><span>help bar download, works on slow phones</span></li>
+          <li><strong>MIT</strong><span>open source, free to use and change</span></li>
         </ul>
       </div>
 
       <section id="features" aria-labelledby="features-title">
         <div class="wrap">
-          <h2 id="features-title">What it does</h2>
-          <p class="section-lede">Built with disabled learners in Addis Ababa. Every feature works by keyboard, screen reader and touch.</p>
-          <ul class="grid">
-            <li class="card">
-              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg>Answer by voice</h3>
-              <p>Speak any answer, check what was heard, and change it before it is used. Nothing is sent without your OK.</p>
+          <p class="kicker">Features</p>
+          <h2 id="features-title">Everything a hard form is missing</h2>
+          <p class="section-lede">Built with disabled learners in Addis Ababa. Every part works by keyboard, screen reader, voice and touch.</p>
+          <ul class="grid three">
+            <li class="tile">
+              <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v5"/></svg></span>
+              <h3>Answer by voice</h3>
+              <p>Speak any answer. You see what was heard and can change it. Nothing is sent without your OK.</p>
             </li>
-            <li class="card">
-              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>Read aloud, any language</h3>
-              <p>Questions and answers are read aloud with the device's voices, open source voices or a voice service you choose.</p>
+            <li class="tile">
+              <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg></span>
+              <h3>Hear every question</h3>
+              <p>Each field's name, hint and current answer read aloud, in any language your device or our voices know.</p>
             </li>
-            <li class="card">
-              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M7 11V6a2 2 0 0 1 4 0v5M11 10V4a2 2 0 0 1 4 0v6M15 10V6a2 2 0 0 1 4 0v8a7 7 0 0 1-7 7h-1a7 7 0 0 1-6-3l-2-4a2 2 0 0 1 3-2l1 2"/></svg>Sign language help</h3>
-              <p>Picture cards for common questions and a signed video you can keep on your device for an interpreter.</p>
+            <li class="tile">
+              <span class="icon amber" lang="am" style="font-weight:800;font-size:1.4rem">ሀ</span>
+              <h3>Type Amharic easily</h3>
+              <p>Type <span class="path">selam</span> and get <span lang="am">ሰላም</span>. No Amharic keyboard needed.</p>
             </li>
-            <li class="card">
-              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18"/></svg>Colours for every eye</h3>
-              <p>A default palette that works for all types of colour blindness, plus high contrast and dark. States never rely on colour alone.</p>
+            <li class="tile">
+              <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 0 0 18z" fill="currentColor"/></svg></span>
+              <h3>Colours for every eye</h3>
+              <p>A palette safe for all types of colour blindness, plus high contrast, dark and bigger text.</p>
             </li>
-            <li class="card">
-              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Private by design</h3>
-              <p>Support needs stay on your device and are never shared with employers unless you choose to share them.</p>
+            <li class="tile">
+              <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></span>
+              <h3>Private by design</h3>
+              <p>Answers stay on the page. Support needs are never shared with employers unless you choose to.</p>
             </li>
-            <li class="card">
-              <h3><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.6a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0M3 3l18 18"/></svg>Works on slow internet</h3>
-              <p>Answers are saved on the device and sent when the connection returns. No time limits, nothing is lost.</p>
+            <li class="tile">
+              <span class="icon"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 8.8a15 15 0 0 1 20 0M5 12.6a10 10 0 0 1 14 0M8.5 16.4a5 5 0 0 1 7 0"/><circle cx="12" cy="20" r="1" fill="currentColor"/></svg></span>
+              <h3>Made for slow internet</h3>
+              <p>Small downloads, answers saved on the device, and no time limits. Nothing is lost when the signal drops.</p>
             </li>
           </ul>
+        </div>
+      </section>
+
+      <section aria-labelledby="how-title">
+        <div class="wrap">
+          <p class="kicker">How it works</p>
+          <h2 id="how-title">Three steps, on any form</h2>
+          <ol class="grid three steps">
+            <li class="tile"><h3>Open the help bar</h3><p>Press <strong>Accessibility help</strong> at the bottom of the page, or <kbd>Alt</kbd> + <kbd>Shift</kbd> + <kbd>H</kbd>.</p></li>
+            <li class="tile"><h3>Pick a field</h3><p>Click or Tab to any box: name, phone, a long answer. The bar knows which one you mean.</p></li>
+            <li class="tile"><h3>Listen, speak or type</h3><p>Hear the question, answer by voice or in Amharic, check it, and carry on yourself.</p></li>
+          </ol>
         </div>
       </section>
 
       <section id="anywhere" aria-labelledby="anywhere-title">
         <div class="wrap">
-          <h2 id="anywhere-title">Use it anywhere</h2>
-          <p class="section-lede">Three ways in, from no code at all to a full integration.</p>
-          <ul class="grid">
-            <li class="card">
-              <span class="tag">No code</span>
+          <p class="kicker">Use it anywhere</p>
+          <h2 id="anywhere-title">From no code to a full integration</h2>
+          <p class="section-lede">Use the extension on sites you do not own, or add Digital Bridge to your own site in one line.</p>
+          <ul class="grid three">
+            <li class="tile way">
+              <span class="badge">No code</span>
               <h3>Browser extension</h3>
-              <p>Adds a help bar to any form on any website, for example LinkedIn, a job board or a government form: voice answers, read aloud, Amharic typing and colour modes.</p>
-              <ol class="steps">
+              <p>Works on LinkedIn, job boards and government forms, in Chrome and Edge.</p>
+              <ol class="install">
                 <li>Download the code from GitHub.</li>
-                <li>Open <code>chrome://extensions</code> or <code>edge://extensions</code> and turn on Developer mode.</li>
-                <li>Choose Load unpacked and pick the <code>apps/extension</code> folder.</li>
+                <li>Open <span class="path">chrome://extensions</span> and turn on Developer mode.</li>
+                <li>Choose Load unpacked, then the <span class="path">apps/extension</span> folder.</li>
               </ol>
-              <a class="button" href="https://github.com/ephrathasamuel/digital-bridge/tree/main/apps/extension">Get the extension</a>
+              <a class="button line" href="https://github.com/ephrathasamuel/digital-bridge/tree/main/apps/extension">Get the extension</a>
             </li>
-            <li class="card">
-              <span class="tag">One line</span>
-              <h3>Help bar on your own site</h3>
-              <p>Site owners add the same help bar to every form on their pages with one script tag.</p>
-              <pre><code>&lt;script src="https://digital-bridge-six.vercel.app/db-assist.js" defer&gt;&lt;/script&gt;</code></pre>
+            <li class="tile way">
+              <span class="badge">One line</span>
+              <h3>Help bar on your site</h3>
+              <p>Adds the same help bar to every form on your pages.</p>
+              <div class="code">
+                <pre><code id="code-script">&lt;script src="https://digital-bridge-six.vercel.app/db-assist.js" defer&gt;&lt;/script&gt;</code></pre>
+                <button class="copy" type="button" data-copy="code-script" aria-label="Copy the help bar script">Copy</button>
+              </div>
             </li>
-            <li class="card">
-              <span class="tag">Full</span>
+            <li class="tile way">
+              <span class="badge">Full</span>
               <h3>Widgets, API and LMS</h3>
               <p>Ready made sign up, jobs and Ask widgets, a REST API, and LTI 1.3 for Moodle and Canvas.</p>
-              <pre><code>&lt;db-signup lang="am"&gt;&lt;/db-signup&gt;</code></pre>
-              <a class="button" href="https://github.com/ephrathasamuel/digital-bridge#install-level-1">Read the install guide</a>
+              <div class="code">
+                <pre><code id="code-widget">&lt;db-signup lang="am"&gt;&lt;/db-signup&gt;</code></pre>
+                <button class="copy" type="button" data-copy="code-widget" aria-label="Copy the sign up widget tag">Copy</button>
+              </div>
             </li>
           </ul>
+          <p id="copy-status" class="sr-only" role="status" aria-live="polite"></p>
         </div>
       </section>
 
       <section id="voices" aria-labelledby="voices-title">
         <div class="wrap">
-          <h2 id="voices-title">Voices for any language</h2>
-          <p class="section-lede">Choose where the read aloud voice comes from. Keys stay on your server, never in the browser.</p>
-          <ul class="grid">
-            <li class="card">
-              <h3>Device voices</h3>
-              <p>Free and offline. Uses the voices already on the phone or computer.</p>
-            </li>
-            <li class="card">
-              <h3>Open source voices</h3>
-              <p>Meta's MMS voices cover more than 1,100 languages, including Amharic, through your Digital Bridge API.</p>
-            </li>
-            <li class="card">
-              <h3>Your own voice service</h3>
-              <p>Connect any text to speech service with a URL, for example a self hosted Piper server or a paid provider.</p>
-            </li>
-          </ul>
+          <p class="kicker">Voices</p>
+          <h2 id="voices-title">A voice for every language</h2>
+          <p class="section-lede">Read aloud tries each source in order until one speaks your language. Keys stay on your server, never in the browser.</p>
+          <ol class="chain">
+            <li class="tile"><small>First</small><h3>Device voices</h3><p>Free and offline, from the phone or computer.</p></li>
+            <li class="tile"><small>Then</small><h3>Open source voices</h3><p>Meta's MMS voices: more than 1,100 languages, Amharic included, through your API.</p></li>
+            <li class="tile"><small>Or</small><h3>Your own service</h3><p>Connect any text to speech service with one URL, such as a self hosted Piper server.</p></li>
+          </ol>
         </div>
       </section>
 
       <section id="demos" aria-labelledby="demos-title">
         <div class="wrap">
-          <h2 id="demos-title">Try it</h2>
+          <p class="kicker">Demos</p>
+          <h2 id="demos-title">Try it now</h2>
           <p class="section-lede">Bridge Learning is a made up learning portal that shows the widgets on a real looking site.</p>
-          <ul class="grid">
-            <li class="card">
-              <h3>Learner home</h3>
-              <p>Next steps, course progress and the Ask box.</p>
-              <a class="button" href="pages/home.html">Open learner home</a>
-            </li>
-            <li class="card">
-              <h3>Sign up</h3>
-              <p>Seven short questions, voice on every field, private support needs, and a partner route for learners without an ID.</p>
-              <a class="button" href="pages/signup.html">Open sign up</a>
-            </li>
-            <li class="card">
-              <h3>My profile</h3>
-              <p>Review and change every answer, download or delete your data.</p>
-              <a class="button" href="pages/profile.html">Open my profile</a>
-            </li>
-            <li class="card">
-              <h3>Jobs</h3>
-              <p>Filter jobs by the support employers offer. The filter never leaves your device.</p>
-              <a class="button" href="pages/jobs.html">Open jobs</a>
-            </li>
-            <li class="card">
-              <h3>Plain page</h3>
-              <p>The widgets on a page with no styles at all, the way a partner first installs them.</p>
-              <a class="button" href="demo/blank.html">Open the plain page</a>
-            </li>
-            <li class="card">
-              <h3>Any form, with the help bar</h3>
-              <p>An ordinary form with the one line help bar added: voice, read aloud and colours on every field.</p>
-              <a class="button" href="demo/any-form.html">Open the form demo</a>
-            </li>
+          <ul class="demos">
+            <li><a class="demo" href="demo/any-form.html"><span>Any form + help bar<small>An ordinary job form</small></span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></li>
+            <li><a class="demo" href="pages/home.html"><span>Learner home<small>Portal with courses and Ask</small></span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></li>
+            <li><a class="demo" href="pages/signup.html"><span>Sign up<small>Seven questions, voice on each</small></span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></li>
+            <li><a class="demo" href="pages/profile.html"><span>My profile<small>Change, download or delete</small></span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></li>
+            <li><a class="demo" href="pages/jobs.html"><span>Jobs<small>Filter by the support offered</small></span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></li>
+            <li><a class="demo" href="demo/blank.html"><span>Plain page<small>Widgets with no styles</small></span><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></a></li>
           </ul>
+
+          <div class="cta">
+            <h2>Make your forms work for everyone</h2>
+            <p>Free and open source. Add the help bar today, or help improve it on GitHub.</p>
+            <ul class="actions">
+              <li><a class="button dark" href="#anywhere">Add it to your site</a></li>
+              <li><a class="button outline" href="https://github.com/ephrathasamuel/digital-bridge">Contribute on GitHub</a></li>
+            </ul>
+          </div>
         </div>
       </section>
     </main>
 
     <footer>
       <div class="wrap">
-        <p>Digital Bridge is open source under the MIT licence. It started at the Digital Bridge Accessibility Hackathon 2026 as the work of team johny x and is maintained on <a href="https://github.com/ephrathasamuel/digital-bridge">GitHub</a>.</p>
-        <p>More: <a href="standalone.html">all widgets on one page</a> · <a href="external-partner-demo.html">partner events demo</a> · <a href="mock-lms/index.html">mock LMS (LTI 1.3)</a></p>
+        <div>
+          <p><strong>Digital Bridge</strong> is open source under the MIT licence.</p>
+          <p>It began at the Digital Bridge Accessibility Hackathon 2026 as the work of team johny x.</p>
+        </div>
+        <nav aria-label="More">
+          <ul>
+            <li><a href="https://github.com/ephrathasamuel/digital-bridge">GitHub</a></li>
+            <li><a href="standalone.html">All widgets</a></li>
+            <li><a href="external-partner-demo.html">Partner events</a></li>
+            <li><a href="mock-lms/index.html">Mock LMS</a></li>
+          </ul>
+        </nav>
       </div>
     </footer>
+
+    <script>
+      // Copy buttons: copy the code beside them and say so in the live region.
+      const copyStatus = document.getElementById('copy-status');
+      for (const button of document.querySelectorAll('[data-copy]')) {
+        button.addEventListener('click', async () => {
+          const text = document.getElementById(button.dataset.copy).textContent;
+          try {
+            await navigator.clipboard.writeText(text);
+            button.textContent = 'Copied';
+            copyStatus.textContent = 'Copied to the clipboard.';
+          } catch {
+            copyStatus.textContent = 'Could not copy. Select the code and copy it yourself.';
+          }
+          setTimeout(() => { button.textContent = 'Copy'; }, 2000);
+        });
+      }
+    </script>
   </body>
 </html>

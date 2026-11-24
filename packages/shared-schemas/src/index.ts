@@ -1325,3 +1325,4 @@ export function validateHelpContact(
 }
 
 export * from './help';
+export * from './translate';

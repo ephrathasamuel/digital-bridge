@@ -6,30 +6,67 @@
    * Top-bar language switch (signup, profile, jobs): sets lang on every Digital Bridge widget on the page.
    * ?lang=am in the URL, or the learner's last choice on this device, is applied on load.
    */
+  // Added languages: their buttons appear only when the API has text saved for them.
+  const EXTRA_LANGS = { om: 'Afaan Oromoo', ti: 'ትግርኛ', so: 'Soomaali', sw: 'Kiswahili', aa: 'Qafaraf' };
+  const KNOWN_LANGS = ['en', 'am', ...Object.keys(EXTRA_LANGS)];
+  const HOSTED_API = 'https://digital-bridge-api.onrender.com/api/v1';
+
   function setupWidgetLanguage() {
-    const buttons = document.querySelectorAll('[data-db-lang]');
-    if (!buttons.length) return;
+    const group = document.querySelector('.db-topbar-lang');
+    if (!group || !group.querySelector('[data-db-lang]')) return;
+    const buttons = () => group.querySelectorAll('[data-db-lang]');
     const widgets = () =>
       document.querySelectorAll('db-signup, db-onboarding-wizard, db-career-gateway, db-employer-accommodations, db-ask');
+    let current = 'en';
     const apply = (lang) => {
+      current = lang;
       widgets().forEach((widget) => widget.setAttribute('lang', lang));
-      buttons.forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.dbLang === lang)));
+      buttons().forEach((button) => button.setAttribute('aria-pressed', String(button.dataset.dbLang === lang)));
       try {
         localStorage.setItem('db-host-lang', lang);
       } catch (error) {
         // Storage blocked: the choice still applies to this page.
       }
     };
-    buttons.forEach((button) => button.addEventListener('click', () => apply(button.dataset.dbLang)));
+    group.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-db-lang]');
+      if (button) apply(button.dataset.dbLang);
+    });
     let initial = new URLSearchParams(location.search).get('lang');
-    if (initial !== 'en' && initial !== 'am') {
+    if (!KNOWN_LANGS.includes(initial)) {
       try {
         initial = localStorage.getItem('db-host-lang');
       } catch (error) {
         initial = null;
       }
     }
-    if (initial === 'en' || initial === 'am') apply(initial);
+    if (KNOWN_LANGS.includes(initial)) apply(initial);
+
+    const widget = widgets()[0];
+    const explicit = widget && (widget.getAttribute('api') || widget.getAttribute('api-url'));
+    const local = ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+    const api = explicit ? explicit.replace(/\/+$/, '') : local ? null : HOSTED_API;
+    if (!api) return;
+    fetch(`${api}/i18n`)
+      .then((response) => (response.ok ? response.json() : null))
+      .then((json) => {
+        (json && json.languages ? json.languages : [])
+          .filter((item) => EXTRA_LANGS[item.lang] && item.translated > 0)
+          .forEach((item) => {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.dataset.dbLang = item.lang;
+            button.setAttribute('aria-pressed', String(current === item.lang));
+            const name = document.createElement('span');
+            name.lang = item.lang;
+            name.textContent = EXTRA_LANGS[item.lang];
+            button.append(name);
+            group.append(button);
+          });
+      })
+      .catch(() => {
+        // API asleep or away: English and Amharic still work.
+      });
   }
 
   /**

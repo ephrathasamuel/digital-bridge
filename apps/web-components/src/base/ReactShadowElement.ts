@@ -1,7 +1,8 @@
 import React, { type ReactNode } from 'react';
 import { parseVoiceSource, setVoiceConfig } from '../tts/voiceSource';
 import { createRoot, type Root } from 'react-dom/client';
-import { DB_EVENTS, type OnboardingProfile } from '@db/shared-schemas';
+import { DB_EVENTS, isExtraLang, type OnboardingProfile } from '@db/shared-schemas';
+import { activeExtraLang, loadExtraPack, machineNote, setExtraPack } from '../i18n/extraPack';
 import styles from '../styles/index.css?inline';
 import { isVisionMode, setVisionMode } from '../wizard/vision';
 
@@ -50,6 +51,7 @@ export abstract class ReactShadowElement extends HTMLElement {
 
   private reactRoot?: Root;
   private mountPoint?: HTMLDivElement;
+  private noteEl?: HTMLParagraphElement;
 
   connectedCallback(): void {
     if (!this.shadowRoot) {
@@ -73,6 +75,7 @@ export abstract class ReactShadowElement extends HTMLElement {
     this.reactRoot ??= createRoot(this.mountPoint);
     this.renderWidget();
     void this.prepareRuntime();
+    void this.applyExtraLang();
   }
 
   attributeChangedCallback(): void {
@@ -82,7 +85,39 @@ export abstract class ReactShadowElement extends HTMLElement {
       this.mountPoint.lang = this.currentLang;
       this.renderWidget();
       void this.prepareRuntime();
+      void this.applyExtraLang();
     }
+  }
+
+  /** lang="om|ti|so|sw|aa": load the saved translation from the API, then draw again in that language. */
+  private async applyExtraLang(): Promise<void> {
+    const wanted = (this.getAttribute('lang') || '').toLowerCase();
+    if (!isExtraLang(wanted)) {
+      this.showMachineNote(null);
+      return;
+    }
+    if (activeExtraLang() !== wanted) setExtraPack(null);
+    const ok = await loadExtraPack(wanted, this.apiUrl);
+    if (!ok || !this.mountPoint || (this.getAttribute('lang') || '').toLowerCase() !== wanted) return;
+    this.mountPoint.lang = wanted;
+    this.showMachineNote(wanted);
+    this.renderWidget();
+  }
+
+  private showMachineNote(lang: Parameters<typeof machineNote>[0] | null): void {
+    if (!lang) {
+      this.noteEl?.remove();
+      this.noteEl = undefined;
+      return;
+    }
+    if (!this.noteEl) {
+      this.noteEl = document.createElement('p');
+      this.noteEl.setAttribute('part', 'machine-note');
+      this.noteEl.lang = 'en';
+      this.noteEl.style.cssText = 'margin:0 0 .5rem;font-size:.875rem';
+      this.mountPoint?.before(this.noteEl);
+    }
+    this.noteEl.textContent = machineNote(lang);
   }
 
   /** voice="auto|device|server|custom" and voice-url pick where read aloud audio comes from (tts/voiceSource.ts). */

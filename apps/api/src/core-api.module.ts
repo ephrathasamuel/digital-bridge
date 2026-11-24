@@ -19,6 +19,8 @@ import { SmsResumeTokenEntity } from "./sms/entities/sms-resume-token.entity";
 import { SmsModule } from "./sms/sms.module";
 import { SeedModule } from "./seed/seed.module";
 import { PartnerVoucherEntity } from "./vouch/entities/partner-voucher.entity";
+import { TranslationEntity } from "./translate/translation.entity";
+import { TranslateModule } from "./translate/translate.module";
 import { VoiceModule } from "./voice/voice.module";
 import { VouchModule } from "./vouch/vouch.module";
 
@@ -33,6 +35,7 @@ const ENTITIES = [
   JobEntity,
   ApplicationEntity,
   HelpContactRequestEntity,
+  TranslationEntity,
 ];
 
 /**
@@ -82,6 +85,7 @@ class HealthController {
     SeedModule,
     HelpModule,
     VoiceModule,
+    TranslateModule,
   ],
   controllers: [HealthController],
   providers: [

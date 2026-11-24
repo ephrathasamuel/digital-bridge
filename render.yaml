@@ -36,6 +36,9 @@ services:
         sync: false
       - key: HF_TOKEN
         sync: false
+      # Add a language in one tap: nllb (uses HF_TOKEN) or custom (TRANSLATE_URL). See README.
+      - key: TRANSLATE_PROVIDER
+        sync: false
       # Where SMS resume links point, e.g. https://<your-vercel-site>/pages/signup.html
       - key: PUBLIC_RESUME_URL
         sync: false

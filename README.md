@@ -87,6 +87,23 @@ Read aloud uses the device's voices first. Where the device has none (Amharic on
   `Authorization`.
 * Nothing set: the route answers 501 and the widgets show captions and use device voices.
 
+### Add a language in one tap
+
+English and Amharic are written by people. Afaan Oromoo, Tigrinya, Somali, Kiswahili and Afar can be added by machine
+translation, then fixed by people who speak them:
+
+* `GET /api/v1/i18n` lists the languages and how many strings are translated and checked by a speaker.
+* `GET /api/v1/i18n/{lang}` returns the saved pack. Keys it lacks fall back to English.
+* `POST /api/v1/i18n/{lang}/generate` (scope `i18n:edit`) translates the next 64 missing or out of date strings.
+  Call it again until `remaining` is 0. Strings where the machine broke a `{placeholder}` stay in English.
+* `PUT /api/v1/i18n/{lang}/{key}` with `{"text"}` (scope `i18n:edit`) saves a speaker's fix. Fixed strings are never
+  overwritten by the machine.
+
+Configure the API with `TRANSLATE_PROVIDER=nllb` and `HF_TOKEN` (Meta's NLLB 200; `TRANSLATE_NLLB_URL` can point at a
+self hosted copy; the model weights are licensed for non commercial use only), or `TRANSLATE_PROVIDER=custom` with a
+LibreTranslate style `TRANSLATE_URL` (and optional `TRANSLATE_AUTH_HEADER`). Give the `i18n:edit` scope only to your own
+client in `PARTNER_CLIENTS`.
+
 Widgets and the help bar also accept `voice="device|server|custom"` and `voice-url="https://…?text={text}&lang={lang}"`
 to call a voice service directly. Keys never go in the browser: put them on the API.
 

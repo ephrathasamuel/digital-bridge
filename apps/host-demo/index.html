@@ -50,6 +50,14 @@
       .hero { position: relative; overflow: hidden; color: var(--on-night);
         background: radial-gradient(60rem 30rem at 85% -10%, #1d3f7a 0%, transparent 60%), linear-gradient(180deg, var(--night) 0%, var(--night-2) 100%); }
       .hero a:not(.button) { color: var(--on-night); }
+      /* Pinned site header. Only on screens tall and wide enough, so it never hides much of the page; focused
+         items and #links stop below it (scroll-padding), so it can not cover them (WCAG 2.4.11). */
+      .site-head { color: var(--on-night); background: var(--night); }
+      .site-head a { color: var(--on-night); }
+      @media (min-width: 48rem) and (min-height: 30rem) {
+        .site-head { position: sticky; top: 0; z-index: 50; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08), 0 6px 18px rgba(10, 26, 54, 0.25); }
+        html { scroll-padding-top: 6rem; }
+      }
       .topbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1.5rem; padding-block: 1rem; }
       .logo { display: inline-flex; align-items: center; gap: 0.6rem; min-height: 44px; font-size: 1.2rem; font-weight: 800; }
       .logo-mark { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; border-radius: 0.7rem; background: var(--amber); color: var(--night); }
@@ -190,7 +198,7 @@
   <body>
     <a class="skip-link" href="#main">Skip to main content</a>
 
-    <header class="hero">
+    <header class="site-head">
       <div class="wrap">
         <div class="topbar">
           <a class="logo" href="#main">
@@ -207,11 +215,15 @@
             </ul>
           </nav>
         </div>
+      </div>
+    </header>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="wrap">
 
         <div class="hero-grid">
           <div>
             <p class="pill">Open source · English and <span lang="am">አማርኛ</span></p>
-            <h1>Forms <em>everyone</em> can fill&nbsp;in.</h1>
+            <h1 id="hero-title">Forms <em>everyone</em> can fill&nbsp;in.</h1>
             <p class="lede">
               Speak your answers, hear every question, type Amharic with English letters, and pick colours that work for
               your eyes. On any website, from LinkedIn to a school sign up form.
@@ -249,7 +261,7 @@
           </figure>
         </div>
       </div>
-    </header>
+    </section>
 
     <main id="main">
       <div class="stats wrap">

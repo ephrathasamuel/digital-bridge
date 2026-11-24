@@ -18,6 +18,11 @@
   color: var(--dbs-on-night);
   font: 600 1rem/1.4 var(--dbs-font);
 }
+/* Pinned on screens tall and wide enough; focused items and #links stop below it, so it never covers them (2.4.11). */
+@media (min-width: 40rem) and (min-height: 30rem) {
+  .site-top { position: sticky; top: 0; z-index: 1000; box-shadow: 0 6px 18px rgba(10, 26, 54, 0.25); }
+  html { scroll-padding-top: 5rem; }
+}
 .site-top-inner {
   display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem;
   width: 100%; max-width: 74rem; margin: 0 auto; padding: 0.65rem 1.25rem;

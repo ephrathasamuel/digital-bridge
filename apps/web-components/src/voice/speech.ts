@@ -1,3 +1,4 @@
+import { spokenLang } from '../i18n/extraPack';
 import type { Lang } from '@db/shared-schemas';
 
 // Minimal Web Speech API typings (not shipped in TypeScript's DOM lib).
@@ -33,7 +34,8 @@ export const speechLocale = (lang: Lang) => (lang === 'am' ? 'am-ET' : 'en-US');
 /** Find an installed speech-synthesis voice for the language (Amharic is often missing on Windows/Android). */
 export function findSynthVoice(lang: Lang): SpeechSynthesisVoice | undefined {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return undefined;
-  const prefix = lang === 'am' ? 'am' : 'en';
+  // Afaan Oromoo text needs an Oromo voice (om), never the English one it runs as underneath.
+  const prefix = spokenLang(lang);
   return window.speechSynthesis.getVoices().find((v) => v.lang.toLowerCase().startsWith(prefix));
 }
 

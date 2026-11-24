@@ -66,3 +66,14 @@ describe('language picker list', () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('spoken language', () => {
+  it('speaks the added language, never English, while it is shown', async () => {
+    const { setExtraPack, spokenLang } = await import('./extraPack');
+    setExtraPack({ lang: 'om', strings: { a: 'b' }, checked: [] });
+    expect(spokenLang('en')).toBe('om');
+    expect(spokenLang('am')).toBe('am');
+    setExtraPack(null);
+    expect(spokenLang('en')).toBe('en');
+  });
+});

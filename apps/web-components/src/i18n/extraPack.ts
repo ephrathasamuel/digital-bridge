@@ -93,3 +93,8 @@ export function requestLang(node: Node | null, lang: string): void {
   const host = (node?.getRootNode() as ShadowRoot | undefined)?.host;
   host?.setAttribute('lang', lang);
 }
+
+/** The language to SPEAK: an added language runs as English underneath, but must never get an English voice. */
+export function spokenLang(lang: 'en' | 'am'): string {
+  return lang === 'en' ? (activeExtraLang() ?? 'en') : lang;
+}

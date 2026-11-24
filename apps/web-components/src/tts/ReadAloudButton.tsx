@@ -6,6 +6,7 @@ import { t } from '../i18n';
 import { cx, ui } from '../wizard/ui';
 import { findSynthVoice, playChime, splitPhrases } from '../voice/speech';
 import { resolvePromptClip } from './promptAudio';
+import { activeExtraLang, spokenLang } from '../i18n/extraPack';
 import { deviceVoiceFirst, fetchRemoteSpeech } from './voiceSource';
 import type { ScriptPhrase } from '../wizard/stepScript';
 
@@ -124,7 +125,7 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
     const deviceVoice = findSynthVoice(lang);
     // "server" or "custom": the chosen voice service first, a device voice only if it fails.
     if (!deviceFirst || !deviceVoice) {
-      const remote = await fetchRemoteSpeech(shown.join(' '), lang);
+      const remote = await fetchRemoteSpeech(shown.join(' '), spokenLang(lang));
       if (run !== runRef.current) {
         if (remote) URL.revokeObjectURL(remote);
         return; // stopped while the voice was loading
@@ -162,7 +163,8 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
       announce?.(t(lang, 'help.reading'));
       return;
     }
-    const clip = promptKey ? await resolvePromptClip(lang, promptKey, audioBaseUrl ?? '') : null;
+    // Recorded clips are English or Amharic: skip them while an added language is shown.
+    const clip = promptKey && !activeExtraLang() ? await resolvePromptClip(lang, promptKey, audioBaseUrl ?? '') : null;
     if (run !== runRef.current) return; // stopped while looking up the clip
     if (clip) {
       const audio = new Audio(clip);

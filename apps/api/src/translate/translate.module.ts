@@ -16,6 +16,7 @@ import { Repository } from "typeorm";
 import { RequireScopes } from "../common/decorators/require-scopes.decorator";
 import { throwBilingualHttp } from "../common/filters/bilingual-exception.filter";
 import { ScopesGuard } from "../common/guards/scopes.guard";
+import { STATIC_PACKS } from "./packs";
 import { TranslationEntity } from "./translation.entity";
 
 /**
@@ -79,6 +80,15 @@ class FixDto {
 
 const englishPack = I18N.en as Record<string, string>;
 
+/** The repo pack for a language, keeping only keys that still exist and whose {placeholders} match English. */
+export function staticPack(lang: string): Record<string, string> {
+  const pack = (STATIC_PACKS as Record<string, Record<string, string> | undefined>)[lang] ?? {};
+  const names = (text: string) => (text.match(/\{\w+\}/g) ?? []).sort().join();
+  return Object.fromEntries(
+    Object.entries(pack).filter(([key, text]) => key in englishPack && names(text) === names(englishPack[key])),
+  );
+}
+
 @ApiTags("i18n")
 @Controller("i18n")
 class TranslateController {
@@ -91,13 +101,17 @@ class TranslateController {
     const total = Object.keys(englishPack).length;
     return {
       provider: buildTranslateRequest(process.env, ["x"], "om") ? (process.env.TRANSLATE_PROVIDER || "").toLowerCase() : "none",
-      languages: Object.entries(EXTRA_LANGS).map(([lang, info]) => ({
-        lang,
-        name: info.name,
-        total,
-        translated: rows.filter((r) => r.lang === lang).length,
-        checked: rows.filter((r) => r.lang === lang && r.source === "person").length,
-      })),
+      languages: Object.entries(EXTRA_LANGS).map(([lang, info]) => {
+        const saved = rows.filter((r) => r.lang === lang);
+        const keys = new Set([...Object.keys(staticPack(lang)), ...saved.map((r) => r.key)]);
+        return {
+          lang,
+          name: info.name,
+          total,
+          translated: keys.size,
+          checked: saved.filter((r) => r.source === "person").length,
+        };
+      }),
     };
   }
 
@@ -106,10 +120,13 @@ class TranslateController {
   async pack(@Param("lang") lang: string): Promise<LanguagePack> {
     if (!isExtraLang(lang)) throwBilingualHttp(HttpStatus.NOT_FOUND, undefined, "NotFound");
     const rows = await this.repo.find({ where: { lang } });
-    const strings: Record<string, string> = {};
+    const inRepo = staticPack(lang);
+    const strings: Record<string, string> = { ...inRepo };
     const checked: string[] = [];
+    // A speaker's fix wins, then the repo pack, then text the machine made on this server.
     for (const row of rows) {
       if (!(row.key in englishPack)) continue;
+      if (row.source !== "person" && row.key in inRepo) continue;
       strings[row.key] = row.text;
       if (row.source === "person") checked.push(row.key);
     }
@@ -129,10 +146,13 @@ class TranslateController {
     if (!isExtraLang(lang)) throwBilingualHttp(HttpStatus.NOT_FOUND, undefined, "NotFound");
     if (!buildTranslateRequest(process.env, ["x"], lang)) throwBilingualHttp(HttpStatus.NOT_IMPLEMENTED, undefined, "InternalError");
     const saved = new Map((await this.repo.find({ where: { lang } })).map((r) => [r.key, r]));
-    // Missing, or machine made from English that has since changed. A speaker's text is never overwritten.
+    const inRepo = staticPack(lang);
+    // Missing, or machine made from English that has since changed. A speaker's text is never overwritten,
+    // and strings already in the repo pack are not sent to the machine.
     const todo = Object.entries(englishPack).filter(([key, en]) => {
       const row = saved.get(key);
-      return !row || (row.source === "machine" && row.english !== en);
+      if (!row) return !(key in inRepo);
+      return row.source === "machine" && row.english !== en;
     });
     const now = todo.slice(0, MAX_PER_CALL);
     let translated = 0;

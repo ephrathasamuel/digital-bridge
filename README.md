@@ -90,7 +90,9 @@ Read aloud uses the device's voices first. Where the device has none (Amharic on
 ### Add a language in one tap
 
 English and Amharic are written by people. Afaan Oromoo, Tigrinya, Somali, Kiswahili and Afar can be added by machine
-translation, then fixed by people who speak them:
+translation, then fixed by people who speak them. Afaan Oromoo already ships in the repo
+(`apps/api/src/translate/packs/om.ts`, machine translated, pull requests from speakers welcome), so it works with no
+translation service. A speaker's fix saved through the API wins over the repo text.
 
 * `GET /api/v1/i18n` lists the languages and how many strings are translated and checked by a speaker.
 * `GET /api/v1/i18n/{lang}` returns the saved pack. Keys it lacks fall back to English.

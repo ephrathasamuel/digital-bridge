@@ -35,7 +35,10 @@ async function bootstrap() {
   // (the browser extension runs on LinkedIn, job boards, etc.). Every other route keeps the allow-list above.
   const corsFor: CorsOptionsDelegate<{ url?: string; headers: { origin?: string } }> = (req, callback) => {
     const origin = req.headers.origin;
-    if ((req.url ?? '').startsWith('/api/v1/voice')) {
+    // Public, no cookies: read aloud audio, and language packs (GET only; changing them needs a bearer token).
+    const url = req.url ?? '';
+    const isPackRead = url.startsWith('/api/v1/i18n') && !('authorization' in req.headers);
+    if (url.startsWith('/api/v1/voice') || isPackRead) {
       callback(null, { origin: true, credentials: false });
       return;
     }

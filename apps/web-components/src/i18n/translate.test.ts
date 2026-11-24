@@ -51,3 +51,18 @@ describe('added language overlay', async () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('language picker list', () => {
+  it('offers only added languages that have saved text', async () => {
+    const { setPackApiUrl, listReadyLangs } = await import('./extraPack');
+    vi.stubGlobal('fetch', vi.fn(async () => new Response(JSON.stringify({
+      provider: 'nllb',
+      languages: [{ lang: 'om', translated: 500 }, { lang: 'ti', translated: 0 }, { lang: 'xx', translated: 9 }],
+    }))));
+    setPackApiUrl('https://api.test/v1');
+    expect(await listReadyLangs()).toEqual(['om']);
+    setPackApiUrl(undefined);
+    expect(await listReadyLangs()).toEqual([]);
+    vi.unstubAllGlobals();
+  });
+});

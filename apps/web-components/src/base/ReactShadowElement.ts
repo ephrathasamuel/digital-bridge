@@ -2,7 +2,7 @@ import React, { type ReactNode } from 'react';
 import { parseVoiceSource, setVoiceConfig } from '../tts/voiceSource';
 import { createRoot, type Root } from 'react-dom/client';
 import { DB_EVENTS, isExtraLang, type OnboardingProfile } from '@db/shared-schemas';
-import { activeExtraLang, loadExtraPack, machineNote, setExtraPack } from '../i18n/extraPack';
+import { activeExtraLang, loadExtraPack, machineNote, setExtraPack, setPackApiUrl } from '../i18n/extraPack';
 import styles from '../styles/index.css?inline';
 import { isVisionMode, setVisionMode } from '../wizard/vision';
 
@@ -91,8 +91,14 @@ export abstract class ReactShadowElement extends HTMLElement {
 
   /** lang="om|ti|so|sw|aa": load the saved translation from the API, then draw again in that language. */
   private async applyExtraLang(): Promise<void> {
+    setPackApiUrl(this.apiUrl);
     const wanted = (this.getAttribute('lang') || '').toLowerCase();
     if (!isExtraLang(wanted)) {
+      if (activeExtraLang()) {
+        setExtraPack(null);
+        if (this.mountPoint) this.mountPoint.lang = this.currentLang;
+        this.renderWidget();
+      }
       this.showMachineNote(null);
       return;
     }

@@ -1,6 +1,7 @@
-import React, { useId, useRef, useState } from 'react';
+import React, { useEffect, useId, useRef, useState } from 'react';
 import { BookOpen, HelpCircle, Languages, ShieldCheck, X } from 'lucide-react';
-import { I18N, type Lang } from '@db/shared-schemas';
+import { EXTRA_LANGS, I18N, type ExtraLang, type Lang } from '@db/shared-schemas';
+import { activeExtraLang, listReadyLangs, requestLang } from '../i18n/extraPack';
 import { otherLang, t } from '../i18n';
 import { ReadAloudButton } from '../tts/ReadAloudButton';
 import { buildStepScript } from './stepScript';
@@ -58,6 +59,26 @@ export const HelpCluster: React.FC<HelpClusterProps> = ({
   const openerRef = useRef<HTMLButtonElement>(null);
   const dialogTitleId = cleanId(useId());
   const target = otherLang(lang);
+  const langId = `${cleanId(useId())}-lang`;
+  // Added languages (Afaan Oromoo, Tigrinya, ...) with saved text turn the language button into a list.
+  const [ready, setReady] = useState<ExtraLang[]>([]);
+  useEffect(() => {
+    let live = true;
+    void listReadyLangs().then((langs) => live && setReady(langs));
+    return () => { live = false; };
+  }, []);
+  const extra = activeExtraLang();
+  const extraOptions = extra && !ready.includes(extra) ? [...ready, extra] : ready;
+  const chooseLang = (value: string) => {
+    const node = clusterRef.current;
+    if (value === 'en' || value === 'am') {
+      requestLang(node, value);
+      onSwitchLang(value);
+    } else {
+      onSwitchLang('en');
+      requestLang(node, value);
+    }
+  };
   // The on-screen read-aloud panel renders here, after every help button (stable focus order, 3.2.6).
   const [panelSlot, setPanelSlot] = useState<HTMLDivElement | null>(null);
 
@@ -86,11 +107,33 @@ export const HelpCluster: React.FC<HelpClusterProps> = ({
         getPhrases={stepPhrases}
       />
 
-      <button type="button" onClick={() => onSwitchLang(target)} className={ui.btnPill} data-db-action="lang">
-        <Languages aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
-        <span className="sr-only">{t(lang, 'lang.switchTo')}: </span>
-        <span lang={target}>{I18N[target]['lang.selfName']}</span>
-      </button>
+      {extraOptions.length === 0 ? (
+        <button type="button" onClick={() => onSwitchLang(target)} className={ui.btnPill} data-db-action="lang">
+          <Languages aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
+          <span className="sr-only">{t(lang, 'lang.switchTo')}: </span>
+          <span lang={target}>{I18N[target]['lang.selfName']}</span>
+        </button>
+      ) : (
+        <span className="inline-flex flex-wrap items-center gap-2 rounded-full border-2 border-stone-500 bg-white ps-3">
+          <Languages aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
+          <label htmlFor={langId} className="text-sm font-semibold">
+            {t(lang, 'lang.switchTo')}
+          </label>
+          <select
+            id={langId}
+            value={extra ?? lang}
+            onChange={(e) => chooseLang(e.target.value)}
+            data-db-action="lang"
+            className="min-h-[44px] max-w-full rounded-full border-0 bg-transparent pe-2 text-sm font-semibold text-ink focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-terracotta-dark"
+          >
+            <option value="en" lang="en">{I18N.en['lang.selfName']}</option>
+            <option value="am" lang="am">{I18N.am['lang.selfName']}</option>
+            {extraOptions.map((code) => (
+              <option key={code} value={code} lang={code}>{EXTRA_LANGS[code].name}</option>
+            ))}
+          </select>
+        </span>
+      )}
 
       <button type="button" onClick={onToggleSimple} aria-pressed={simple} className={ui.btnPillToggle(simple)}>
         <BookOpen aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />

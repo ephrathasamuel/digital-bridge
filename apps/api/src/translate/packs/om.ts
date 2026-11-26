@@ -342,7 +342,7 @@ export const OM: Record<string, string> = {
   "sign.cardsTitle": "Kaardiidhaan deebii kee ijaari",
   "sign.clear": "Qulqulleessi",
   "sign.delete": "Kan dhumaa haqi",
-  "sign.honest": "Meeshaan kun mallattoo ofiin hin dubbisu. Kaardii gadii jiru irraas deebii kee ijaaruu ni dandeessa.",
+  "sign.honest": "Meeshaan kun mallattoo ati yookaan hawaasni kee itti barsiiftan qofa dubbisa. Kaardii gadii jiru irraas deebii kee ijaaruu ni dandeessa.",
   "sign.intro": "Deebii kee Afaan Mallattoo Itoophiyaatiin viidiyoo gabaabaa waraabi. Namni Afaan Mallattoo Itoophiyaa beeku ni dubbisa, atis osoo hin barreessin itti fufuu ni dandeessa.",
   "sign.keep": "Viidiyoo olkaa'i",
   "sign.kept": "Viidiyoon afaan mallattoo {field}f olkaa'ameera. Osoo hin barreessin itti fufuu ni dandeessa.",

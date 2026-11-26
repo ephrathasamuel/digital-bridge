@@ -1,11 +1,12 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
-import { Check, Circle, Delete, Hand, RotateCcw, Square, Video, VideoOff, X } from 'lucide-react';
+import { Check, Circle, Delete, Hand, RotateCcw, ScanLine, Square, Upload, Video, VideoOff, X } from 'lucide-react';
 import type { Lang } from '@db/shared-schemas';
 import { t as translate, type I18nKey } from '../i18n';
 import { cleanId, cx, ui } from '../wizard/ui';
 import { blobToDataUrl, setFieldListening } from './speech';
 import { setVoiceNote } from './voiceNotes';
 import type { SpokenKind } from './spokenInput';
+import { createModel, detect, fromJSON, loadTracker, reader, SIGNS_STORE, toJSON, type HandTracker, type Model } from '../sign';
 
 export interface SignPanelProps {
   lang: Lang;
@@ -22,6 +23,15 @@ const MAX_VIDEO_MS = 20_000;
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+/** Signs taught on the "Teach your own signs" page in this browser (or loaded from a file on this site). */
+function loadSigns(): Model {
+  try {
+    return fromJSON(localStorage.getItem(SIGNS_STORE) ?? '') ?? createModel();
+  } catch {
+    return createModel();
+  }
+}
+
 function pickVideoMime(): string | undefined {
   const types = ['video/webm;codecs=vp8', 'video/webm', 'video/mp4'];
   return types.find((type) => typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported?.(type));
@@ -30,13 +40,15 @@ function pickVideoMime(): string | undefined {
 /**
  * Sign language answer (co-designer finding: "also sign language support").
  *
- * Honest by design: nothing here recognises signs automatically (no browser-only model can read Ethiopian Sign
- * Language reliably today). The learner can
+ * Honest by design: there is no built in sign language model (no browser-only model can read Ethiopian Sign Language
+ * reliably today). The learner can
  *  1. record a short sign-language video that a person who knows EthSL reviews - kept like a voice note, so the field
  *     is answered and the learner continues without typing;
- *  2. build the answer from number, letter and word cards; and
+ *  2. build the answer from number, letter and word cards;
  *  3. optionally drive the cards with "camera wave control": hand movement on the left / middle / right of the camera
- *     picture moves back / chooses / moves forward (a switch-style input, not sign recognition).
+ *     picture moves back / chooses / moves forward (a switch-style input, not sign recognition); and
+ *  4. "Read my taught signs": signs the learner or their community taught on the Teach your own signs page (or in a
+ *     shared signs file) are read with MediaPipe hand tracking and added to the answer, still or with movement.
  * Everything runs in the browser; no video leaves the device.
  */
 export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNoteKey, spokenKind, onUse, onClose, announce }) => {
@@ -62,6 +74,9 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
   const [current, setCurrent] = useState(0);
   const [wave, setWave] = useState(false);
   const [zones, setZones] = useState([0, 0, 0]);
+  const [reading, setReading] = useState(false);
+  const signsRef = useRef<Model>(loadSigns());
+  const trackerRef = useRef<HandTracker | null>(null);
 
   const words = [t('sign.wordYes'), t('sign.wordNo')];
   const cards = [...DIGITS, ...LETTERS, ...words];
@@ -86,6 +101,7 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
     streamRef.current = null;
     setRecording(false);
     setWave(false);
+    setReading(false);
     setCamera((c) => (c === 'blocked' ? c : 'off'));
   };
 
@@ -246,6 +262,60 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
     return () => clearInterval(timer);
   }, [wave, camera]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // ---- Read my taught signs (MediaPipe hand tracking, signs taught by people) -------------------------------------
+  const toggleReading = async () => {
+    if (reading) return setReading(false);
+    if (!signsRef.current.signs.length) return say(t('sign.readNone'));
+    if (!(await startCamera())) return;
+    if (!trackerRef.current) {
+      say(t('sign.readLoading'));
+      try {
+        trackerRef.current = await loadTracker();
+      } catch {
+        return say(t('sign.readFailed'));
+      }
+    }
+    setWave(false); // one camera control at a time
+    setReading(true);
+    say(t('sign.readOn'));
+  };
+
+  const loadSignsFile = async (file: File | undefined) => {
+    if (!file) return;
+    const loaded = file.size <= 5_000_000 ? fromJSON(await file.text()) : null;
+    if (!loaded || !loaded.signs.length) return say(t('sign.readBadFile'));
+    signsRef.current = loaded;
+    try {
+      localStorage.setItem(SIGNS_STORE, toJSON(loaded)); // kept for next time, on this site only
+    } catch {
+      // Storage blocked: the signs last until the page closes.
+    }
+    setReading(false);
+    say(t('sign.readLoaded', { count: loaded.signs.length }));
+  };
+
+  useEffect(() => {
+    const video = liveVideoRef.current;
+    const tracker = trackerRef.current;
+    if (!reading || camera !== 'on' || !video || !tracker) return;
+    const read = reader(signsRef.current);
+    let last = -1;
+    let frame = 0;
+    const loop = () => {
+      if (video.readyState >= 2 && video.currentTime !== last) {
+        last = video.currentTime;
+        const { word } = read(detect(tracker, video));
+        if (word) {
+          setBuilt((text) => `${text.trim()} ${word}`.trim());
+          announce?.(t('sign.added', { item: word }));
+        }
+      }
+      frame = requestAnimationFrame(loop);
+    };
+    frame = requestAnimationFrame(loop);
+    return () => cancelAnimationFrame(frame);
+  }, [reading, camera]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const card = (item: string, index: number) => (
     <button
       key={item}
@@ -344,6 +414,7 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
               aria-describedby={`${uid}-wave`}
               onClick={async () => {
                 if (!wave && !(await startCamera())) return;
+                if (!wave) setReading(false); // one camera control at a time
                 setWave((on) => !on);
               }}
               className={ui.btnToggle(wave)}
@@ -362,6 +433,38 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
                 <canvas ref={canvasRef} width={48} height={36} className="hidden" />
               </div>
             )}
+          </div>
+        )}
+
+        {canFilm && (
+          <div className="mt-3">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                aria-pressed={reading}
+                aria-describedby={`${uid}-read`}
+                onClick={() => void toggleReading()}
+                data-db-action="sign-read"
+                className={ui.btnToggle(reading)}
+              >
+                <ScanLine aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
+                {t('sign.readToggle')}
+              </button>
+              <label className={cx(ui.btnQuiet, 'cursor-pointer')}>
+                <Upload aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
+                {t('sign.readLoad')}
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  onChange={(event) => {
+                    void loadSignsFile(event.target.files?.[0]);
+                    event.target.value = '';
+                  }}
+                />
+              </label>
+            </div>
+            <p id={`${uid}-read`} className={cx(ui.hint, 'mt-1')}>{t('sign.readHint')}</p>
           </div>
         )}
 

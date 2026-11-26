@@ -233,7 +233,7 @@ export const SO: Record<string, string> = {
   "sign.button": "Ugu jawaab {field} luqadda calaamadaha",
   "sign.title": "Jawaab luqadda calaamadaha ah",
   "sign.intro": "Duub muuqaal gaaban oo jawaabtaada ah oo ku qoran Luqadda Calaamadaha Itoobiya. Qof yaqaan Luqadda Calaamadaha Itoobiya ayaa akhrin doona, adiguna waad sii wadan kartaa adigoon wax qorin.",
-  "sign.honest": "Qalabkani calaamadaha kaligiis ma akhriyo. Sidoo kale jawaabtaada waxaad ka dhisi kartaa kaararka hoose.",
+  "sign.honest": "Qalabkani wuxuu akhriyaa oo keliya calaamadaha adiga ama bulshadaadu bareen. Sidoo kale jawaabtaada waxaad ka dhisi kartaa kaararka hoose.",
   "sign.videoTitle": "Duub muuqaal luqadda calaamadaha ah",
   "sign.cameraStart": "Shid kamaradda",
   "sign.cameraStop": "Dami kamaradda",

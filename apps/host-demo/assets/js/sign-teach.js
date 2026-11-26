@@ -1,12 +1,7 @@
 // Teach your own signs: camera + MediaPipe Hand Landmarker (Apache 2.0) in the browser, matching in hand-signs.js.
 // Camera pictures stay on the device. Taught signs live in this browser (localStorage) or in a file the person saves.
-import {
-  addClip, addSample, classify, classifyClip, createModel, fromJSON, makeClip, normalise, removeSign, segmenter, steady, toJSON,
-} from './hand-signs.js';
-
-const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
-const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
-const STORE = 'db-taught-signs';
+import { addClip, addSample, createModel, fromJSON, makeClip, normalise, reader, removeSign, segmenter, toJSON } from './hand-signs.js';
+import { detect, loadTracker, SIGNS_STORE as STORE } from './hand-tracker.js';
 const EXAMPLES = 30;
 const MOVES = 3;
 /** A movement example must start within this long after the count, or we ask again. */
@@ -27,8 +22,7 @@ let lastTime = -1;
 let recognising = false;
 /** Teaching in progress: { word, kind: 'still'|'move', left, skip, counting, seg, since } */
 let recording = null;
-let push = steady(8);
-let moves = segmenter();
+let readSign = reader(model);
 
 function load() {
   try {
@@ -88,17 +82,6 @@ function renderSigns() {
     });
     item.append(name, remove);
     list.append(item);
-  }
-}
-
-async function loadTracker() {
-  const vision = await import(`${MEDIAPIPE}/vision_bundle.mjs`);
-  const files = await vision.FilesetResolver.forVisionTasks(`${MEDIAPIPE}/wasm`);
-  const options = (delegate) => ({ baseOptions: { modelAssetPath: MODEL, delegate }, runningMode: 'VIDEO', numHands: 1 });
-  try {
-    return await vision.HandLandmarker.createFromOptions(files, options('GPU'));
-  } catch {
-    return vision.HandLandmarker.createFromOptions(files, options('CPU'));
   }
 }
 
@@ -168,13 +151,10 @@ function frame() {
   if (!stream || !landmarker) return;
   if (video.readyState >= 2 && video.currentTime !== lastTime) {
     lastTime = video.currentTime;
-    const result = landmarker.detectForVideo(video, performance.now());
-    const points = result.landmarks?.[0] ?? null;
-    const handedness = (result.handedness ?? result.handednesses)?.[0]?.[0]?.categoryName;
-    const seen = points ? { points, handedness } : null;
-    draw(points);
+    const seen = detect(landmarker, video);
+    draw(seen?.points ?? null);
     if (recording?.kind === 'move') learnMove(seen);
-    else if (recording) learnStill(seen ? normalise(points, handedness) : null);
+    else if (recording) learnStill(seen ? normalise(seen.points, seen.handedness) : null);
     else if (recognising) read(seen);
     else handLine.textContent = seen ? 'Hand seen' : 'No hand seen';
   }
@@ -245,34 +225,15 @@ function addWord(word) {
 }
 
 function read(seen) {
-  if (model.signs.some((s) => s.clips.length)) {
-    const done = moves.push(seen);
-    if (done) {
-      const match = classifyClip(model, makeClip(done));
-      guess.textContent = match ? match.word : '';
-      handLine.textContent = match ? `Movement: ${match.word}` : 'Not a taught movement';
-      if (match) addWord(match.word);
-      push = steady(8); // the still sign after a movement must be held again
-      return;
-    }
-    if (moves.moving) {
-      handLine.textContent = 'Moving…';
-      push(null);
-      return;
-    }
-  }
-  const vector = seen ? normalise(seen.points, seen.handedness) : null;
-  const match = classify(model, vector);
-  guess.textContent = match ? match.word : '';
-  handLine.textContent = vector ? (match ? `Looks like: ${match.word}` : 'Not a taught sign') : 'No hand seen';
-  const word = push(match ? match.word : null);
+  const { word, now } = readSign(seen);
+  guess.textContent = now === 'none' || now === 'moving' || now === 'unknown' ? '' : now;
+  handLine.textContent = { none: 'No hand seen', moving: 'Moving…', unknown: 'Not a taught sign' }[now] ?? `Looks like: ${now}`;
   if (word) addWord(word);
 }
 
 function setRecognising(on) {
   recognising = on;
-  push = steady(8);
-  moves = segmenter();
+  readSign = reader(model); // built from the signs taught so far
   guess.textContent = '';
   $('recognise').textContent = on ? 'Stop recognising' : 'Start recognising';
   $('recognise').setAttribute('aria-pressed', String(on));

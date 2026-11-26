@@ -329,3 +329,34 @@ export function fromJSON(text) {
   }
   return model;
 }
+
+// ---- Reading signs from the camera stream ---------------------------------------------------------------------------
+
+/**
+ * One reader per session: give it every camera frame (or null when no hand is seen). It returns a word when a taught
+ * sign is finished (a movement, or a still shape held for `hold` frames), and says what it sees right now.
+ * @param {Model} model
+ * @returns {(seen: Frame | null) => { word: string | null, now: 'none' | 'moving' | 'unknown' | string }}
+ */
+export function reader(model, { hold = 8 } = {}) {
+  const hasMoves = model.signs.some((s) => s.clips.length);
+  const moves = segmenter();
+  let push = steady(hold);
+  return (seen) => {
+    if (hasMoves) {
+      const done = moves.push(seen);
+      if (done) {
+        const match = classifyClip(model, makeClip(done));
+        push = steady(hold); // a still sign after a movement must be held again
+        return { word: match ? match.word : null, now: match ? match.word : 'unknown' };
+      }
+      if (moves.moving) {
+        push(null);
+        return { word: null, now: 'moving' };
+      }
+    }
+    const vector = seen ? normalise(seen.points, seen.handedness) : null;
+    const match = classify(model, vector);
+    return { word: push(match ? match.word : null), now: vector ? (match ? match.word : 'unknown') : 'none' };
+  };
+}

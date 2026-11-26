@@ -26,3 +26,4 @@ export function classifyClip(model: Model, clip: number[][] | null, options?: { 
 export function segmenter(options?: { start?: number; stop?: number; quiet?: number; minFrames?: number; maxFrames?: number; minTravel?: number }): Segmenter;
 export function toJSON(model: Model): string;
 export function fromJSON(text: string): Model | null;
+export function reader(model: Model, options?: { hold?: number }): (seen: Frame | null) => { word: string | null; now: string };

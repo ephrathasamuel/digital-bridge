@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addClip, addSample, classify, classifyClip, createModel, fromJSON, makeClip, normalise, removeSign, segmenter, steady, toJSON,
+  addClip, addSample, classify, classifyClip, createModel, fromJSON, makeClip, normalise, reader, removeSign, segmenter, steady, toJSON,
   type Frame, type Point,
 } from '../../../host-demo/assets/js/hand-signs.js';
 
@@ -135,5 +135,18 @@ describe('signs with movement', () => {
     const v1 = fromJSON(JSON.stringify({ format: 'digital-bridge-signs', version: 1, signs: [{ word: 'old', samples: [Array(63).fill(0)] }] }))!;
     expect(v1.signs[0]).toEqual({ word: 'old', samples: [Array(63).fill(0)], clips: [] });
     expect(addClip(model, 'bad', [[1, 2, 3]])).toBe(false);
+  });
+});
+
+describe('reading a stream of camera frames', () => {
+  it('gives each taught sign once, still or moving, and nothing for an untaught hand', () => {
+    const model = taughtMoves();
+    for (let n = 0; n < 6; n++) addSample(model, 'water', normalise(hand(4 + n * 0.02))!);
+    const read = reader(model);
+    const still = (bend: number, n: number, dx = 0.3) => Array.from({ length: n }, () => ({ points: hand(bend, { dx }) }));
+    const stream = [...still(0, 5, 0), ...moving(0, 20, right), ...still(0, 10), null, ...still(4, 12), null, ...still(7, 12)];
+    const words = stream.map((f) => read(f).word).filter(Boolean);
+    expect(words).toEqual(['go', 'water']);
+    expect(read(null).now).toBe('none');
   });
 });

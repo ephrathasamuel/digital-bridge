@@ -33,8 +33,8 @@
       <div class="callout">
         <p style="margin:0"><strong>Your camera pictures never leave this device.</strong> A hand tracker (Google MediaPipe, Apache 2.0) runs in
         your browser and downloads once when you turn the camera on. The signs you teach are saved only in this browser. Use
-        <strong>Save to a file</strong> to share them with your community. This early version knows still hand shapes, not signs with
-        movement, and it only knows the signs people teach it.</p>
+        <strong>Save to a file</strong> to share them with your community. It knows still hand shapes and one hand moving, and it only
+        knows the signs people teach it.</p>
       </div>
 
       <div class="split">
@@ -59,11 +59,15 @@
               <p class="hint" id="word-hint">For example: water, help, thank you. Any language.</p>
               <input id="word" maxlength="40" autocomplete="off" aria-describedby="word-hint" />
             </div>
+            <fieldset class="field" style="border:0;padding:0;margin:0 0 1rem">
+              <legend style="font-weight:700;margin-bottom:0.35rem">What kind of sign?</legend>
+              <label style="display:block;font-weight:400"><input type="radio" name="kind" value="still" checked /> Still: one hand shape, held</label>
+              <label style="display:block;font-weight:400"><input type="radio" name="kind" value="move" /> With movement: the hand moves</label>
+            </fieldset>
             <div class="row">
               <button id="record" class="btn amber" type="button">Record 30 examples</button>
             </div>
-            <p class="hint" style="margin-top:0.5rem">After a 3 second count, hold the sign and move your hand a little, nearer and further, so it learns the
-            sign from different angles. Teach each sign at least twice.</p>
+            <p class="hint" id="record-hint" style="margin-top:0.5rem"></p>
             <h3>Signs taught on this device</h3>
             <p id="empty" class="muted">No signs yet.</p>
             <ul id="signs" class="signs"></ul>
@@ -79,7 +83,8 @@
             <div class="row">
               <button id="recognise" class="btn solid" type="button" aria-pressed="false">Start recognising</button>
             </div>
-            <p class="hint" style="margin-top:0.75rem">Hold each sign still for about half a second. Lower your hand between signs.</p>
+            <p class="hint" style="margin-top:0.75rem">Hold a still sign for about half a second. Make a sign with movement, then hold your hand still for a moment.
+            Lower your hand between signs.</p>
             <p class="guess" id="guess" aria-hidden="true"></p>
             <label for="sentence">Your words</label>
             <textarea id="sentence" aria-describedby="sentence-hint"></textarea>

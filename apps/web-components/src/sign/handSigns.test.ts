@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
-  addSample, classify, createModel, fromJSON, normalise, removeSign, steady, toJSON, type Point,
+  addClip, addSample, classify, classifyClip, createModel, fromJSON, makeClip, normalise, removeSign, segmenter, steady, toJSON,
+  type Frame, type Point,
 } from '../../../host-demo/assets/js/hand-signs.js';
 
 /** A made up hand: `bend` moves the finger tips, so different values are different hand shapes. */
@@ -69,5 +70,70 @@ describe('hand signs', () => {
       null,
     ] }))!;
     expect(bad.signs.map((s) => [s.word, s.samples.length])).toEqual([['ok', 1]]);
+  });
+});
+
+/** A hand that keeps shape `bend` while its wrist follows `path` (t from 0 to 1 -> offset). */
+function moving(bend: number, steps: number, path: (t: number) => [number, number]): Frame[] {
+  return Array.from({ length: steps }, (_, i) => {
+    const t = i / (steps - 1);
+    const [dx, dy] = path(t);
+    return { points: hand(bend, { dx: dx + 0.002 * Math.sin(i * 7), dy }) };
+  });
+}
+const right = (t: number): [number, number] => [0.3 * t, 0];
+const down = (t: number): [number, number] => [0, 0.3 * t];
+const circle = (t: number): [number, number] => [0.1 * Math.cos(2 * Math.PI * t) - 0.1, 0.1 * Math.sin(2 * Math.PI * t)];
+
+function taughtMoves(): ReturnType<typeof createModel> {
+  const model = createModel();
+  for (const steps of [16, 20, 24]) {
+    addClip(model, 'go', makeClip(moving(0, steps, right)));
+    addClip(model, 'round', makeClip(moving(0, steps, circle)));
+    addClip(model, 'stop', makeClip(moving(2, steps, right)));
+  }
+  return model;
+}
+
+describe('signs with movement', () => {
+  it('recognises the path and the hand shape, at any speed', () => {
+    const model = taughtMoves();
+    expect(classifyClip(model, makeClip(moving(0, 40, right)))?.word).toBe('go');
+    expect(classifyClip(model, makeClip(moving(0, 12, circle)))?.word).toBe('round');
+    expect(classifyClip(model, makeClip(moving(2, 30, right)))?.word).toBe('stop');
+    expect(classifyClip(model, makeClip(moving(0, 20, down)))).toBeNull();
+  });
+
+  it('finds one movement between still moments, and ignores a shaky hand', () => {
+    const seg = segmenter();
+    const still = (n: number, dx: number) => Array.from({ length: n }, () => ({ points: hand(0, { dx }) }));
+    const frames = [...still(10, 0), ...moving(0, 20, right), ...still(10, 0.3)];
+    const found = frames.map((f) => seg.push(f)).filter(Boolean);
+    expect(found).toHaveLength(1);
+    expect(found[0]!.length).toBeGreaterThanOrEqual(18);
+    expect(classifyClip(taughtMoves(), makeClip(found[0]!))?.word).toBe('go');
+    const shaky = segmenter();
+    const jitter = Array.from({ length: 30 }, (_, i) => ({ points: hand(0, { dx: 0.004 * (i % 2) }) }));
+    expect(jitter.map((f) => shaky.push(f)).filter(Boolean)).toHaveLength(0);
+  });
+
+  it('a movement that ends when the hand leaves still counts', () => {
+    const seg = segmenter();
+    for (const f of moving(0, 20, right)) seg.push(f);
+    expect(seg.moving).toBe(true);
+    expect(seg.push(null)?.length).toBeGreaterThanOrEqual(18);
+  });
+
+  it('keeps movement examples in shared files, and still reads version 1 files', () => {
+    const model = taughtMoves();
+    addSample(model, 'water', normalise(hand(0))!);
+    const copy = fromJSON(toJSON(model))!;
+    expect(copy.signs.map((s) => [s.word, s.samples.length, s.clips.length])).toEqual([
+      ['go', 0, 3], ['round', 0, 3], ['stop', 0, 3], ['water', 1, 0],
+    ]);
+    expect(classifyClip(copy, makeClip(moving(0, 25, circle)))?.word).toBe('round');
+    const v1 = fromJSON(JSON.stringify({ format: 'digital-bridge-signs', version: 1, signs: [{ word: 'old', samples: [Array(63).fill(0)] }] }))!;
+    expect(v1.signs[0]).toEqual({ word: 'old', samples: [Array(63).fill(0)], clips: [] });
+    expect(addClip(model, 'bad', [[1, 2, 3]])).toBe(false);
   });
 });

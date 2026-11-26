@@ -1,11 +1,16 @@
 // Teach your own signs: camera + MediaPipe Hand Landmarker (Apache 2.0) in the browser, matching in hand-signs.js.
 // Camera pictures stay on the device. Taught signs live in this browser (localStorage) or in a file the person saves.
-import { addSample, classify, createModel, fromJSON, normalise, removeSign, steady, toJSON } from './hand-signs.js';
+import {
+  addClip, addSample, classify, classifyClip, createModel, fromJSON, makeClip, normalise, removeSign, segmenter, steady, toJSON,
+} from './hand-signs.js';
 
 const MEDIAPIPE = 'https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';
 const MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task';
 const STORE = 'db-taught-signs';
 const EXAMPLES = 30;
+const MOVES = 3;
+/** A movement example must start within this long after the count, or we ask again. */
+const MOVE_WAIT_MS = 6000;
 
 const $ = (id) => document.getElementById(id);
 const video = $('video');
@@ -20,8 +25,10 @@ let landmarker = null;
 let stream = null;
 let lastTime = -1;
 let recognising = false;
-let recording = null; // { word, left, skip }
+/** Teaching in progress: { word, kind: 'still'|'move', left, skip, counting, seg, since } */
+let recording = null;
 let push = steady(8);
+let moves = segmenter();
 
 function load() {
   try {
@@ -43,6 +50,17 @@ function say(text) {
   status.textContent = text;
 }
 
+const wait = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const kind = () => document.querySelector('input[name="kind"]:checked')?.value === 'move' ? 'move' : 'still';
+
+function renderKind() {
+  const move = kind() === 'move';
+  $('record').textContent = move ? `Record ${MOVES} movement examples` : `Record ${EXAMPLES} examples`;
+  $('record-hint').textContent = move
+    ? `After a 3 second count, make the sign once, then hold your hand still. We ask for it ${MOVES} times. Make it a little differently each time (faster, slower, nearer).`
+    : 'After a 3 second count, hold the sign and move your hand a little, nearer and further, so it learns the sign from different angles. Teach each sign at least twice.';
+}
+
 function renderSigns() {
   const list = $('signs');
   list.replaceChildren();
@@ -50,9 +68,12 @@ function renderSigns() {
   for (const sign of model.signs) {
     const item = document.createElement('li');
     const name = document.createElement('span');
-    name.innerHTML = `<strong></strong> <span class="muted"></span>`;
+    name.innerHTML = '<strong></strong> <span class="muted"></span>';
     name.querySelector('strong').textContent = sign.word;
-    name.querySelector('.muted').textContent = `${sign.samples.length} examples`;
+    const parts = [];
+    if (sign.samples.length) parts.push(`${sign.samples.length} still examples`);
+    if (sign.clips.length) parts.push(`${sign.clips.length} movement examples`);
+    name.querySelector('.muted').textContent = parts.join(', ');
     const remove = document.createElement('button');
     remove.type = 'button';
     remove.className = 'btn';
@@ -149,18 +170,41 @@ function frame() {
     lastTime = video.currentTime;
     const result = landmarker.detectForVideo(video, performance.now());
     const points = result.landmarks?.[0] ?? null;
-    const side = (result.handedness ?? result.handednesses)?.[0]?.[0]?.categoryName;
-    const vector = points ? normalise(points, side) : null;
+    const handedness = (result.handedness ?? result.handednesses)?.[0]?.[0]?.categoryName;
+    const seen = points ? { points, handedness } : null;
     draw(points);
-    if (recording) learn(vector);
-    else if (recognising) read(vector);
-    else handLine.textContent = vector ? 'Hand seen' : 'No hand seen';
+    if (recording?.kind === 'move') learnMove(seen);
+    else if (recording) learnStill(seen ? normalise(points, handedness) : null);
+    else if (recognising) read(seen);
+    else handLine.textContent = seen ? 'Hand seen' : 'No hand seen';
   }
   requestAnimationFrame(frame);
 }
 
-function learn(vector) {
-  if (recording.countdown > 0) return;
+async function countdown(word, first, before = '') {
+  recording.counting = true;
+  for (let n = 3; n > 0; n--) {
+    say(`${n === 3 && before ? `${before} ` : ''}${first ? 'Get ready to sign' : 'Again:'} ${word}: ${n}`);
+    handLine.textContent = `Get ready: ${n}`;
+    await wait(1000);
+    if (!recording) return false;
+  }
+  recording.counting = false;
+  recording.seg = segmenter();
+  recording.since = performance.now();
+  return true;
+}
+
+function finishTeaching(text) {
+  recording = null;
+  save();
+  renderSigns();
+  say(text);
+  $('record').disabled = false;
+}
+
+function learnStill(vector) {
+  if (recording.counting) return;
   if (!vector) {
     handLine.textContent = `Show your hand: ${EXAMPLES - recording.left} of ${EXAMPLES}`;
     return;
@@ -170,36 +214,72 @@ function learn(vector) {
   addSample(model, recording.word, vector);
   recording.left--;
   handLine.textContent = `Recording ${recording.word}: ${EXAMPLES - recording.left} of ${EXAMPLES}`;
-  if (recording.left <= 0) {
-    const word = recording.word;
-    recording = null;
-    save();
-    renderSigns();
-    say(`Learned ${word}. Teach it once more for better results, or teach the next sign.`);
-    $('record').disabled = false;
-  }
+  if (recording.left <= 0) finishTeaching(`Learned ${recording.word}. Teach it once more for better results, or teach the next sign.`);
 }
 
-function read(vector) {
+function learnMove(seen) {
+  if (recording.counting) return;
+  const done = recording.seg.push(seen);
+  const number = MOVES - recording.left + 1;
+  handLine.textContent = recording.seg.moving ? `Movement ${number} of ${MOVES}: seen, now hold still` : `Make the sign: ${number} of ${MOVES}`;
+  if (!done) {
+    if (!recording.seg.moving && performance.now() - recording.since > MOVE_WAIT_MS) {
+      const word = recording.word;
+      finishTeaching(`No movement seen for ${word}. Move your hand more, or teach it as a still sign.`);
+    }
+    return;
+  }
+  const word = recording.word;
+  if (!addClip(model, word, makeClip(done))) return;
+  recording.left--;
+  if (recording.left <= 0) {
+    finishTeaching(`Learned ${word} with movement. Teach it once more for better results, or teach the next sign.`);
+    return;
+  }
+  void countdown(word, false, `Got movement ${number} of ${MOVES}.`);
+}
+
+function addWord(word) {
+  sentence.value = `${sentence.value.trim()} ${word}`.trim();
+  say(`Added: ${word}`);
+}
+
+function read(seen) {
+  if (model.signs.some((s) => s.clips.length)) {
+    const done = moves.push(seen);
+    if (done) {
+      const match = classifyClip(model, makeClip(done));
+      guess.textContent = match ? match.word : '';
+      handLine.textContent = match ? `Movement: ${match.word}` : 'Not a taught movement';
+      if (match) addWord(match.word);
+      push = steady(8); // the still sign after a movement must be held again
+      return;
+    }
+    if (moves.moving) {
+      handLine.textContent = 'Moving…';
+      push(null);
+      return;
+    }
+  }
+  const vector = seen ? normalise(seen.points, seen.handedness) : null;
   const match = classify(model, vector);
   guess.textContent = match ? match.word : '';
   handLine.textContent = vector ? (match ? `Looks like: ${match.word}` : 'Not a taught sign') : 'No hand seen';
   const word = push(match ? match.word : null);
-  if (word) {
-    sentence.value = `${sentence.value.trim()} ${word}`.trim();
-    say(`Added: ${word}`);
-  }
+  if (word) addWord(word);
 }
 
 function setRecognising(on) {
   recognising = on;
   push = steady(8);
+  moves = segmenter();
   guess.textContent = '';
   $('recognise').textContent = on ? 'Stop recognising' : 'Start recognising';
   $('recognise').setAttribute('aria-pressed', String(on));
 }
 
 $('camera').addEventListener('click', () => (stream ? (stopCamera(), say('Camera off.')) : startCamera()));
+for (const radio of document.querySelectorAll('input[name="kind"]')) radio.addEventListener('change', renderKind);
 
 $('record').addEventListener('click', async () => {
   const word = $('word').value.trim();
@@ -211,19 +291,10 @@ $('record').addEventListener('click', async () => {
   if (!(await startCamera())) return;
   setRecognising(false);
   $('record').disabled = true;
-  recording = { word, left: EXAMPLES, skip: 0, countdown: 3 };
-  for (let n = 3; n > 0; n--) {
-    say(`Get ready to sign ${word}: ${n}`);
-    handLine.textContent = `Get ready: ${n}`;
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    if (!recording) break;
-  }
-  if (recording) {
-    recording.countdown = 0;
-    say(`Recording ${word}. Hold the sign.`);
-  } else {
-    $('record').disabled = false;
-  }
+  const move = kind() === 'move';
+  recording = { word, kind: move ? 'move' : 'still', left: move ? MOVES : EXAMPLES, skip: 0, counting: true, seg: null, since: 0 };
+  if (await countdown(word, true)) say(move ? `Make the sign ${word}, then hold still.` : `Recording ${word}. Hold the sign.`);
+  else $('record').disabled = false;
 });
 
 $('recognise').addEventListener('click', async () => {
@@ -283,10 +354,14 @@ $('import').addEventListener('change', async (event) => {
   if (file.size > 5_000_000) return say('That file is too big for a signs file.');
   const loaded = fromJSON(await file.text());
   if (!loaded) return say('That is not a Digital Bridge signs file.');
-  for (const sign of loaded.signs) for (const sample of sign.samples) addSample(model, sign.word, sample);
+  for (const sign of loaded.signs) {
+    for (const sample of sign.samples) addSample(model, sign.word, sample);
+    for (const clip of sign.clips) addClip(model, sign.word, clip);
+  }
   save();
   renderSigns();
   say(`Loaded ${loaded.signs.length} signs.`);
 });
 
+renderKind();
 renderSigns();

@@ -150,6 +150,8 @@ export interface DescribeWords {
 const fill = (template: string, vars: Record<string, string>) =>
   Object.entries(vars).reduce((text, [k, v]) => text.replace(`{${k}}`, v), template);
 
+const CELL_CONTROLS = 'select, textarea, input:not([type="hidden"]), button, a[href], [role="button"]';
+
 /** What to read aloud when an item gets focus: a form field, a button, a link, a table cell, or its text. */
 export function describeElement(el: Element, words: DescribeWords): string {
   if (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio') && words.checked && words.unchecked) {
@@ -159,12 +161,15 @@ export function describeElement(el: Element, words: DescribeWords): string {
   if (isFormField(el)) {
     return composeFieldText({ label: fieldLabel(el), hint: fieldHint(el), value: fieldValue(el), required: isRequired(el) }, words.field);
   }
-  const cell = tableCellOf(el);
+  const cell = el instanceof HTMLTableCellElement ? el : null;
   if (cell) {
     const row = (cell.parentElement as HTMLTableRowElement | null)?.rowIndex ?? 0;
     const column = columnHeader(cell);
-    if (!column) return fill(words.headCell, { text: clean(cell.textContent) || words.emptyCell });
-    return fill(words.cell, { text: clean(cell.textContent) || words.emptyCell, column, row: String(row + 1) });
+    // A cell holding a control (a list, a tick box, a button) is read as that control, never as the list's raw text.
+    const control = cell.querySelector<HTMLElement>(CELL_CONTROLS);
+    const text = control ? describeElement(control, words).replace(/\.$/, '') : clean(cell.textContent) || words.emptyCell;
+    if (!column) return fill(words.headCell, { text });
+    return fill(words.cell, { text, column, row: String(row + 1) });
   }
   const name = clean(el.getAttribute('aria-label')) || textOfIds(el.getAttribute('aria-labelledby'), el) || clean(el.textContent);
   if (el instanceof HTMLButtonElement || el.getAttribute('role') === 'button') return fill(words.button, { text: name });
@@ -173,7 +178,7 @@ export function describeElement(el: Element, words: DescribeWords): string {
 }
 
 /**
- * Whether the arrow key already has a job where focus is: moving the cursor in text, choosing in a list or a radio
+ * Whether the arrow key already has a job where focus is: moving the cursor in text, choosing in a radio
  * group, changing a number. In a one line text box only left and right move the cursor, so up and down move on.
  */
 export function keepsArrow(node: Element, key: string): boolean {
@@ -182,5 +187,6 @@ export function keepsArrow(node: Element, key: string): boolean {
     if (['', 'text', 'email', 'tel', 'search', 'url', 'password'].includes(node.type)) return key === 'ArrowLeft' || key === 'ArrowRight';
     return true; // radio, number, range, date and the like
   }
-  return node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement || (node instanceof HTMLElement && node.isContentEditable);
+  // A closed list does not trap the arrows: Space, Enter or Alt+Down open it, and the arrows then choose inside it.
+  return node instanceof HTMLTextAreaElement || (node instanceof HTMLElement && node.isContentEditable);
 }

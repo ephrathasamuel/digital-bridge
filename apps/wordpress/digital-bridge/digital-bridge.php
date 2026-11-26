@@ -60,7 +60,7 @@ function digital_bridge_sanitize( $input ) {
 	$input = is_array( $input ) ? $input : array();
 	$api   = isset( $input['api'] ) ? esc_url_raw( trim( (string) $input['api'] ), array( 'https' ) ) : '';
 	return array(
-		'lang'     => ( isset( $input['lang'] ) && 'am' === $input['lang'] ) ? 'am' : 'en',
+		'lang'     => ( isset( $input['lang'] ) && in_array( $input['lang'], array( 'en', 'am', 'om', 'ti', 'so' ), true ) ) ? $input['lang'] : 'en',
 		'position' => ( isset( $input['position'] ) && 'left' === $input['position'] ) ? 'left' : 'right',
 		'api'      => $api,
 	);
@@ -109,6 +109,9 @@ function digital_bridge_settings_page() {
 						<select id="digital-bridge-lang" name="<?php echo esc_attr( $name ); ?>[lang]">
 							<option value="en" <?php selected( $settings['lang'], 'en' ); ?>>English</option>
 							<option value="am" lang="am" <?php selected( $settings['lang'], 'am' ); ?>>አማርኛ</option>
+							<option value="om" lang="om" <?php selected( $settings['lang'], 'om' ); ?>>Afaan Oromoo</option>
+							<option value="ti" lang="ti" <?php selected( $settings['lang'], 'ti' ); ?>>ትግርኛ</option>
+							<option value="so" lang="so" <?php selected( $settings['lang'], 'so' ); ?>>Soomaali</option>
 						</select>
 						<p class="description"><?php esc_html_e( 'Visitors can change it in the bar.', 'digital-bridge' ); ?></p>
 					</td>

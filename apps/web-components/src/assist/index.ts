@@ -6,14 +6,16 @@
  *   <script src="https://…/db-assist.js" data-lang="am" data-api="https://…/api/v1" defer></script>
  *
  * Options (script data attributes, or window.DigitalBridgeAssist = {...} set before the script):
- *   lang       en | am                       first language of the bar and the voice (remembered per site)
- *   api        Digital Bridge API base        enables open source voices for languages the device lacks
+ *   lang       en | am | om | ti | so | ...  first language of the bar and the voice (remembered per site)
+ *   api        Digital Bridge API base        loads added languages (om, ti, so, ...) and open source voices for
+ *                                            languages the device lacks
  *   voice      auto | device | server | custom
  *   voiceUrl   your own text to speech URL    {text} and {lang} are filled in (see tts/voiceSource.ts)
  *   position   right | left
  */
-import { I18N, type I18nKey, type Lang } from '@db/shared-schemas';
+import { EXTRA_LANGS, I18N, isExtraLang, type ExtraLang, type I18nKey, type Lang } from '@db/shared-schemas';
 import { toFidel } from '../i18n/fidel';
+import { activeExtraLang, listReadyLangs, loadExtraPack, machineNote, overlayText, setExtraPack, setPackApiUrl } from '../i18n/extraPack';
 import { normaliseSpoken } from '../voice/spokenInput';
 import { getSpeechRecognition, type SpeechRecognitionLike } from '../voice/speech';
 import { deviceVoiceFirst, fetchRemoteSpeech, parseVoiceSource, setVoiceConfig } from '../tts/voiceSource';
@@ -29,7 +31,9 @@ const PAUSE_MS = 2_000;
 const STOPS = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"]), td, th';
 
 interface AssistOptions { lang?: string; api?: string; voice?: string; voiceUrl?: string; position?: string }
-interface Settings { lang: Lang; open: boolean; bigText: boolean; focus: boolean; links: boolean; contrast: boolean; darkContrast: boolean; readMove: boolean }
+/** English, Amharic, or an added language whose text comes from the API pack over English. */
+type BarLang = Lang | ExtraLang;
+interface Settings { lang: BarLang; open: boolean; bigText: boolean; focus: boolean; links: boolean; contrast: boolean; darkContrast: boolean; readMove: boolean }
 
 const HOST_ID = 'db-assist-host';
 const STORE_KEY = 'db-assist-settings';
@@ -44,10 +48,21 @@ function readOptions(): AssistOptions {
   return { ...(script?.dataset ?? {}), ...fromWindow } as AssistOptions;
 }
 
+/** Speech recognition tags for voice answers. Browsers that cannot listen in a language say so, and people type. */
+const RECOGNITION: Record<BarLang, string> = {
+  en: 'en-US', am: 'am-ET', om: 'om-ET', ti: 'ti-ET', so: 'so-SO', sw: 'sw-KE', aa: 'aa-ET',
+};
+
+function toBarLang(value: unknown): BarLang {
+  if (value === 'en' || value === 'am') return value;
+  return typeof value === 'string' && isExtraLang(value) ? value : 'en';
+}
+
 function loadSettings(options: AssistOptions): Settings {
-  const base: Settings = { lang: options.lang === 'am' ? 'am' : 'en', open: false, bigText: false, focus: false, links: false, contrast: false, darkContrast: false, readMove: false };
+  const base: Settings = { lang: toBarLang(options.lang), open: false, bigText: false, focus: false, links: false, contrast: false, darkContrast: false, readMove: false };
   try {
-    return { ...base, ...(JSON.parse(localStorage.getItem(STORE_KEY) ?? '{}') as Partial<Settings>) };
+    const saved = { ...base, ...(JSON.parse(localStorage.getItem(STORE_KEY) ?? '{}') as Partial<Settings>) };
+    return { ...saved, lang: toBarLang(saved.lang) };
   } catch {
     return base;
   }
@@ -148,8 +163,14 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
   let lastField: FormField | null = null;
   let recognition: SpeechRecognitionLike | null = null;
   let audio: HTMLAudioElement | null = null;
+  let readyLangs: ExtraLang[] = [];
+  const lookup = (key: I18nKey): string => {
+    const lang = settings.lang;
+    if (!isExtraLang(lang)) return I18N[lang][key] ?? I18N.en[key];
+    return (activeExtraLang() === lang ? overlayText(key) : undefined) ?? I18N.en[key];
+  };
   const t = (key: I18nKey, vars: Record<string, string> = {}) =>
-    Object.entries(vars).reduce((text, [k, v]) => text.replace(`{${k}}`, v), I18N[settings.lang][key] ?? I18N.en[key]);
+    Object.entries(vars).reduce((text, [k, v]) => text.replace(`{${k}}`, v), lookup(key));
 
   // Remember the last form field used on the page, so a click on the bar still knows which field is meant.
   document.addEventListener('focusin', (event) => {
@@ -168,7 +189,7 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
   bar.append(panel, toggle);
 
   const announce = (text: string) => { status.textContent = text; };
-  const voiceLang = () => (settings.lang === 'am' ? 'am-ET' : 'en-US');
+  const voiceLang = () => RECOGNITION[settings.lang];
 
   const speak = async (text: string) => {
     window.speechSynthesis?.cancel();
@@ -374,16 +395,18 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
 
     const langLabel = el('label', { for: 'db-assist-lang' }, t('assist.language'));
     const langSelect = el('select', { id: 'db-assist-lang' });
-    for (const [value, name] of [['en', 'English'], ['am', 'አማርኛ']] as const) {
+    const extras = [...new Set([...readyLangs, ...(isExtraLang(settings.lang) ? [settings.lang] : [])])];
+    const choices: Array<[BarLang, string]> = [['en', 'English'], ['am', 'አማርኛ'], ...extras.map((l): [BarLang, string] => [l, EXTRA_LANGS[l].name])];
+    for (const [value, name] of choices) {
       const option = el('option', { value, lang: value }, name);
       option.selected = settings.lang === value;
       langSelect.append(option);
     }
     langSelect.addEventListener('change', () => {
-      settings.lang = langSelect.value === 'am' ? 'am' : 'en';
-      update();
-      shadow.getElementById('db-assist-lang')?.focus();
+      void chooseLang(toBarLang(langSelect.value)).then(() => shadow.getElementById('db-assist-lang')?.focus());
     });
+    // Added languages are machine translated: say so in English, so everyone can read why.
+    const note = isExtraLang(settings.lang) ? [el('p', { class: 'hint', lang: 'en' }, machineNote(settings.lang))] : [];
 
     reviewLabel.textContent = t('assist.live');
     reviewHint.textContent = t('assist.checkWords');
@@ -440,7 +463,7 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
       display.append(button);
     }
 
-    panel.append(title, intro, langLabel, langSelect, actions, review, readMove, readMoveHint, fidelLabel, fidelHint,
+    panel.append(title, intro, ...note, langLabel, langSelect, actions, review, readMove, readMoveHint, fidelLabel, fidelHint,
       fidelInput, fidelOut, fidelInsert, displayTitle, display, status);
   };
 
@@ -448,6 +471,24 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     saveSettings(settings);
     render();
   };
+
+  /** Switch language; an added language loads its pack first and stays English when the API has none. */
+  async function chooseLang(lang: BarLang): Promise<void> {
+    if (isExtraLang(lang)) {
+      const ok = await loadExtraPack(lang, options.api);
+      if (!ok) {
+        setExtraPack(null);
+        settings.lang = 'en';
+        update();
+        announce(`${EXTRA_LANGS[lang].name}: not available right now.`);
+        return;
+      }
+    } else {
+      setExtraPack(null);
+    }
+    settings.lang = lang;
+    update();
+  }
 
   toggle.addEventListener('click', () => {
     settings.open = !settings.open;
@@ -470,6 +511,14 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     }
   });
   render();
+
+  // Added languages: offer the ones the API has text for, and load the remembered one.
+  setPackApiUrl(options.api);
+  void listReadyLangs().then((langs) => {
+    readyLangs = langs;
+    if (langs.length && !shadow.activeElement) render(); // never rebuild the panel under someone's focus
+  });
+  if (isExtraLang(settings.lang)) void chooseLang(settings.lang);
 }
 
 if (typeof window !== 'undefined' && typeof document !== 'undefined') {

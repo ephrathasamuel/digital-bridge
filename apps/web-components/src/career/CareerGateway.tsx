@@ -8,6 +8,7 @@ import { LiveRegion, useAnnouncer } from '../wizard/LiveRegion';
 import { emitEvent } from '../wizard/emit';
 import { localServices, type Dev2Services } from '../wizard/services';
 import { cleanId, cx, ui } from '../wizard/ui';
+import { ReadMoveToggle } from '../tts/ReadMoveToggle';
 import { VoiceControl } from '../wizard/VoiceControl';
 import { useVisionMode } from '../wizard/vision';
 import { ApplyDialog } from './ApplyDialog';
@@ -39,6 +40,7 @@ export const CareerGateway: React.FC<CareerGatewayProps> = ({
   const lang: Lang = langProp ?? profile.lang;
   const t = useMemo(() => makeT(lang), [lang]);
   const { announcement, announce } = useAnnouncer();
+  const readMoveRef = useRef<HTMLDivElement>(null);
 
   const rootRef = useRef<HTMLElement>(null);
   const vision = useVisionMode();
@@ -135,6 +137,9 @@ export const CareerGateway: React.FC<CareerGatewayProps> = ({
         {t('career.title')}
       </h2>
       <p className="mb-4">{t('career.intro')}</p>
+      <div ref={readMoveRef} className="mb-4 flex flex-wrap gap-2">
+        <ReadMoveToggle lang={lang} announce={announce} anchor={readMoveRef} />
+      </div>
 
       <div role="group" aria-label={t('career.viewLabel')} className="mb-6 flex flex-wrap gap-2">
         <button type="button" aria-pressed={view === 'jobs'} onClick={() => switchView('jobs')} className={ui.btnToggle(view === 'jobs')}>

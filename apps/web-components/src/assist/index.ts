@@ -21,7 +21,7 @@ import { getSpeechRecognition, type SpeechRecognitionLike } from '../voice/speec
 import { deviceVoiceFirst, fetchRemoteSpeech, parseVoiceSource, setVoiceConfig } from '../tts/voiceSource';
 import { joinTranscripts } from '../ask/askVoice';
 import {
-  canTakeText, composeFieldText, describeElement, fieldHint, fieldLabel, fieldValue, insertText, isFormField, isRequired,
+  canTakeText, composeFieldText, describeElement, fieldHint, fieldLabel, fieldValue, insertText, isFormField, isRequired, keepsArrow,
   neighbourCell, spokenKindFor, tableCellOf, type FormField,
 } from './fields';
 
@@ -324,6 +324,8 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     cell: t('assist.cell'),
     headCell: t('assist.headCell'),
     emptyCell: t('assist.emptyCell'),
+    checked: t('vc.checked'),
+    unchecked: t('vc.unchecked'),
   });
   const visible = (node: Element) => {
     const box = node.getBoundingClientRect();
@@ -339,12 +341,8 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     next.scrollIntoView?.({ block: 'nearest' });
   };
   const ARROW_ROLES = ['slider', 'listbox', 'menu', 'menubar', 'radiogroup', 'tablist', 'grid', 'tree', 'combobox', 'spinbutton'];
-  const typingIn = (node: Element) =>
-    (node instanceof HTMLInputElement && !['checkbox', 'button', 'submit', 'reset'].includes(node.type)) ||
-    node instanceof HTMLTextAreaElement ||
-    node instanceof HTMLSelectElement ||
-    (node instanceof HTMLElement && node.isContentEditable) ||
-    ARROW_ROLES.includes(node.closest('[role]')?.getAttribute('role') ?? '');
+  const inArrowWidget = (node: Element) => ARROW_ROLES.includes(node.closest('[role]')?.getAttribute('role') ?? '');
+
 
   document.addEventListener('focusin', (event) => {
     if (!settings.readMove) return;
@@ -359,7 +357,7 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     const path = event.composedPath();
     if (path.includes(host)) return;
     const current = (path[0] as Element | null) ?? document.body;
-    if (current !== document.body && typingIn(current)) return; // arrows keep their normal job inside fields
+    if (current !== document.body && (keepsArrow(current, event.key) || inArrowWidget(current))) return; // arrows keep their normal job
     const key = event.key as 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
     const forward = key === 'ArrowDown' || key === 'ArrowRight';
     const cell = tableCellOf(current);

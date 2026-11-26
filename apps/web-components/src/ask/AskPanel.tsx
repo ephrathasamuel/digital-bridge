@@ -7,6 +7,7 @@ import { answerHelpQuestion, HELP_ENTRIES, type HelpAnswer, type Lang } from '@d
 import { makeT } from '../i18n';
 import { scriptClass } from '../i18n/script';
 import { cleanId, cx, ui } from '../wizard/ui';
+import { ReadMoveToggle } from '../tts/ReadMoveToggle';
 import { useVisionMode } from '../wizard/vision';
 import { getSpeechRecognition, setFieldListening, speechLocale, type SpeechRecognitionLike } from '../voice/speech';
 import { SignPanel } from '../voice/SignPanel';
@@ -41,6 +42,7 @@ const CARD_ICONS: Record<string, LucideIcon> = {
  */
 export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl, apiUrl, partnerId }) => {
   const t = makeT(lang);
+  const readMoveRef = useRef<HTMLDivElement>(null);
   const vision = useVisionMode();
   const idBase = `ask-${cleanId(useId())}`;
   const [question, setQuestion] = useState('');
@@ -200,6 +202,9 @@ export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl, a
         {t('ask.heading')}
       </h2>
       <p className="mb-3">{t('ask.intro')}</p>
+      <div ref={readMoveRef} className="mb-3 flex flex-wrap gap-2">
+        <ReadMoveToggle lang={lang} announce={setStatus} anchor={readMoveRef} />
+      </div>
 
       <form
         noValidate

@@ -142,6 +142,9 @@ export interface DescribeWords {
   cell: string;
   headCell: string;
   emptyCell: string;
+  /** Said for a tick box or a choice instead of "your answer: empty" ("ticked" / "not ticked"). */
+  checked?: string;
+  unchecked?: string;
 }
 
 const fill = (template: string, vars: Record<string, string>) =>
@@ -149,6 +152,10 @@ const fill = (template: string, vars: Record<string, string>) =>
 
 /** What to read aloud when an item gets focus: a form field, a button, a link, a table cell, or its text. */
 export function describeElement(el: Element, words: DescribeWords): string {
+  if (el instanceof HTMLInputElement && (el.type === 'checkbox' || el.type === 'radio') && words.checked && words.unchecked) {
+    const hint = fieldHint(el);
+    return [fieldLabel(el) || words.field.unnamed, hint, el.checked ? words.checked : words.unchecked].filter(Boolean).join('. ') + '.';
+  }
   if (isFormField(el)) {
     return composeFieldText({ label: fieldLabel(el), hint: fieldHint(el), value: fieldValue(el), required: isRequired(el) }, words.field);
   }
@@ -163,4 +170,17 @@ export function describeElement(el: Element, words: DescribeWords): string {
   if (el instanceof HTMLButtonElement || el.getAttribute('role') === 'button') return fill(words.button, { text: name });
   if (el instanceof HTMLAnchorElement) return fill(words.link, { text: name });
   return name;
+}
+
+/**
+ * Whether the arrow key already has a job where focus is: moving the cursor in text, choosing in a list or a radio
+ * group, changing a number. In a one line text box only left and right move the cursor, so up and down move on.
+ */
+export function keepsArrow(node: Element, key: string): boolean {
+  if (node instanceof HTMLInputElement) {
+    if (['checkbox', 'button', 'submit', 'reset'].includes(node.type)) return false;
+    if (['', 'text', 'email', 'tel', 'search', 'url', 'password'].includes(node.type)) return key === 'ArrowLeft' || key === 'ArrowRight';
+    return true; // radio, number, range, date and the like
+  }
+  return node instanceof HTMLTextAreaElement || node instanceof HTMLSelectElement || (node instanceof HTMLElement && node.isContentEditable);
 }

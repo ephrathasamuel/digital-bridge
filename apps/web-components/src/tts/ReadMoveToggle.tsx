@@ -6,20 +6,13 @@ import { t } from '../i18n';
 import { ui } from '../wizard/ui';
 import { spokenLang } from '../i18n/extraPack';
 import { speakText } from '../voice/speech';
-import { describeElement, tableCellOf, neighbourCell } from '../assist/fields';
+import { describeElement, keepsArrow, neighbourCell, tableCellOf } from '../assist/fields';
 import { deviceVoiceFirst, fetchRemoteSpeech } from './voiceSource';
 
 /** Remembered across steps and visits, like the other help settings. */
 const STORE = 'db-read-move';
 /** Everything a person can reach on the step (the same items the Tab key reaches). */
 const STOPS = 'a[href], button, input:not([type="hidden"]), select, textarea, summary, [tabindex]:not([tabindex="-1"])';
-/** Inside these the arrow keys already have a job (typing, choosing an option, a radio group). */
-const typingIn = (node: Element) =>
-  (node instanceof HTMLInputElement && !['checkbox', 'button', 'submit', 'reset'].includes(node.type)) ||
-  node instanceof HTMLTextAreaElement ||
-  node instanceof HTMLSelectElement ||
-  (node instanceof HTMLElement && node.isContentEditable);
-
 function readSaved(): boolean {
   try {
     return localStorage.getItem(STORE) === 'on';
@@ -31,10 +24,10 @@ function readSaved(): boolean {
 export interface ReadMoveToggleProps {
   lang: Lang;
   announce: (message: string) => void;
-  /** Any element inside the step; the step is its closest <section>. */
+  /** Any element inside the step or widget; the area the arrows move through is its closest <section>. */
   anchor: React.RefObject<HTMLElement | null>;
   /** Where the caption panel renders (after all help buttons, so focus order stays the same on every step). */
-  panelSlot: HTMLElement | null;
+  panelSlot?: HTMLElement | null;
 }
 
 /**
@@ -85,6 +78,8 @@ export const ReadMoveToggle: React.FC<ReadMoveToggleProps> = ({ lang, announce, 
     cell: t(lang, 'assist.cell'),
     headCell: t(lang, 'assist.headCell'),
     emptyCell: t(lang, 'assist.emptyCell'),
+    checked: t(lang, 'vc.checked'),
+    unchecked: t(lang, 'vc.unchecked'),
   });
 
   const unmark = () => {
@@ -116,7 +111,7 @@ export const ReadMoveToggle: React.FC<ReadMoveToggleProps> = ({ lang, announce, 
     const onKey = (event: KeyboardEvent) => {
       if (!event.key.startsWith('Arrow') || event.altKey || event.ctrlKey || event.metaKey) return;
       const current = (step.getRootNode() as ShadowRoot | Document).activeElement ?? null;
-      if (current && typingIn(current)) return; // arrows keep their normal job inside fields and lists
+      if (current && keepsArrow(current, event.key)) return; // arrows keep their normal job inside fields and lists
       const key = event.key as 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight';
       const forward = key === 'ArrowDown' || key === 'ArrowRight';
       const cell = tableCellOf(current);

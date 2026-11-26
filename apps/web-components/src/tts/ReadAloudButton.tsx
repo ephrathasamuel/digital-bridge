@@ -37,8 +37,12 @@ export interface ReadAloudButtonProps {
   getPhrases?: () => ScriptPhrase[];
 }
 
-/** 'tts': an installed voice speaks phrase by phrase. 'visual': a bundled cue or chime, then timed phrases. */
-type Mode = 'idle' | 'tts' | 'visual';
+/**
+ * 'tts': an installed voice speaks phrase by phrase. 'remote': the voice server speaks phrase by phrase (each phrase
+ * is its own request, so the whole page is read, never cut at the server's length limit). 'visual': a bundled cue or
+ * chime, then timed phrases.
+ */
+type Mode = 'idle' | 'tts' | 'remote' | 'visual';
 
 /** On-screen pace: long enough to read comfortably, scaled to the phrase length. */
 const phraseMs = (phrase: string) => Math.max(2200, Array.from(phrase).length * 90);
@@ -62,11 +66,14 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const runRef = useRef(0);
+  /** Ends the phrase that is playing from the voice server (used by stop, so the phrase loop finishes). */
+  const endClipRef = useRef<(() => void) | null>(null);
 
   const active = mode !== 'idle';
 
   const stop = () => {
     runRef.current += 1; // cancels any pending async start
+    endClipRef.current?.();
     clearTimeout(timerRef.current);
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) window.speechSynthesis.cancel();
     audioRef.current?.pause();
@@ -115,6 +122,44 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
     announce?.(t(lang, 'readAloud.visualNote'));
   };
 
+  /** Plays phrase after phrase from the voice server, fetching the next one while the current one plays. */
+  const playRemote = async (parts: string[], first: string, fetchPart: (i: number) => Promise<string | null>, run: number) => {
+    setPhrases(parts);
+    setIndex(0);
+    setPaused(false);
+    setMode('remote');
+    announce?.(t(lang, 'help.reading'));
+    let url: string | null = first;
+    for (let i = 0; i < parts.length; i++) {
+      if (run !== runRef.current) break;
+      if (!url) {
+        // The server gave no audio for this phrase: show the rest on screen at reading pace.
+        setIndex(i);
+        setMode('visual');
+        return;
+      }
+      const next = i + 1 < parts.length ? fetchPart(i + 1) : null;
+      setIndex(i);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      setClipPlaying(true);
+      await new Promise<void>((resolve) => {
+        endClipRef.current = resolve;
+        audio.onended = () => resolve();
+        audio.onerror = () => resolve();
+        audio.play().catch(() => resolve());
+      });
+      endClipRef.current = null;
+      URL.revokeObjectURL(url);
+      url = next ? await next : null;
+    }
+    if (url) URL.revokeObjectURL(url);
+    if (run !== runRef.current) return;
+    setClipPlaying(false);
+    setMode('idle');
+    announce?.(t(lang, 'readAloud.done'));
+  };
+
   const start = async () => {
     const run = ++runRef.current;
     const script = getPhrases?.() ?? [];
@@ -125,21 +170,14 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
     const deviceVoice = findSynthVoice(lang);
     // "server" or "custom": the chosen voice service first, a device voice only if it fails.
     if (!deviceFirst || !deviceVoice) {
-      const remote = await fetchRemoteSpeech(shown.join(' '), spokenLang(lang));
+      const fetchPart = (i: number) => fetchRemoteSpeech(shown[i], spokenLang(lang));
+      const first = await fetchPart(0);
       if (run !== runRef.current) {
-        if (remote) URL.revokeObjectURL(remote);
+        if (first) URL.revokeObjectURL(first);
         return; // stopped while the voice was loading
       }
-      if (remote) {
-        const audio = new Audio(remote);
-        audioRef.current = audio;
-        audio.onended = () => {
-          URL.revokeObjectURL(remote);
-          setClipPlaying(false);
-        };
-        setClipPlaying(true);
-        audio.play().catch(() => setClipPlaying(false));
-        startVisual(shown);
+      if (first) {
+        void playRemote(shown, first, fetchPart, run);
         return;
       }
     }
@@ -187,6 +225,10 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
     if (mode === 'tts') {
       if (next) window.speechSynthesis.pause();
       else window.speechSynthesis.resume();
+    }
+    if (mode === 'remote') {
+      if (next) audioRef.current?.pause();
+      else void audioRef.current?.play().catch(() => undefined);
     }
   };
 
@@ -248,7 +290,7 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
         onClick={toggle}
         aria-pressed={active}
         data-db-action={actionId}
-        data-db-audible={String(mode === 'tts' || clipPlaying)}
+        data-db-audible={String(mode === 'tts' || mode === 'remote' || clipPlaying)}
         aria-label={label && !active ? label : undefined}
         className={cx(toggleClass, className)}
       >

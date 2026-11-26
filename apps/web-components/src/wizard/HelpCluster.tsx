@@ -4,6 +4,7 @@ import { EXTRA_LANGS, I18N, type ExtraLang, type Lang } from '@db/shared-schemas
 import { activeExtraLang, listReadyLangs, requestLang } from '../i18n/extraPack';
 import { otherLang, t } from '../i18n';
 import { ReadAloudButton } from '../tts/ReadAloudButton';
+import { ReadMoveToggle } from '../tts/ReadMoveToggle';
 import { buildStepScript } from './stepScript';
 import { setVisionMode, useVisionMode, VISION_LABEL_KEYS, VISION_MODES, type VisionMode } from './vision';
 import type { I18nKey } from '../i18n';
@@ -44,7 +45,7 @@ const plainKeys = (text: string) => text.replace(/\{(\w+)\}/g, (_, key: string) 
 
 /**
  * Consistent Help (WCAG 3.2.6): same controls, same DOM order, same position on every step.
- * Order: Read aloud · Language · Simple words · Need help · My data.
+ * Order: Read aloud · Read as I move · Language · Simple words · Need help · My data.
  */
 export const HelpCluster: React.FC<HelpClusterProps> = ({
   lang, readText, promptKey, simple, onToggleSimple, onSwitchLang, onOpenPrivacy, announce, audioBaseUrl, signLanguage = false, onSignLanguage,
@@ -106,6 +107,7 @@ export const HelpCluster: React.FC<HelpClusterProps> = ({
         actionId="read"
         getPhrases={stepPhrases}
       />
+      <ReadMoveToggle lang={lang} announce={announce} anchor={clusterRef} panelSlot={panelSlot} />
 
       {extraOptions.length === 0 ? (
         <button type="button" onClick={() => onSwitchLang(target)} className={ui.btnPill} data-db-action="lang">

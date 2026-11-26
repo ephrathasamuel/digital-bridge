@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Teach your own signs</title>
+    <link rel="stylesheet" href="../assets/css/site.css" />
+    <style>
+      .stage { position: relative; width: 100%; max-width: 32rem; aspect-ratio: 4 / 3; background: var(--dbs-tint); border: 1px solid var(--dbs-line); border-radius: 1rem; overflow: hidden; }
+      .stage video, .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+      .stage p { position: absolute; inset: auto 0 0 0; margin: 0; padding: 0.5rem 0.75rem; background: rgba(0, 0, 0, 0.65); color: #fff; font-weight: 600; }
+      .guess { font-size: 2rem; font-weight: 700; min-height: 2.6rem; margin: 0.25rem 0 0.75rem; }
+      .signs { list-style: none; padding: 0; margin: 0.75rem 0 0; display: grid; gap: 0.5rem; }
+      .signs li { display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; justify-content: space-between; padding: 0.5rem 0.75rem; border: 1px solid var(--dbs-line); border-radius: 0.75rem; }
+      textarea { width: 100%; min-height: 5rem; font: inherit; }
+      .split { display: grid; gap: 1.25rem; }
+      @media (min-width: 60rem) { .split { grid-template-columns: 1fr 1fr; align-items: start; } }
+    </style>
+  </head>
+  <body class="site">
+    <nav class="site-top" aria-label="Digital Bridge">
+      <div class="site-top-inner">
+        <span class="site-logo"><span class="site-logo-mark"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><path d="M3 24h26v3H3zM5 24v-6M27 24v-6M16 24v-9" stroke="currentColor" stroke-width="2.6" fill="none" stroke-linecap="round"/><path d="M3 17c4-7 22-7 26 0" stroke="currentColor" stroke-width="3" fill="none" stroke-linecap="round"/></svg></span><span>Digital Bridge</span></span>
+        <a class="site-back" href="../index.html"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg><span>Back to home</span></a>
+      </div>
+    </nav>
+    <main id="main" class="page">
+      <div class="page-head">
+        <p class="kicker">Open source, early version</p>
+        <h1>Teach your own signs</h1>
+        <p class="lede">Show a sign to the camera a few times and give it a word. Then sign, and the words appear as text you can read aloud or copy.</p>
+      </div>
+      <div class="callout">
+        <p style="margin:0"><strong>Your camera pictures never leave this device.</strong> A hand tracker (Google MediaPipe, Apache 2.0) runs in
+        your browser and downloads once when you turn the camera on. The signs you teach are saved only in this browser. Use
+        <strong>Save to a file</strong> to share them with your community. This early version knows still hand shapes, not signs with
+        movement, and it only knows the signs people teach it.</p>
+      </div>
+
+      <div class="split">
+        <section class="card" aria-labelledby="cam-title">
+          <h2 id="cam-title">Camera</h2>
+          <div class="stage">
+            <video id="video" playsinline muted></video>
+            <canvas id="overlay" aria-hidden="true"></canvas>
+            <p id="hand" aria-hidden="true">Camera off</p>
+          </div>
+          <div class="row" style="margin-top:0.75rem">
+            <button id="camera" class="btn solid" type="button" aria-pressed="false">Turn on the camera</button>
+          </div>
+          <p id="status" role="status" class="hint" style="margin-top:0.75rem"></p>
+        </section>
+
+        <div>
+          <section class="card" aria-labelledby="teach-title">
+            <h2 id="teach-title">1. Teach a sign</h2>
+            <div class="field">
+              <label for="word">Word or short phrase for this sign</label>
+              <p class="hint" id="word-hint">For example: water, help, thank you. Any language.</p>
+              <input id="word" maxlength="40" autocomplete="off" aria-describedby="word-hint" />
+            </div>
+            <div class="row">
+              <button id="record" class="btn amber" type="button">Record 30 examples</button>
+            </div>
+            <p class="hint" style="margin-top:0.5rem">After a 3 second count, hold the sign and move your hand a little, nearer and further, so it learns the
+            sign from different angles. Teach each sign at least twice.</p>
+            <h3>Signs taught on this device</h3>
+            <p id="empty" class="muted">No signs yet.</p>
+            <ul id="signs" class="signs"></ul>
+            <div class="row" style="margin-top:0.75rem">
+              <button id="export" class="btn" type="button">Save to a file</button>
+              <label class="btn" for="import" style="margin:0">Load a file</label>
+              <input id="import" type="file" accept="application/json,.json" style="position:absolute;opacity:0;width:1px;height:1px" />
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="use-title">
+            <h2 id="use-title">2. Sign</h2>
+            <div class="row">
+              <button id="recognise" class="btn solid" type="button" aria-pressed="false">Start recognising</button>
+            </div>
+            <p class="hint" style="margin-top:0.75rem">Hold each sign still for about half a second. Lower your hand between signs.</p>
+            <p class="guess" id="guess" aria-hidden="true"></p>
+            <label for="sentence">Your words</label>
+            <textarea id="sentence" aria-describedby="sentence-hint"></textarea>
+            <p class="hint" id="sentence-hint">You can change the words here before you use them.</p>
+            <div class="row">
+              <button id="speak" class="btn" type="button">Read aloud</button>
+              <button id="copy" class="btn" type="button">Copy</button>
+              <button id="undo" class="btn" type="button">Remove last word</button>
+              <button id="clear" class="btn" type="button">Clear</button>
+            </div>
+          </section>
+        </div>
+      </div>
+    </main>
+    <script type="module" src="../assets/js/sign-teach.js"></script>
+    <script src="../db-assist.js" data-api="https://digital-bridge-api.onrender.com/api/v1" defer></script>
+  </body>
+</html>

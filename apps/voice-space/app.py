@@ -1,78 +1,73 @@
 """
-Digital Bridge voices: Meta's open MMS text to speech models behind one small HTTP route, for a free
-Hugging Face Space (or any server). The Digital Bridge API calls it with TTS_PROVIDER=custom.
+Digital Bridge voices: Meta's open MMS text to speech voices, converted to ONNX (export_onnx.py), behind one small
+HTTP route. Needs no PyTorch, so it fits a free 512 MB server (Render free, a Hugging Face Space, any Docker host).
+The Digital Bridge API calls it with TTS_PROVIDER=custom.
 
 POST /speak  {"text": "...", "lang": "om"}  ->  audio/wav
 GET  /       health and the languages offered
 
-Set the Space secret SPEAK_TOKEN to require "Authorization: Bearer <SPEAK_TOKEN>" (put the same value in the API's
-TTS_AUTH_HEADER as "Bearer <SPEAK_TOKEN>"), so only your API can use your free hardware.
-The MMS models are CC BY NC 4.0: non commercial use only. Text is never logged or stored.
+Set SPEAK_TOKEN to require "Authorization: Bearer <SPEAK_TOKEN>" (put the same value in the API's
+TTS_AUTH_HEADER as "Bearer <SPEAK_TOKEN>"), so only your API can use the server.
+The MMS voices are CC BY NC 4.0: non commercial use only. Text is never logged or stored.
 """
 import io
+import json
 import os
-import re
 import threading
+import wave
+from collections import OrderedDict
 
 import numpy as np
-import torch
+import onnxruntime as ort
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
-from scipy.io import wavfile
-from transformers import AutoTokenizer, VitsModel
 
-# BCP 47 code from the widgets -> MMS model code.
-LANGS = {"om": "orm", "am": "amh", "ti": "tir", "so": "som", "en": "eng"}
-PRELOAD = os.environ.get("PRELOAD", "om").split(",")
+from mms_text import MmsText, split
+
+VOICES = os.environ.get("VOICES_DIR", os.path.join(os.path.dirname(__file__), "voices"))
+LANGS = sorted(f[4:-5] for f in os.listdir(VOICES) if f.startswith("mms-") and f.endswith(".json")) if os.path.isdir(VOICES) else []
+PRELOAD = [l for l in os.environ.get("PRELOAD", "om").split(",") if l in LANGS]
+MAX_LOADED = int(os.environ.get("MAX_LOADED", "2"))  # each voice takes about 150 MB of memory
 TOKEN = os.environ.get("SPEAK_TOKEN", "")
 
-torch.set_num_threads(max(1, os.cpu_count() or 1))
 app = FastAPI(title="Digital Bridge voices")
-_models: dict = {}
+_voices: OrderedDict = OrderedDict()
 _lock = threading.Lock()
 
 
 def load(lang: str):
-    """Load a voice once (about 150 MB each), then keep it in memory."""
+    """Load a voice, keeping only the MAX_LOADED most recently used ones in memory."""
     with _lock:
-        if lang not in _models:
-            name = f"facebook/mms-tts-{LANGS[lang]}"
-            _models[lang] = (AutoTokenizer.from_pretrained(name), VitsModel.from_pretrained(name).eval())
-        return _models[lang]
-
-
-def romanise(text: str, tokenizer) -> str:
-    # Some MMS voices were trained on romanised text (uroman); the tokenizer says which.
-    if not getattr(tokenizer, "is_uroman", False):
-        return text
-    import uroman as ur  # imported only when needed
-
-    return ur.Uroman().romanize_string(text)
-
-
-def split(text: str) -> list[str]:
-    # Short pieces sound more natural and keep memory low; empty pieces are dropped.
-    parts = re.split(r"(?<=[.!?።፧])\s+|\n+", text)
-    return [p.strip() for p in parts if p.strip()]
-
-
-class SpeakBody(BaseModel):
-    text: str = Field(min_length=1, max_length=1000)
-    lang: str = "om"
+        if lang in _voices:
+            _voices.move_to_end(lang)
+            return _voices[lang]
+        with open(os.path.join(VOICES, f"mms-{lang}.json"), encoding="utf-8") as f:
+            cfg = json.load(f)
+        options = ort.SessionOptions()
+        options.enable_cpu_mem_arena = False  # lower memory between requests
+        session = ort.InferenceSession(os.path.join(VOICES, f"mms-{lang}.onnx"), options, providers=["CPUExecutionProvider"])
+        while len(_voices) >= MAX_LOADED:
+            _voices.popitem(last=False)
+        _voices[lang] = (MmsText(cfg), session, cfg["sampling_rate"])
+        return _voices[lang]
 
 
 @app.on_event("startup")
 def warm_up() -> None:
     # Load the main voice in the background so the first request after a restart is faster.
-    for lang in PRELOAD:
-        if lang in LANGS:
-            threading.Thread(target=load, args=(lang,), daemon=True).start()
+    for lang in PRELOAD[:MAX_LOADED]:
+        threading.Thread(target=load, args=(lang,), daemon=True).start()
 
 
 @app.get("/")
 def health():
-    return {"status": "ok", "languages": sorted(LANGS), "loaded": sorted(_models)}
+    return {"status": "ok" if LANGS else "no voices", "languages": LANGS, "loaded": list(_voices)}
+
+
+class SpeakBody(BaseModel):
+    text: str = Field(min_length=1, max_length=1000)
+    lang: str = "om"
 
 
 @app.post("/speak")
@@ -82,20 +77,21 @@ def speak(body: SpeakBody, authorization: str = Header(default="")):
     lang = body.lang.lower().split("-")[0].split("_")[0]
     if lang not in LANGS:
         raise HTTPException(status_code=404, detail="Language not offered")
-    tokenizer, model = load(lang)
-    rate = model.config.sampling_rate
+    text, session, rate = load(lang)
     pause = np.zeros(int(rate * 0.25), dtype=np.float32)
     pieces = []
     for part in split(body.text):
-        inputs = tokenizer(romanise(part, tokenizer), return_tensors="pt")
-        if inputs["input_ids"].shape[-1] == 0:
+        ids = text.ids(part)
+        if len(ids) <= 1:
             continue
-        with torch.no_grad():
-            wave = model(**inputs).waveform[0].cpu().numpy()
-        pieces += [wave, pause]
+        pieces += [session.run(None, {"input_ids": np.array([ids], dtype=np.int64)})[0][0], pause]
     if not pieces:
         raise HTTPException(status_code=422, detail="Nothing to say")
-    audio = np.concatenate(pieces)
+    audio = (np.clip(np.concatenate(pieces), -1, 1) * 32767).astype("<i2")
     buffer = io.BytesIO()
-    wavfile.write(buffer, rate, (np.clip(audio, -1, 1) * 32767).astype(np.int16))
+    with wave.open(buffer, "wb") as out:
+        out.setnchannels(1)
+        out.setsampwidth(2)
+        out.setframerate(rate)
+        out.writeframes(audio.tobytes())
     return Response(content=buffer.getvalue(), media_type="audio/wav", headers={"Cache-Control": "public, max-age=86400"})

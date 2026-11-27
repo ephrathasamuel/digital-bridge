@@ -326,7 +326,9 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
       silence = setTimeout(() => engine.stop(), PAUSE_MS);
     };
     engine.onerror = (event) => {
-      if (event.error !== 'aborted' && event.error !== 'no-speech') announce(t('assist.noVoiceInput'));
+      // The browser's own reason is shown too (e.g. not-allowed, language-not-supported, network), so a phone that
+      // cannot do speech input says why instead of doing nothing.
+      if (event.error !== 'aborted' && event.error !== 'no-speech') announce(`${t('assist.noVoiceInput')} (${event.error})`);
     };
     engine.onend = () => {
       clearTimeout(silence);
@@ -342,7 +344,14 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
       reviewText.focus();
     };
     recognition = engine;
-    engine.start();
+    try {
+      engine.start();
+    } catch (error) {
+      recognition = null;
+      closeReview();
+      announce(`${t('assist.noVoiceInput')} (${(error as Error).name || 'start failed'})`);
+      return;
+    }
     dictateButton.setAttribute('aria-pressed', 'true');
     dictateButton.textContent = t('assist.dictateStop');
     announce(t('assist.listening'));

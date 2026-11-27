@@ -49,7 +49,7 @@ export const VoiceDownload: React.FC<{ lang: Lang; announce?: (message: string) 
   };
 
   return (
-    <div className="mt-3 rounded-xl bg-stone-50 p-3">
+    <div className="mt-3 rounded-xl border-2 border-stone-500 bg-white p-3">
       {state === 'loading' ? (
         <>
           <label className="block text-sm font-semibold text-ink" htmlFor={`db-voice-progress-${voiceLang}`}>

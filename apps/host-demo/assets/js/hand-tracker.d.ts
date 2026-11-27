@@ -6,3 +6,4 @@ export const HAND_MODEL: string;
 export const SIGNS_STORE: string;
 export function loadTracker(): Promise<HandTracker>;
 export function detect(tracker: HandTracker, video: HTMLVideoElement): Frame | null;
+export function trackerStatus(): string;

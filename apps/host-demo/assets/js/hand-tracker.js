@@ -9,6 +9,12 @@ let loading = null;
 /** A processor (CPU) tracker that replaces the graphics chip one after it failed while reading frames. */
 let replacement = null;
 let switching = false;
+let status = 'not loaded';
+
+/** What the tracker is doing, shown on the teach page so a phone that finds no hand says why. */
+export function trackerStatus() {
+  return status;
+}
 
 // Phones: the graphics chip (GPU) path often starts fine but then finds no hand or fails on every frame,
 // so phones use the processor, which is slower but works everywhere.
@@ -29,12 +35,16 @@ export function loadTracker() {
   loading ??= (async () => {
     if (!isPhone()) {
       try {
-        return await create('GPU');
+        const gpu = await create('GPU');
+        status = 'graphics chip';
+        return gpu;
       } catch {
         // no usable graphics chip: use the processor below
       }
     }
-    return create('CPU');
+    const cpu = await create('CPU');
+    status = 'processor';
+    return cpu;
   })();
   loading.catch(() => { loading = null; }); // offline: allow another try later
   return loading;
@@ -50,11 +60,12 @@ export function detect(tracker, video) {
     const points = result.landmarks?.[0];
     if (!points) return null;
     return { points, handedness: (result.handedness ?? result.handednesses)?.[0]?.[0]?.categoryName };
-  } catch {
+  } catch (error) {
+    status = `error: ${error?.message ?? error}`.slice(0, 120);
     if (!switching && !replacement) {
       switching = true;
       create('CPU')
-        .then((cpu) => { replacement = cpu; })
+        .then((cpu) => { replacement = cpu; status = 'processor (after an error)'; })
         .catch(() => undefined)
         .finally(() => { switching = false; });
     }

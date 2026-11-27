@@ -67,11 +67,12 @@ export const ChoiceMenu: React.FC<{
         aria-controls={listId}
         data-db-action={action}
         onClick={() => setOpen(!open)}
-        className={cx(ui.btnSecondary, 'max-w-full flex-wrap')}
+        className={cx(ui.btnSecondary, 'w-full max-w-full flex-nowrap sm:w-auto')}
       >
         {icon}
-        <span className="font-semibold">{label}:</span>
-        <span lang={current?.lang} className="min-w-0 break-words">{current?.label}</span>
+        <span className="shrink-0 font-semibold">{label}:</span>
+        {/* One line: a long name ends with "…"; the whole name is in the list. */}
+        <span lang={current?.lang} className="min-w-0 flex-1 truncate text-start">{current?.label}</span>
         <ChevronDown aria-hidden="true" focusable="false" className={cx('h-5 w-5 shrink-0 transition-transform', open && 'rotate-180')} />
       </button>
       {open && (

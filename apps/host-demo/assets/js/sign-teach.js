@@ -1,7 +1,7 @@
 // Teach your own signs: camera + MediaPipe Hand Landmarker (Apache 2.0) in the browser, matching in hand-signs.js.
 // Camera pictures stay on the device. Taught signs live in this browser (localStorage) or in a file the person saves.
 import { addClip, addSample, createModel, fromJSON, makeClip, normalise, reader, removeSign, segmenter, toJSON } from './hand-signs.js';
-import { detect, loadTracker, SIGNS_STORE as STORE } from './hand-tracker.js';
+import { detect, loadTracker, trackerStatus, SIGNS_STORE as STORE } from './hand-tracker.js';
 const EXAMPLES = 30;
 const MOVES = 3;
 /** A movement example must start within this long after the count, or we ask again. */
@@ -156,7 +156,7 @@ function frame() {
     if (recording?.kind === 'move') learnMove(seen);
     else if (recording) learnStill(seen ? normalise(seen.points, seen.handedness) : null);
     else if (recognising) read(seen);
-    else handLine.textContent = seen ? 'Hand seen' : 'No hand seen';
+    else handLine.textContent = `${seen ? 'Hand seen' : 'No hand seen'} (tracker: ${trackerStatus()}, picture ${video.videoWidth}x${video.videoHeight})`;
   }
   requestAnimationFrame(frame);
 }

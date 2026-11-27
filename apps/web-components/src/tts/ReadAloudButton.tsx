@@ -62,6 +62,8 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
   const elementsRef = useRef<(HTMLElement | null | undefined)[]>([]);
   const [clipPlaying, setClipPlaying] = useState(false);
   const [mode, setMode] = useState<Mode>('idle');
+  /** Stays on after reading on screen ends, so the voice download is not cut off when the panel closes. */
+  const [offerVoice, setOfferVoice] = useState(false);
   const [phrases, setPhrases] = useState<string[]>([]);
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
@@ -87,6 +89,7 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
 
   // Stop on unmount, step change or language change.
   useEffect(() => stop, [text, lang]);
+  useEffect(() => setOfferVoice(false), [lang]);
 
   // Highlight the control whose phrase is being read; clear it when reading stops.
   useEffect(() => {
@@ -121,6 +124,7 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
     setIndex(0);
     setPaused(false);
     setMode('visual');
+    if (hasBrowserVoice(spokenLang(lang))) setOfferVoice(true);
     announce?.(t(lang, 'readAloud.visualNote'));
   };
 
@@ -252,20 +256,24 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
     }
   };
 
+  const offer = offerVoice ? (
+    <div className="basis-full">
+      <VoiceDownload lang={lang} announce={announce} onReady={() => { setOfferVoice(false); stop(); void start(); }} />
+    </div>
+  ) : null;
+
   const Icon = active ? Square : Volume2;
   const toggleClass = pill ? ui.btnPillToggle(active) : ui.btnToggle(active);
 
   const panel =
     active ? (
-      <div className="mt-3 basis-full max-h-[70vh] overflow-y-auto rounded-2xl border-2 border-terracotta bg-white p-4 shadow-card">
+      <div className="mt-3 basis-full rounded-2xl border-2 border-terracotta bg-white p-4 shadow-card">
         <p className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-terracotta-dark">
           <span>{t(lang, 'readAloud.visualTitle')}</span>
           <span>{t(lang, 'readAloud.phraseOf', { current: index + 1, total: phrases.length })}</span>
         </p>
         {mode === 'visual' && <p className="mt-1 text-sm text-stone-700">{t(lang, 'readAloud.visualNote')}</p>}
-        {mode === 'visual' && hasBrowserVoice(spokenLang(lang)) && (
-          <VoiceDownload lang={lang} announce={announce} onReady={() => { stop(); void start(); }} />
-        )}
+
         <p className="mt-3 text-[1.375rem] leading-relaxed text-ink" data-db-caption="">
           {phrases.map((phrase, i) => (
             <React.Fragment key={i}>
@@ -312,6 +320,7 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
         <span>{active ? t(lang, 'help.stopReading') : t(lang, 'help.readAloud')}</span>
       </button>
       {panel && (panelSlot ? createPortal(panel, panelSlot) : panel)}
+      {offer && (panelSlot ? createPortal(offer, panelSlot) : offer)}
     </>
   );
 };

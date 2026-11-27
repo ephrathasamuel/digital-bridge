@@ -1,0 +1,50 @@
+{
+ "om": {
+  "text": "Wanta 3: Maqaa, saanduqa barreeffamaa.",
+  "pieces": [
+   "Wanta 3",
+   "Maqaa",
+   "saanduqa barreeffamaa"
+  ],
+  "keys": [
+   "89bd48f7",
+   "4e9bf4fd",
+   "1fa6881f"
+  ]
+ },
+ "am": {
+  "text": "ንጥል 3፦ ስም፣ የጽሑፍ ሳጥን።",
+  "pieces": [
+   "ንጥል 3",
+   "ስም",
+   "የጽሑፍ ሳጥን"
+  ],
+  "keys": [
+   "a08389cf",
+   "e27516e3",
+   "0fa4b1f6"
+  ]
+ },
+ "so": {
+  "text": "Buuxi foomka; riix Sii wad!",
+  "pieces": [
+   "Buuxi foomka",
+   "riix Sii wad"
+  ],
+  "keys": [
+   "ac434adf",
+   "28bf0159"
+  ]
+ },
+ "ti": {
+  "text": "ሰላም፣ ከመይ ኣለኹም?",
+  "pieces": [
+   "ሰላም",
+   "ከመይ ኣለኹም"
+  ],
+  "keys": [
+   "e0a86726",
+   "780c0d38"
+  ]
+ }
+}

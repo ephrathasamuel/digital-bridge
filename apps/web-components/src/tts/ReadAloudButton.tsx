@@ -8,6 +8,8 @@ import { findSynthVoice, playChime, splitPhrases } from '../voice/speech';
 import { resolvePromptClip } from './promptAudio';
 import { activeExtraLang, spokenLang } from '../i18n/extraPack';
 import { deviceVoiceFirst, fetchRemoteSpeech } from './voiceSource';
+import { hasBrowserVoice } from './browserVoice';
+import { VoiceDownload } from './VoiceDownload';
 import type { ScriptPhrase } from '../wizard/stepScript';
 
 export interface ReadAloudButtonProps {
@@ -252,6 +254,9 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
           <span>{t(lang, 'readAloud.phraseOf', { current: index + 1, total: phrases.length })}</span>
         </p>
         {mode === 'visual' && <p className="mt-1 text-sm text-stone-700">{t(lang, 'readAloud.visualNote')}</p>}
+        {mode === 'visual' && hasBrowserVoice(spokenLang(lang)) && (
+          <VoiceDownload lang={lang} announce={announce} onReady={() => { stop(); void start(); }} />
+        )}
         <p className="mt-3 text-[1.375rem] leading-relaxed text-ink" data-db-caption="">
           {phrases.map((phrase, i) => (
             <React.Fragment key={i}>

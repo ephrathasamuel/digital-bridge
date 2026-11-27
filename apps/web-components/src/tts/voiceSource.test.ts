@@ -1,6 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { deviceVoiceFirst, fetchRemoteSpeech, parseVoiceSource, setVoiceConfig, getVoiceConfig } from './voiceSource';
 
+// Clips and browser voices are tested in mmsText.test.ts; here only the voice server path.
+vi.mock('./clipVoice', () => ({ clipSpeech: async () => null }));
+vi.mock('./browserVoice', () => ({ browserSpeech: async () => null }));
+
 const audio = (status = 200, type = 'audio/mpeg') =>
   vi.fn().mockResolvedValue(new Response(status === 200 ? new Blob(['x'], { type }) : null, { status, headers: { 'content-type': type } }));
 

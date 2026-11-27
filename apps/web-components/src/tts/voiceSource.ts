@@ -8,6 +8,9 @@
  * server  our API first (open source MMS voices or the configured provider), then device voices
  * custom  voice-url first: with {text} and {lang} in it, a GET; otherwise a POST of {"text","lang"}
  */
+import { browserSpeech } from './browserVoice';
+import { clipSpeech } from './clipVoice';
+
 export type VoiceSource = 'auto' | 'device' | 'server' | 'custom';
 
 export interface VoiceConfig {
@@ -64,6 +67,13 @@ export async function fetchRemoteSpeech(
   cfg: VoiceConfig = config,
   fetcher: typeof fetch = fetch,
 ): Promise<string | null> {
+  // Ready made clips of the pack text come first (instant, a few KB), then a voice the person downloaded into this
+  // browser (offline, the text stays on the device), then the voice server.
+  // "device" never calls out, so it skips the clips (they come from the network) but uses a downloaded voice.
+  if (cfg.source !== 'custom') {
+    const local = (cfg.source === 'device' ? null : await clipSpeech(text, lang)) ?? (await browserSpeech(text, lang));
+    if (local) return local;
+  }
   const request = remoteRequest(text.slice(0, 1000), lang, cfg);
   if (!request || unavailable.has(request.url)) return null;
   try {

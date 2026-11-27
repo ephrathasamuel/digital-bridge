@@ -18,6 +18,7 @@ from transformers import AutoTokenizer, VitsModel
 
 from mms_text import MmsText, romanise
 
+RUNS = 7
 LANGS = {"om": "orm", "am": "amh", "ti": "tir", "so": "som", "en": "eng"}
 SAMPLES = {
     "om": ["Akkam.", "Akkam jirtu? Maaloo unka kana guutaa, booda Itti fufi tuqaa. Gaaffii yoo qabaattan nu gaafadhaa."],
@@ -80,18 +81,29 @@ def export(lang: str, code: str, out: str) -> None:
             opset_version=17,
         )
 
-    # 2. ONNX must follow the text length (not the example's), and match the original within the voice's randomness.
+    # 2. ONNX must follow the text length (not the example's), and match the original. The voice picks its speed
+    # with some randomness on every run, so compare the middle value of several runs, not one run.
     session = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
     lengths = []
     for sample in SAMPLES[lang]:
         ids = torch.tensor([text.ids(sample)])
         with torch.no_grad():
-            want = model(input_ids=ids).waveform.shape[-1]
-        wave = session.run(None, {"input_ids": ids.numpy()})[0]
-        got = wave.shape[-1]
-        if not np.isfinite(wave).all() or not 0.7 < got / want < 1.4:
-            fail(f"{lang}: ONNX gave {got} samples, original {want}, for {sample!r}")
-        lengths.append(got)
+            want = np.median([model(input_ids=ids).waveform.shape[-1] for _ in range(RUNS)])
+        waves = [session.run(None, {"input_ids": ids.numpy()})[0] for _ in range(RUNS)]
+        got = np.median([w.shape[-1] for w in waves])
+        if not all(np.isfinite(w).all() for w in waves) or not 0.8 < got / want < 1.25:
+            fail(f"{lang}: ONNX gave {got:.0f} samples (middle of {RUNS}), original {want:.0f}, for {sample!r}")
+        lengths.append(int(got))
+    # A single letter must work too (the attention padding was traced with a long example).
+    for word in ("a", SAMPLES[lang][0][:2]):
+        ids = text.ids(word)
+        try:
+            ok = len(ids) <= 1 or np.isfinite(session.run(None, {"input_ids": np.array([ids])})[0]).all()
+        except Exception as error:  # noqa: BLE001 (report any runtime error as a failed check)
+            ok = False
+            print(error, flush=True)
+        if not ok:
+            fail(f"{lang}: ONNX failed on the very short text {word!r}")
     if lengths[1] < lengths[0] * 2:
         fail(f"{lang}: long text is not longer than short text ({lengths}); shapes were frozen in export")
 

@@ -28,6 +28,12 @@ SAMPLES = {
 }
 
 
+def fail(message: str) -> None:
+    # "::error::" shows the message as a GitHub annotation, readable without signing in.
+    print(f"::error::{message}", flush=True)
+    sys.exit(1)
+
+
 class Wave(torch.nn.Module):
     def __init__(self, model):
         super().__init__()
@@ -52,12 +58,18 @@ def export(lang: str, code: str, out: str) -> None:
     }
     text = MmsText(cfg)
 
-    # 1. Our tokenizer must match transformers exactly (also with capitals and odd characters).
-    for sample in SAMPLES[lang] + [SAMPLES[lang][0].upper() + " 123 ?!"]:
-        theirs = tok(romanise(sample) if cfg["is_uroman"] else sample).input_ids
+    # 1. Our tokenizer must keep the same letters as transformers (also with capitals and odd characters).
+    # The blanks are added like Meta's original MMS code (one between every letter): transformers drops one
+    # when a letter shares id 0 with the blank (Somali "u" in "buuxi"), so it is not the reference for that part.
+    tok.add_blank = False
+    for sample in SAMPLES[lang] + [SAMPLES[lang][0].upper() + " 123 ?!", "buuxi uu aa"]:
+        letters = tok(romanise(sample) if cfg["is_uroman"] else sample).input_ids
+        theirs = [0] * (len(letters) * 2 + 1) if cfg["add_blank"] else letters
+        if cfg["add_blank"]:
+            theirs[1::2] = letters
         ours = text.ids(sample)
         if theirs != ours:
-            sys.exit(f"{lang}: token ids differ for {sample!r}\n theirs {theirs}\n ours   {ours}")
+            fail(f"{lang}: token ids differ for {sample!r} theirs {theirs} ours {ours}")
 
     path = os.path.join(out, f"mms-{lang}.onnx")
     example = torch.tensor([text.ids(SAMPLES[lang][1])])
@@ -78,10 +90,10 @@ def export(lang: str, code: str, out: str) -> None:
         wave = session.run(None, {"input_ids": ids.numpy()})[0]
         got = wave.shape[-1]
         if not np.isfinite(wave).all() or not 0.7 < got / want < 1.4:
-            sys.exit(f"{lang}: ONNX gave {got} samples, original {want}, for {sample!r}")
+            fail(f"{lang}: ONNX gave {got} samples, original {want}, for {sample!r}")
         lengths.append(got)
     if lengths[1] < lengths[0] * 2:
-        sys.exit(f"{lang}: long text is not longer than short text ({lengths}); shapes were frozen in export")
+        fail(f"{lang}: long text is not longer than short text ({lengths}); shapes were frozen in export")
 
     with open(os.path.join(out, f"mms-{lang}.json"), "w", encoding="utf-8") as f:
         json.dump(cfg, f, ensure_ascii=False)

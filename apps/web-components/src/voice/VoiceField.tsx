@@ -1,11 +1,15 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
+import { speakAny, stopAny } from '../tts/speakAny';
+import { hasBrowserVoice } from '../tts/browserVoice';
+import { VoiceDownload } from '../tts/VoiceDownload';
+import { spokenLang } from '../i18n/extraPack';
 import { Check, Circle, Hand, Mic, MicOff, RotateCcw, Square, Trash2, Volume2, X } from 'lucide-react';
 import { SignPanel } from './SignPanel';
 import type { Lang } from '@db/shared-schemas';
 import { t } from '../i18n';
 import { cleanId, ui } from '../wizard/ui';
 import {
-  blobToDataUrl, canRecordVoiceNote, setFieldListening, NOISY_ROOM_AUDIO, getSpeechRecognition, pickAudioMime, speakText, speechLocale, stopSpeaking,
+  blobToDataUrl, canRecordVoiceNote, setFieldListening, NOISY_ROOM_AUDIO, getSpeechRecognition, pickAudioMime, speechLocale,
   type SpeechRecognitionLike,
 } from './speech';
 import { hasVoiceNote, removeVoiceNote, setVoiceNote, useVoiceNotes } from './voiceNotes';
@@ -110,7 +114,7 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
         if (recorder.state !== 'inactive') recorder.stop();
       }
       stopTracks();
-      if (speakingRef.current) stopSpeaking();
+      if (speakingRef.current) stopAny();
     },
     [],
   );
@@ -267,7 +271,7 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
   useEffect(() => () => clearTimeout(silenceRef.current), []);
 
   const useAnswer = () => {
-    if (speakingRef.current) stopSpeaking();
+    if (speakingRef.current) stopAny();
     onUse(heard.trim());
     beforeLiveFill.current = null;
     setPhase('idle');
@@ -278,8 +282,10 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
   };
 
   /** Read the reviewed text back so a blind learner can check what speech recognition wrote. */
-  const readBack = () => {
-    const ok = speakText(spokenKind === 'email' ? 'en' : lang, spellOut(heard, spokenKind), () => {
+  const readBack = async () => {
+    // Same voices as Read aloud (clips, downloaded voice, voice server, device), not only the device voice.
+    setReviewNote(t(lang, 'voice.reading'));
+    const ok = await speakAny(spokenKind === 'email' ? 'en' : lang, spellOut(heard, spokenKind), () => {
       speakingRef.current = false;
     });
     speakingRef.current = ok;
@@ -289,7 +295,7 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
   };
 
   const cancelReview = () => {
-    if (speakingRef.current) stopSpeaking();
+    if (speakingRef.current) stopAny();
     if (liveFill && beforeLiveFill.current !== null) onUse(beforeLiveFill.current);
     beforeLiveFill.current = null;
     setPhase('idle');
@@ -305,7 +311,7 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
     recognitionRef.current?.abort();
     recognitionRef.current = null;
     secondsRef.current = undefined;
-    if (speakingRef.current) stopSpeaking();
+    if (speakingRef.current) stopAny();
     setPreviewUrl('');
     blobRef.current = null;
     try {
@@ -459,6 +465,8 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
           announce={announce}
           onUse={(text) => {
             onUse(text);
+            // The field that took the answer comes into view and gets focus, so it is clear where it went.
+            targetRef.current?.scrollIntoView?.({ block: 'center', behavior: 'smooth' });
             targetRef.current?.focus();
           }}
           onClose={() => {
@@ -494,7 +502,7 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
               <Check aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
               {t(lang, 'voice.use')}
             </button>
-            <button type="button" onClick={readBack} disabled={!heard.trim()} className={ui.btnSecondary}>
+            <button type="button" onClick={() => void readBack()} disabled={!heard.trim()} className={ui.btnSecondary}>
               <Volume2 aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
               {t(lang, 'voice.readBack')}
             </button>
@@ -507,6 +515,10 @@ export const VoiceField: React.FC<VoiceFieldProps> = ({ lang, fieldLabel, onUse,
             </button>
           </div>
           {reviewNote && <p className="mt-2 text-sm text-stone-800">{reviewNote}</p>}
+          {/* No voice could read it: offer the downloadable voice right here (it then reads every answer offline). */}
+          {reviewNote === t(lang, 'voice.readBackUnavailable') && hasBrowserVoice(spokenLang(lang)) && (
+            <VoiceDownload lang={lang} announce={announce} onReady={() => void readBack()} />
+          )}
           {fidelHelper && (
             <FidelHelper fieldLabel={t(lang, 'voice.reviewLabel')} value={heard} onChange={setHeard} announce={announce} targetRef={reviewRef} />
           )}

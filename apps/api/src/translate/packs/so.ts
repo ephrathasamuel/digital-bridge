@@ -514,4 +514,13 @@ export const SO: Record<string, string> = {
   "voice.ours": "Codka Digital Bridge (isku mid qalab kasta)",
   "voice.changed": "Cod: {voice}",
   "voice.natural": "Cod Amxaari dabiici ah (tijaabo)",
+  "sign.readBadFile": "Kani ma aha fayl calaamado oo Digital Bridge ah.",
+  "sign.readFailed": "Raadraaca gacanta lama furi karin. Hubi xiriirka internetkaaga oo isku day mar kale.",
+  "sign.readHint": "Wuxuu isticmaalaa calaamadaha lagu baray bogga Bar calaamadahaaga biraawsarkan, ama fayl calaamado ah oo aad soo gelisay. Calaamad kasta oo uu akhriyo waxaa lagu daraa jawaabtaada hoose.",
+  "sign.readLoad": "Soo geli fayl calaamado",
+  "sign.readLoaded": "{count} calaamadood ayaa la soo geliyay.",
+  "sign.readLoading": "Raadraaca gacanta waa la furayaa. Markii ugu horreysay wuxuu qaataa dhowr ilbiriqsi.",
+  "sign.readNone": "Weli halkan ma jiraan calaamado la baray. Soo geli fayl calaamado, ama marka hore calaamado bar.",
+  "sign.readOn": "Calaamadahaaga ayaa la akhrinayaa. Hal eray hal mar calaamadee.",
+  "sign.readToggle": "Akhri calaamadaha aan baray",
 };

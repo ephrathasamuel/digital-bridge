@@ -515,4 +515,13 @@ export const TI: Record<string, string> = {
   "voice.ours": "ድምጺ Digital Bridge (ኣብ ኩሉ መሳርሒ ሓደ)",
   "voice.changed": "ድምጺ፦ {voice}",
   "voice.natural": "ተፈጥሮኣዊ ድምጺ ኣምሓርኛ (ኣብ ፈተነ)",
+  "sign.readBadFile": "እዚ ናይ Digital Bridge ፋይል ምልክታት ኣይኮነን።",
+  "sign.readFailed": "መከታተሊ ኢድ ክጅምር ኣይከኣለን። ርክብ ኢንተርነትኩም ኣረጋግጹ እሞ እንደገና ፈትኑ።",
+  "sign.readHint": "ኣብ ገጽ ናይ ገዛእ ርእስኹም ምልክታት ኣምህሩ ኣብዚ መርበብ ዝተመሃሩ ምልክታት፣ ወይ ዘእቶኹሞ ፋይል ምልክታት ይጥቀም። ዘንበቦ ምልክት ኩሉ ኣብ ታሕቲ ዘሎ መልስኹም ይውሰኽ።",
+  "sign.readLoad": "ፋይል ምልክታት ኣእቱ",
+  "sign.readLoaded": "{count} ምልክታት ኣትዮም።",
+  "sign.readLoading": "መከታተሊ ኢድ ይጅምር ኣሎ። ናይ መጀመርታ ግዜ ቁሩብ ካልኢታት ይወስድ።",
+  "sign.readNone": "ክሳብ ሕጂ ዝተመሃረ ምልክት የለን። ፋይል ምልክታት ኣእትዉ፣ ወይ ቅድሚኡ ምልክታት ኣምህሩ።",
+  "sign.readOn": "ምልክታትኩም የንብብ ኣሎ። ሓደ ቃል ብሓደ ግዜ ኣመልክቱ።",
+  "sign.readToggle": "ዝመሃርክዎም ምልክታት ኣንብብ",
 };

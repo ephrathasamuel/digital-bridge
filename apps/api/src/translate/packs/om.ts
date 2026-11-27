@@ -515,4 +515,13 @@ export const OM: Record<string, string> = {
   "voice.ours": "Sagalee Digital Bridge (meeshaa hundarratti tokko)",
   "voice.changed": "Sagalee: {voice}",
   "voice.natural": "Sagalee Amaariffaa uumamaa (qorannoo irra)",
+  "sign.readBadFile": "Kun faayilii mallattoo Digital Bridge miti.",
+  "sign.readFailed": "Hordoftuun harkaa hin banamne. Quunnamtii interneetii kee ilaali, irra deebi'ii yaali.",
+  "sign.readHint": "Mallattoo fuula Mallattoo mataa kee barsiisi irratti brawuzarii kana keessatti barsiifaman, ykn faayilii mallattoo ati baaftu fayyadama. Mallattoon dubbisu hundi deebii kee isa armaan gadiitti dabalama.",
+  "sign.readLoad": "Faayilii mallattoo baasi",
+  "sign.readLoaded": "Mallattoon {count} baafamaniiru.",
+  "sign.readLoading": "Hordoftuun harkaa banamaa jira. Yeroo jalqabaa sekondii muraasa fudhata.",
+  "sign.readNone": "Ammaaf mallattoon barsiifame hin jiru. Faayilii mallattoo baasi, ykn dursa mallattoo barsiisi.",
+  "sign.readOn": "Mallattoo kee dubbisaa jira. Yeroo tokkotti jecha tokko mallattoon agarsiisi.",
+  "sign.readToggle": "Mallattoo ani barsiise dubbisi",
 };

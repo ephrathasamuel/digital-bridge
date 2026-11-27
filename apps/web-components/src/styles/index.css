@@ -220,6 +220,16 @@
   background-color: var(--v-card) !important;
 }
 
+/* Pale tints (live words while speaking, hover and pressed states) follow the mode too, or dark mode shows light
+   text on a pale box. */
+:host [data-vision-mode]:not([data-vision-mode='terracotta']) .bg-terracotta-tint,
+:host [data-vision-mode]:not([data-vision-mode='terracotta']) .hover\:bg-terracotta-tint:hover,
+:host [data-vision-mode]:not([data-vision-mode='terracotta']) .hover\:bg-white:hover,
+:host [data-vision-mode]:not([data-vision-mode='terracotta']) .active\:bg-sand-light:active {
+  background-color: var(--v-hover) !important;
+  color: var(--v-text) !important;
+}
+
 :host [data-vision-mode]:not([data-vision-mode='terracotta']) .text-ink { color: var(--v-text) !important; }
 :host [data-vision-mode]:not([data-vision-mode='terracotta']) .text-stone-700,
 :host [data-vision-mode]:not([data-vision-mode='terracotta']) .text-stone-800 { color: var(--v-muted) !important; }

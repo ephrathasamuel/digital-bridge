@@ -134,7 +134,10 @@ button[aria-pressed='true']::before { content: '✓'; }
 .panel { width: min(23rem, calc(100vw - 2rem)); max-height: min(80vh, 40rem); overflow: auto; padding: 1rem; background: #fff;
   border: 2px solid #0b0f19; border-radius: .9rem; box-shadow: 0 6px 24px rgba(11,15,25,.3); }
 .panel[hidden] { display: none; }
-@media (max-width: 40rem) { .panel { max-height: 60vh; } }
+@media (max-width: 40rem) { .panel { max-height: 60vh; max-height: 60dvh; } }
+.panel { overscroll-behavior: contain; scroll-padding: 1rem; }
+/* The box being typed in is always clearly marked, also on touch screens (no keyboard focus ring there). */
+input:focus, textarea:focus, select:focus { outline: 3px solid #ffd43b; outline-offset: 2px; box-shadow: 0 0 0 6px #0b0f19; }
 .head { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
 .where { margin: 0 0 .5rem; font-weight: 700; }
 h2 { margin: 0 0 .25rem; font-size: 1.15rem; } h3 { margin: .9rem 0 .4rem; font-size: 1rem; }
@@ -501,7 +504,11 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     fidelWhere = el('p', { class: 'where' });
     showWhere();
     // While typing letters, the field they will go into is outlined on the page.
-    fidelInput.addEventListener('focus', () => lastField?.setAttribute('data-db-assist-target', ''));
+    fidelInput.addEventListener('focus', () => {
+      lastField?.setAttribute('data-db-assist-target', '');
+      // Phones: the keyboard covers the lower half, so keep the letters box and its buttons in view.
+      setTimeout(() => fidelInput.scrollIntoView({ block: 'center', behavior: 'smooth' }), 300);
+    });
     fidelInput.addEventListener('blur', () => lastField?.removeAttribute('data-db-assist-target'));
     const fidelInsert = el('button', { type: 'button' }, t('assist.fidelInsert'));
     fidelInsert.addEventListener('click', () => {

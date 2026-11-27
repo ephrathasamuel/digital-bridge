@@ -71,6 +71,7 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
   const [previewUrl, setPreviewUrl] = useState('');
   const [note, setNote] = useState('');
   const [built, setBuilt] = useState('');
+  const builtRef = useRef<HTMLInputElement>(null);
   const [current, setCurrent] = useState(0);
   const [wave, setWave] = useState(false);
   const [zones, setZones] = useState([0, 0, 0]);
@@ -195,6 +196,15 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
       return isWord ? `${text}${text && !text.endsWith(' ') ? ' ' : ''}${item}` : `${text}${item}`;
     });
     announce?.(t('sign.added', { item }));
+    // Show where the sign went: the answer box scrolls into view (on phones it is often below the camera), and it
+    // flashes the active item outline for a moment.
+    requestAnimationFrame(() => {
+      const box = builtRef.current;
+      if (!box) return;
+      box.scrollIntoView?.({ block: 'nearest', behavior: 'smooth' });
+      box.setAttribute('data-vc-active', 'true');
+      setTimeout(() => box.removeAttribute('data-vc-active'), 1200);
+    });
   };
 
   const useBuilt = () => {
@@ -499,7 +509,7 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
         </div>
 
         <label htmlFor={resultId} className={cx(ui.label, 'mt-3')}>{t('sign.result')}</label>
-        <input id={resultId} type="text" value={built} onChange={(e) => setBuilt(e.target.value)} className={ui.input} />
+        <input ref={builtRef} id={resultId} type="text" value={built} onChange={(e) => setBuilt(e.target.value)} className={ui.input} />
         <div className="mt-2 flex flex-wrap gap-2">
           <button type="button" onClick={useBuilt} disabled={!built.trim()} className={ui.btnPrimary}>
             <Check aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />

@@ -39,6 +39,7 @@ async function ask(lang, items) {
     '',
     JSON.stringify(items.map(([key, source, target]) => ({ key, english: source, target }))),
   ].join('\n');
+  let last = 0;
   for (let attempt = 0; attempt < 6; attempt++) {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
@@ -49,6 +50,7 @@ async function ask(lang, items) {
       }),
     });
     if (response.status === 429 || response.status >= 500) {
+      last = response.status;
       // Free tier limit or busy: show Google's reason, wait as long as it asks (RetryInfo), then try again.
       const body = await response.text();
       const asked = Number(/"retryDelay":\s*"(\d+(?:\.\d+)?)s"/.exec(body)?.[1] ?? 0);
@@ -62,11 +64,13 @@ async function ask(lang, items) {
     const data = await response.json();
     return JSON.parse(data.candidates?.[0]?.content?.parts?.[0]?.text ?? '[]');
   }
-  throw new Error('Gemini kept refusing (rate limit); try again later');
+  // 429 = this key's free limit is used up; 5xx = Google is busy. Both are worth another try later.
+  throw new Error(last === 429 ? 'free limit reached for now; try again later or tomorrow' : 'Gemini is too busy right now; try again later');
 }
 
 const csv = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
 mkdirSync('translation-check', { recursive: true });
+let incomplete = false;
 const summary = ['# Translation check', '', `Model: ${model}. Flagged = meaning below 4 or natural below 3.`, ''];
 
 for (const lang of langs) {
@@ -82,6 +86,7 @@ for (const lang of langs) {
     } catch (error) {
       // Keep what was checked so far (the report says where it stopped) instead of losing it all.
       stopped = `stopped at ${i} of ${items.length}: ${error.message}`;
+      incomplete = true;
       console.log(`::error::${lang}: ${stopped}`);
       break;
     }
@@ -101,4 +106,9 @@ for (const lang of langs) {
 }
 
 writeFileSync('translation-check/summary.md', summary.join('\n'));
+// A run that could not check everything is shown as failed (red), so a green tick always means a full report.
+if (incomplete) {
+  console.log('::error::Not every string was checked; see the summary. Run it again later.');
+  process.exitCode = 1;
+}
 if (process.env.GITHUB_STEP_SUMMARY) appendFileSync(process.env.GITHUB_STEP_SUMMARY, summary.join('\n'));

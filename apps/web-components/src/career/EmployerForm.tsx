@@ -1,4 +1,4 @@
-import React, { useId, useState } from 'react';
+import React, { useEffect, useId, useState } from 'react';
 import { Building2 } from 'lucide-react';
 import type { ErrorCode, JobListing, Lang, SupportFilter } from '@db/shared-schemas';
 import { errorText, makeT, supportLabel, type I18nKey } from '../i18n';
@@ -44,6 +44,28 @@ const LOW_COST_ADJUSTMENTS: Array<{
   { filter: 'quiet_workspace', title: 'employer.adjustment.quiet.title', explanation: 'employer.adjustment.quiet.explanation', cost: 'employer.adjustment.quiet.cost' },
 ];
 
+/**
+ * The employer's workplace facilities, filled in once and reused for every job they post (owner request: employers
+ * fill in once what facilities they have, editable if anything changes). Saved on this device only for now; an
+ * online profile would need employer accounts.
+ */
+interface EmployerProfile {
+  employerName: string;
+  contactEmail: string;
+  location: string;
+  offers: SupportFilter[];
+}
+const PROFILE_KEY = 'db-employer-profile';
+
+function loadProfile(): EmployerProfile | null {
+  try {
+    const saved = JSON.parse(localStorage.getItem(PROFILE_KEY) ?? 'null') as EmployerProfile | null;
+    return saved && Array.isArray(saved.offers) ? saved : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Employer accommodation form: post a job and the workplace support it offers. */
 export const EmployerForm: React.FC<EmployerFormProps> = ({ lang = 'en', services = localServices, announce, onPosted, headingLevel = 2 }) => {
   const Heading = headingLevel === 3 ? 'h3' : 'h2';
@@ -58,6 +80,50 @@ export const EmployerForm: React.FC<EmployerFormProps> = ({ lang = 'en', service
   const [errors, setErrors] = useState<Partial<Record<Field, ErrorCode>>>({});
   const [summaryKey, setSummaryKey] = useState(0);
   const [posted, setPosted] = useState('');
+  const [profile, setProfile] = useState<EmployerProfile | null>(null);
+  const [profileNote, setProfileNote] = useState('');
+
+  /** Fills the form from the saved facilities (on open, and after each posted job). */
+  const fromProfile = (saved: EmployerProfile | null) => {
+    setValues({ ...EMPTY, employerName: saved?.employerName ?? '', contactEmail: saved?.contactEmail ?? '', location: saved?.location ?? '' });
+    setOffers(saved?.offers ?? []);
+    setRemote(Boolean(saved?.offers.includes('remote')));
+  };
+  useEffect(() => {
+    const saved = loadProfile();
+    if (!saved) return;
+    setProfile(saved);
+    fromProfile(saved);
+    setProfileNote(t('employer.profileLoaded'));
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const saveProfile = () => {
+    const next: EmployerProfile = {
+      employerName: values.employerName.trim(),
+      contactEmail: values.contactEmail.trim(),
+      location: values.location,
+      offers: remote && !offers.includes('remote') ? [...offers, 'remote'] : offers,
+    };
+    try {
+      localStorage.setItem(PROFILE_KEY, JSON.stringify(next));
+    } catch {
+      // storage blocked: nothing is kept
+    }
+    setProfile(next);
+    setProfileNote(t('employer.profileSaved'));
+    say(t('employer.profileSaved'));
+  };
+
+  const forgetProfile = () => {
+    try {
+      localStorage.removeItem(PROFILE_KEY);
+    } catch {
+      // storage blocked
+    }
+    setProfile(null);
+    setProfileNote(t('employer.profileForgotten'));
+    say(t('employer.profileForgotten'));
+  };
 
   const set = (field: Field) => (value: string) => setValues((v) => ({ ...v, [field]: value }));
   const errorFor = (field: Field) => (errors[field] ? errorText(lang, errors[field]!) : undefined);
@@ -89,9 +155,7 @@ export const EmployerForm: React.FC<EmployerFormProps> = ({ lang = 'en', service
     const message = t('employer.posted', { title: values.jobTitle.trim() });
     setPosted(message);
     say(message);
-    setValues(EMPTY);
-    setRemote(false);
-    setOffers([]);
+    fromProfile(profile); // the next job starts from the saved facilities, not from an empty form
     onPosted?.(job);
   };
 
@@ -146,6 +210,14 @@ export const EmployerForm: React.FC<EmployerFormProps> = ({ lang = 'en', service
             <CheckboxField key={filter} id={`${idBase}-offer-${filter}`} label={supportLabel(lang, filter)}
               checked={offers.includes(filter)} onChange={(on) => toggleOffer(filter, on)} />
           ))}
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={saveProfile} className={ui.btnSecondary}>{t('employer.profileSave')}</button>
+            {profile && (
+              <button type="button" onClick={forgetProfile} className={ui.btnQuiet}>{t('employer.profileForget')}</button>
+            )}
+          </div>
+          <p className="mt-2 text-sm text-stone-700">{t('employer.profileNote')}</p>
+          {profileNote && <p role="status" className="mt-2 font-semibold">{profileNote}</p>}
         </fieldset>
 
         <section aria-labelledby={`${idBase}-suggestions-heading`} className="mt-6">

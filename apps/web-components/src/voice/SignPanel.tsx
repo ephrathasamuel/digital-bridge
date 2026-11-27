@@ -22,6 +22,8 @@ export interface SignPanelProps {
 const MAX_VIDEO_MS = 20_000;
 const DIGITS = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
 const LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+/** Wave card that removes the last letter of the answer. */
+const DELETE = '\u232b';
 
 /** Signs taught on the "Teach your own signs" page in this browser (or loaded from a file on this site). */
 function loadSigns(): Model {
@@ -80,7 +82,9 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
   const trackerRef = useRef<HandTracker | null>(null);
 
   const words = [t('sign.wordYes'), t('sign.wordNo')];
-  const cards = [...DIGITS, ...LETTERS, ...words];
+  // The Delete card is last, so waving left once from the first card reaches it (the cards wrap around).
+  const cards = [...DIGITS, ...LETTERS, ...words, DELETE];
+  const cardName = (item: string) => (item === DELETE ? t('sign.delete') : item);
   const canFilm = typeof window !== 'undefined' && !!navigator.mediaDevices?.getUserMedia;
   const canRecord = canFilm && typeof MediaRecorder !== 'undefined' && !!voiceNoteKey;
 
@@ -191,6 +195,11 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
 
   // ---- Cards ------------------------------------------------------------------------------------------------------
   const addCard = (item: string) => {
+    if (item === DELETE) {
+      setBuilt((text) => text.slice(0, -1));
+      announce?.(t('sign.deleted'));
+      return;
+    }
     setBuilt((text) => {
       const isWord = item.length > 1;
       return isWord ? `${text}${text && !text.endsWith(' ') ? ' ' : ''}${item}` : `${text}${item}`;
@@ -262,11 +271,11 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
       if (fired === 1) {
         const item = cards[currentRef.current];
         addCard(item);
-        announce?.(t('sign.waveChose', { item }));
+        if (item !== DELETE) announce?.(t('sign.waveChose', { item }));
       } else {
         const next = (currentRef.current + (fired === 0 ? -1 : 1) + cards.length) % cards.length;
         setCurrent(next);
-        announce?.(cards[next]);
+        announce?.(cardName(cards[next]));
       }
     }, 200);
     return () => clearInterval(timer);
@@ -347,7 +356,14 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
       data-vc-active={wave && index === current ? 'true' : undefined}
       className={cx(ui.btnSecondary, 'min-w-[48px] text-lg', item.length > 1 && 'text-base', wave && index === current && 'scale-110 ring-4 ring-offset-2 ring-ink')}
     >
-      {item}
+      {item === DELETE ? (
+        <>
+          <Delete aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
+          {t('sign.delete')}
+        </>
+      ) : (
+        item
+      )}
     </button>
   );
 
@@ -442,7 +458,15 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
               <Hand aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
               {t('sign.waveToggle')}
             </button>
-            <p id={`${uid}-wave`} className={cx(ui.hint, 'mt-1')}>{t('sign.waveHint')}</p>
+            <p id={`${uid}-wave`} className={cx(ui.hint, 'mt-1')}>{t('sign.waveHint')} {t('sign.waveDeleteHint')}</p>
+            {wave && (
+              // What is being written, always in view while waving (it stays at the top as the page follows the cards).
+              <p aria-hidden="true" className="sticky top-2 z-10 mt-2 rounded-xl border-2 border-ink bg-white px-3 py-2 shadow-card">
+                <span className="block text-sm font-semibold">{t('sign.writing')}</span>
+                <span className="break-words text-2xl font-bold">{built || ' '}</span>
+                <span className="animate-pulse text-2xl font-bold">|</span>
+              </p>
+            )}
             {wave && (
               <div aria-hidden="true" className="mt-1 flex max-w-[20rem] gap-1">
                 {zones.map((level, i) => (
@@ -491,7 +515,7 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
         {[
           ['sign.numbers', DIGITS, 0],
           ['sign.letters', LETTERS, DIGITS.length],
-          ['sign.words', words, DIGITS.length + LETTERS.length],
+          ['sign.words', [...words, DELETE], DIGITS.length + LETTERS.length],
         ].map(([key, items, offset]) => (
           <div key={key as string} role="group" aria-label={t(key as string)} className="mt-3">
             <p className="text-sm font-semibold mb-1" aria-hidden="true">{t(key as string)}</p>

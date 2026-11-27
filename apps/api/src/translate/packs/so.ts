@@ -523,4 +523,13 @@ export const SO: Record<string, string> = {
   "sign.readNone": "Weli halkan ma jiraan calaamado la baray. Soo geli fayl calaamado, ama marka hore calaamado bar.",
   "sign.readOn": "Calaamadahaaga ayaa la akhrinayaa. Hal eray hal mar calaamadee.",
   "sign.readToggle": "Akhri calaamadaha aan baray",
+  "employer.profileSave": "U kaydi kuwan sida adeegyada goobta shaqadayada",
+  "employer.profileSaved": "Waa la kaydiyay. Adeegyada goobta shaqadaada iyo faahfaahintaada waxaa loo buuxin doonaa shaqada xigta. Waad beddeli kartaa wakhti kasta.",
+  "employer.profileLoaded": "Adeegyada goobta shaqada iyo faahfaahinta la kaydiyay waa la buuxiyay. U beddel shaqadan, ama mar kale kaydi si aad u cusboonaysiiso.",
+  "employer.profileForget": "Tirtir adeegyada la kaydiyay",
+  "employer.profileForgotten": "Adeegyada la kaydiyay waa laga saaray qalabkan.",
+  "employer.profileNote": "Qalabkan oo keliya ayaa lagu kaydiyaa.",
+  "sign.writing": "Waxa aad qoraysaa",
+  "sign.deleted": "Hal xaraf ayaa la tirtiray.",
+  "sign.waveDeleteHint": "Kaarka Tirtir kan ugu dambeeya wuxuu ku yaal bidixda kaarka ugu horreeya.",
 };

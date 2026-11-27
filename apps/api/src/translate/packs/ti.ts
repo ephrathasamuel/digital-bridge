@@ -524,4 +524,13 @@ export const TI: Record<string, string> = {
   "sign.readNone": "ክሳብ ሕጂ ዝተመሃረ ምልክት የለን። ፋይል ምልክታት ኣእትዉ፣ ወይ ቅድሚኡ ምልክታት ኣምህሩ።",
   "sign.readOn": "ምልክታትኩም የንብብ ኣሎ። ሓደ ቃል ብሓደ ግዜ ኣመልክቱ።",
   "sign.readToggle": "ዝመሃርክዎም ምልክታት ኣንብብ",
+  "employer.profileSave": "እዚኦም ከም መገልገሊታት ቦታ ስራና ዓቅብ",
+  "employer.profileSaved": "ተዓቂቡ ኣሎ። መገልገሊታት ቦታ ስራኹምን ዝርዝራትኩምን ንዝቕጽል ስራ ክመልኡ እዮም። ኣብ ዝኾነ ግዜ ክትቅይርዎም ትኽእሉ።",
+  "employer.profileLoaded": "ዝተዓቀቡ መገልገሊታት ቦታ ስራን ዝርዝራትን ተመሊኦም ኣለዉ። ንዚ ስራ ቀይርዎም፣ ወይ ንምሕዳሶም እንደገና ዓቅቡ።",
+  "employer.profileForget": "ዝተዓቀቡ መገልገሊታት ደምስስ",
+  "employer.profileForgotten": "ዝተዓቀቡ መገልገሊታት ካብዚ መሳርሒ ተደምሲሶም።",
+  "employer.profileNote": "ኣብዚ መሳርሒ ጥራይ ይዕቀብ።",
+  "sign.writing": "ትጽሕፍዎ ዘለኹም",
+  "sign.deleted": "ሓንቲ ፊደል ተሰሪዛ።",
+  "sign.waveDeleteHint": "ካርድ ናይ መወዳእታ ደምስስ ካብ ቀዳማይ ካርድ ንጸጋም እዩ።",
 };

@@ -524,4 +524,13 @@ export const OM: Record<string, string> = {
   "sign.readNone": "Ammaaf mallattoon barsiifame hin jiru. Faayilii mallattoo baasi, ykn dursa mallattoo barsiisi.",
   "sign.readOn": "Mallattoo kee dubbisaa jira. Yeroo tokkotti jecha tokko mallattoon agarsiisi.",
   "sign.readToggle": "Mallattoo ani barsiise dubbisi",
+  "employer.profileSave": "Kanneen akka tajaajila bakka hojii keenyaatti olkaa'i",
+  "employer.profileSaved": "Olkaa'ameera. Tajaajilli bakka hojii keessanii fi odeeffannoon keessan hojii itti aanuuf ni guutama. Yeroo barbaaddanitti jijjiiruu dandeessu.",
+  "employer.profileLoaded": "Tajaajilli bakka hojii fi odeeffannoon olkaa'aman guutamaniiru. Hojii kanaaf jijjiiraa, ykn haaromsuuf irra deebi'aa olkaa'aa.",
+  "employer.profileForget": "Tajaajila olkaa'ame haqi",
+  "employer.profileForgotten": "Tajaajilli olkaa'ame meeshaa kana irraa haqameera.",
+  "employer.profileNote": "Meeshaa kana irratti qofa olkaa'ama.",
+  "sign.writing": "Kan barreessaa jirtan",
+  "sign.deleted": "Qubee tokko haqame.",
+  "sign.waveDeleteHint": "Kaardiin Isa dhumaa haqi kaardii jalqabaa irraa gara bitaatti argama.",
 };

@@ -134,14 +134,23 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
     let url: string | null = first;
     for (let i = 0; i < parts.length; i++) {
       if (run !== runRef.current) break;
-      if (!url) {
-        // The server gave no audio for this phrase: show the rest on screen at reading pace.
-        setIndex(i);
-        setMode('visual');
-        return;
-      }
       const next = i + 1 < parts.length ? fetchPart(i + 1) : null;
       setIndex(i);
+      if (!url) {
+        // No audio for this phrase (e.g. a name that is not in the language pack): show it highlighted at reading
+        // pace with a soft sound, then carry on with sound for the next phrases.
+        playChime('next');
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, phraseMs(parts[i]));
+          endClipRef.current = () => {
+            clearTimeout(timer);
+            resolve();
+          };
+        });
+        endClipRef.current = null;
+        url = next ? await next : null;
+        continue;
+      }
       const audio = new Audio(url);
       audioRef.current = audio;
       setClipPlaying(true);

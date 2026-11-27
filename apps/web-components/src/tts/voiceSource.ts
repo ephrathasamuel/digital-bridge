@@ -21,8 +21,32 @@ export interface VoiceConfig {
 
 const SOURCES: VoiceSource[] = ['auto', 'device', 'server', 'custom'];
 let config: VoiceConfig = { source: 'auto' };
-/** APIs that answered "no voice provider" (501): not asked again on this page. */
+/**
+ * APIs that answered "no voice provider" (501): not asked again on this page, nor for a day on this device
+ * (a free API server may be asleep, and waking it only to hear "no voice" took about a minute on a phone).
+ */
 const unavailable = new Set<string>();
+const NO_VOICE_KEY = 'db-voice-none:';
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function isUnavailable(url: string): boolean {
+  if (unavailable.has(url)) return true;
+  try {
+    const at = Number(localStorage.getItem(NO_VOICE_KEY + url));
+    return at > 0 && Date.now() - at < DAY_MS;
+  } catch {
+    return false;
+  }
+}
+
+function markUnavailable(url: string): void {
+  unavailable.add(url);
+  try {
+    localStorage.setItem(NO_VOICE_KEY + url, String(Date.now()));
+  } catch {
+    // storage blocked: remembered for this page only
+  }
+}
 
 export function parseVoiceSource(value: string | null | undefined): VoiceSource {
   return SOURCES.includes(value as VoiceSource) ? (value as VoiceSource) : 'auto';
@@ -75,10 +99,12 @@ export async function fetchRemoteSpeech(
     if (local) return local;
   }
   const request = remoteRequest(text.slice(0, 1000), lang, cfg);
-  if (!request || unavailable.has(request.url)) return null;
+  if (!request || isUnavailable(request.url)) return null;
   try {
-    const response = await fetcher(request.url, { ...request.init, signal: AbortSignal.timeout(15_000) });
-    if (response.status === 501) unavailable.add(request.url);
+    // "auto" has other voices to fall back on, so it waits less for a slow or sleeping server.
+    const wait = cfg.source === 'auto' ? 6_000 : 15_000;
+    const response = await fetcher(request.url, { ...request.init, signal: AbortSignal.timeout(wait) });
+    if (response.status === 501) markUnavailable(request.url);
     const type = response.headers.get('content-type') ?? '';
     if (!response.ok || !type.startsWith('audio/')) return null;
     return URL.createObjectURL(await response.blob());

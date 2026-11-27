@@ -26,7 +26,11 @@ def strings(lang: str) -> list[str]:
         with open(os.path.join(ROOT, "apps/web-components/src/i18n/am.json"), encoding="utf-8") as f:
             return list(json.load(f).values())
     with open(os.path.join(ROOT, f"apps/api/src/translate/packs/{lang}.ts"), encoding="utf-8") as f:
-        return [json.loads(f'"{value}"') for _, value in PACK_LINE.findall(f.read())]
+        pack = [json.loads(f'"{value}"') for _, value in PACK_LINE.findall(f.read())]
+    # The added packs keep place names in English (loc.*), so those are read with this voice too.
+    with open(os.path.join(ROOT, "apps/web-components/src/i18n/en.json"), encoding="utf-8") as f:
+        places = [v for k, v in json.load(f).items() if k.startswith("loc.")]
+    return pack + places
 
 
 def mp3(wave: np.ndarray, rate: int, path: str) -> None:

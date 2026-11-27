@@ -14,6 +14,7 @@ import io
 import json
 import os
 import threading
+import time
 import wave
 from collections import OrderedDict
 
@@ -28,36 +29,45 @@ from mms_text import MmsText, split
 VOICES = os.environ.get("VOICES_DIR", os.path.join(os.path.dirname(__file__), "voices"))
 LANGS = sorted(f[4:-5] for f in os.listdir(VOICES) if f.startswith("mms-") and f.endswith(".json")) if os.path.isdir(VOICES) else []
 PRELOAD = [l for l in os.environ.get("PRELOAD", "om").split(",") if l in LANGS]
-MAX_LOADED = int(os.environ.get("MAX_LOADED", "2"))  # each voice takes about 150 MB of memory
+MAX_LOADED = int(os.environ.get("MAX_LOADED", "1"))  # each voice takes about 150 to 250 MB of memory
+# Small free servers get a fraction of one core; one thread per core seen would fight over it and crawl.
+THREADS = int(os.environ.get("THREADS", "1"))
 TOKEN = os.environ.get("SPEAK_TOKEN", "")
 
 app = FastAPI(title="Digital Bridge voices")
 _voices: OrderedDict = OrderedDict()
-_lock = threading.Lock()
+_lock = threading.Lock()  # one load or one sentence at a time, so requests never pile up in memory
 
 
 def load(lang: str):
-    """Load a voice, keeping only the MAX_LOADED most recently used ones in memory."""
-    with _lock:
-        if lang in _voices:
-            _voices.move_to_end(lang)
-            return _voices[lang]
-        with open(os.path.join(VOICES, f"mms-{lang}.json"), encoding="utf-8") as f:
-            cfg = json.load(f)
-        options = ort.SessionOptions()
-        options.enable_cpu_mem_arena = False  # lower memory between requests
-        session = ort.InferenceSession(os.path.join(VOICES, f"mms-{lang}.onnx"), options, providers=["CPUExecutionProvider"])
-        while len(_voices) >= MAX_LOADED:
-            _voices.popitem(last=False)
-        _voices[lang] = (MmsText(cfg), session, cfg["sampling_rate"])
+    """Load a voice, keeping only the MAX_LOADED most recently used ones in memory. Call with _lock held."""
+    if lang in _voices:
+        _voices.move_to_end(lang)
         return _voices[lang]
+    while len(_voices) >= MAX_LOADED:  # free the old voice before loading the new one
+        _voices.popitem(last=False)
+    with open(os.path.join(VOICES, f"mms-{lang}.json"), encoding="utf-8") as f:
+        cfg = json.load(f)
+    options = ort.SessionOptions()
+    options.enable_cpu_mem_arena = False  # lower memory between requests
+    options.intra_op_num_threads = THREADS
+    options.inter_op_num_threads = 1
+    options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+    session = ort.InferenceSession(os.path.join(VOICES, f"mms-{lang}.onnx"), options, providers=["CPUExecutionProvider"])
+    _voices[lang] = (MmsText(cfg), session, cfg["sampling_rate"])
+    return _voices[lang]
+
+
+def load_locked(lang: str):
+    with _lock:
+        return load(lang)
 
 
 @app.on_event("startup")
 def warm_up() -> None:
     # Load the main voice in the background so the first request after a restart is faster.
     for lang in PRELOAD[:MAX_LOADED]:
-        threading.Thread(target=load, args=(lang,), daemon=True).start()
+        threading.Thread(target=load_locked, args=(lang,), daemon=True).start()
 
 
 @app.get("/")
@@ -77,14 +87,18 @@ def speak(body: SpeakBody, authorization: str = Header(default="")):
     lang = body.lang.lower().split("-")[0].split("_")[0]
     if lang not in LANGS:
         raise HTTPException(status_code=404, detail="Language not offered")
-    text, session, rate = load(lang)
-    pause = np.zeros(int(rate * 0.25), dtype=np.float32)
+    started = time.monotonic()
     pieces = []
-    for part in split(body.text):
-        ids = text.ids(part)
-        if len(ids) <= 1:
-            continue
-        pieces += [session.run(None, {"input_ids": np.array([ids], dtype=np.int64)})[0][0], pause]
+    with _lock:
+        text, session, rate = load(lang)
+        pause = np.zeros(int(rate * 0.25), dtype=np.float32)
+        for part in split(body.text):
+            ids = text.ids(part)
+            if len(ids) <= 1:
+                continue
+            pieces += [session.run(None, {"input_ids": np.array([ids], dtype=np.int64)})[0][0], pause]
+    # Only the language, sizes and time are logged, never the text.
+    print(f"speak {lang}: {len(body.text)} chars in {time.monotonic() - started:.1f}s", flush=True)
     if not pieces:
         raise HTTPException(status_code=422, detail="Nothing to say")
     audio = (np.clip(np.concatenate(pieces), -1, 1) * 32767).astype("<i2")

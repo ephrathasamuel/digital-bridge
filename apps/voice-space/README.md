@@ -29,8 +29,8 @@ The `Dockerfile` downloads that release and checks the sums when it builds.
 
 1. New, then Web Service, then pick this repo. Language **Docker**, Root Directory `apps/voice-space`,
    instance type **Free**.
-2. Environment: `SPEAK_TOKEN` = a long random code. Optional: `MAX_LOADED` (voices kept in memory, default 2,
-   about 150 MB each) and `PRELOAD` (voice loaded at start, default `om`).
+2. Environment: `SPEAK_TOKEN` = a long random code. Optional: `MAX_LOADED` (voices kept in memory, default 1,
+   about 150 to 250 MB each), `THREADS` (default 1) and `PRELOAD` (voice loaded at start, default `om`).
 3. On the Digital Bridge API set `TTS_PROVIDER=custom`, `TTS_URL=https://<service>.onrender.com/speak` and
    `TTS_AUTH_HEADER=Bearer <the same code>`.
 

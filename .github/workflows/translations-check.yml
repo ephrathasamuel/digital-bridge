@@ -25,6 +25,8 @@ jobs:
       - uses: actions/setup-node@v5
         with:
           node-version: 22
+          # The script needs no packages; without this, setup-node looks for pnpm (packageManager in package.json).
+          package-manager-cache: false
       - run: node scripts/check-translations.mjs "$LANGS" "$MODEL"
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

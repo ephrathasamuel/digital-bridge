@@ -61,3 +61,20 @@ class MmsText:
         out = [0] * (len(ids) * 2 + 1)
         out[1::2] = ids
         return out
+
+
+# Read aloud clips (make_clips.py and apps/web-components/src/tts/clipVoice.ts): text is cut into pieces at
+# punctuation, and each piece's clip is named after its token ids, so case and punctuation never matter.
+PIECE_SPLIT = re.compile(r"[,:;.!?،፡-፨\n]+")
+
+
+def pieces(text: str) -> list[str]:
+    return [p.strip() for p in PIECE_SPLIT.split(text) if p.strip()]
+
+
+def clip_key(ids: list[int]) -> str:
+    """FNV-1a 32 bit of the ids joined by commas, as 8 hex digits."""
+    h = 0x811C9DC5
+    for byte in ",".join(map(str, ids)).encode():
+        h = ((h ^ byte) * 0x01000193) & 0xFFFFFFFF
+    return f"{h:08x}"

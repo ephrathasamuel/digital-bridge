@@ -1,0 +1,65 @@
+name: Voice clips
+
+# Run by hand after the language packs change: makes small MP3 read aloud clips for every fixed string of the packs
+# (apps/voice-space/make_clips.py) and puts them in the Hugging Face voices repo under clips/<lang>/.
+# Needs the repo secret HF_TOKEN (a Write token).
+on:
+  workflow_dispatch:
+    inputs:
+      langs:
+        description: Languages (comma separated)
+        default: om,am,ti,so
+      repo:
+        description: Hugging Face model repo name (under the token's account)
+        default: digital-bridge-voices
+
+permissions:
+  contents: read
+
+jobs:
+  clips:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - name: Install tools
+        run: |
+          which ffmpeg || (sudo apt-get update && sudo apt-get install -y ffmpeg)
+          pip install onnxruntime==1.20.1 numpy==2.1.3 uroman==1.3.1.1 huggingface_hub==0.26.5
+      - name: Download the voices
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          REPO: ${{ inputs.repo }}
+          LANGS: ${{ inputs.langs }}
+        run: |
+          python - <<'EOF'
+          import os
+          from huggingface_hub import HfApi, hf_hub_download
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          repo = f"{api.whoami()['name']}/{os.environ['REPO']}"
+          for lang in os.environ["LANGS"].split(","):
+              for name in (f"mms-{lang}.onnx", f"mms-{lang}.json"):
+                  hf_hub_download(repo, name, local_dir="voices")
+          EOF
+      - name: Make the clips
+        run: python apps/voice-space/make_clips.py voices clips "$LANGS"
+        env:
+          LANGS: ${{ inputs.langs }}
+      - name: Upload the clips
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          REPO: ${{ inputs.repo }}
+        run: |
+          python - <<'EOF'
+          import os
+          from huggingface_hub import HfApi
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          repo = f"{api.whoami()['name']}/{os.environ['REPO']}"
+          api.upload_folder(folder_path="clips", path_in_repo="clips", repo_id=repo, commit_message="Read aloud clips")
+          print(f"::notice::Clips uploaded to https://huggingface.co/{repo}/tree/main/clips")
+          EOF

@@ -53,9 +53,23 @@ def load(lang: str):
     options.intra_op_num_threads = THREADS
     options.inter_op_num_threads = 1
     options.execution_mode = ort.ExecutionMode.ORT_SEQUENTIAL
+    # No second, rearranged copy of the weights and no memory planning: slower, but fits 512 MB.
+    options.enable_mem_pattern = False
+    options.add_session_config_entry("session.disable_prepacking", "1")
+    options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
     session = ort.InferenceSession(os.path.join(VOICES, f"mms-{lang}.onnx"), options, providers=["CPUExecutionProvider"])
     _voices[lang] = (MmsText(cfg), session, cfg["sampling_rate"])
+    print(f"loaded {lang}: memory peak {peak_mb()} MB", flush=True)
     return _voices[lang]
+
+
+def peak_mb() -> int:
+    try:
+        import resource  # Linux only
+
+        return resource.getrusage(resource.RUSAGE_SELF).ru_maxrss // 1024
+    except Exception:  # noqa: BLE001 (memory report is optional)
+        return -1
 
 
 def load_locked(lang: str):
@@ -98,7 +112,7 @@ def speak(body: SpeakBody, authorization: str = Header(default="")):
                 continue
             pieces += [session.run(None, {"input_ids": np.array([ids], dtype=np.int64)})[0][0], pause]
     # Only the language, sizes and time are logged, never the text.
-    print(f"speak {lang}: {len(body.text)} chars in {time.monotonic() - started:.1f}s", flush=True)
+    print(f"speak {lang}: {len(body.text)} chars in {time.monotonic() - started:.1f}s, memory peak {peak_mb()} MB", flush=True)
     if not pieces:
         raise HTTPException(status_code=422, detail="Nothing to say")
     audio = (np.clip(np.concatenate(pieces), -1, 1) * 32767).astype("<i2")

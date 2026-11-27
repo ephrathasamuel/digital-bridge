@@ -93,7 +93,7 @@ async function startCamera() {
   }
   try {
     say('Turning on the camera…');
-    stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } }, audio: false });
   } catch {
     say('The camera is blocked or not available. Allow the camera in your browser settings and try again.');
     return false;

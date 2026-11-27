@@ -278,7 +278,20 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
 
   const stopDictation = () => {
     clearTimeout(silence);
-    recognition?.stop();
+    const engine = recognition;
+    if (!engine) return;
+    // Phones can take a long time to finish a stopped recognition: the button answers at once, and if the engine
+    // has not ended within a second it is cut off and finished here (the words heard so far go to the review box).
+    dictateButton.setAttribute('aria-pressed', 'false');
+    dictateButton.textContent = t('assist.dictate');
+    engine.stop();
+    setTimeout(() => {
+      if (recognition !== engine) return;
+      const finish = engine.onend;
+      engine.onend = null;
+      engine.abort();
+      finish?.();
+    }, 1000);
   };
   const closeReview = () => {
     review.hidden = true;

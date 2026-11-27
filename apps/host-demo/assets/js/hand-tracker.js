@@ -6,27 +6,58 @@ export const HAND_MODEL = 'https://storage.googleapis.com/mediapipe-models/hand_
 export const SIGNS_STORE = 'db-taught-signs';
 
 let loading = null;
+/** A processor (CPU) tracker that replaces the graphics chip one after it failed while reading frames. */
+let replacement = null;
+let switching = false;
+
+// Phones: the graphics chip (GPU) path often starts fine but then finds no hand or fails on every frame,
+// so phones use the processor, which is slower but works everywhere.
+const isPhone = () => typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+
+async function create(delegate) {
+  const vision = await import(/* @vite-ignore */ `${MEDIAPIPE}/vision_bundle.mjs`);
+  const files = await vision.FilesetResolver.forVisionTasks(`${MEDIAPIPE}/wasm`);
+  return vision.HandLandmarker.createFromOptions(files, {
+    baseOptions: { modelAssetPath: HAND_MODEL, delegate },
+    runningMode: 'VIDEO',
+    numHands: 1,
+  });
+}
 
 /** One tracker per page, created the first time someone turns on sign reading. */
 export function loadTracker() {
   loading ??= (async () => {
-    const vision = await import(/* @vite-ignore */ `${MEDIAPIPE}/vision_bundle.mjs`);
-    const files = await vision.FilesetResolver.forVisionTasks(`${MEDIAPIPE}/wasm`);
-    const options = (delegate) => ({ baseOptions: { modelAssetPath: HAND_MODEL, delegate }, runningMode: 'VIDEO', numHands: 1 });
-    try {
-      return await vision.HandLandmarker.createFromOptions(files, options('GPU'));
-    } catch {
-      return vision.HandLandmarker.createFromOptions(files, options('CPU'));
+    if (!isPhone()) {
+      try {
+        return await create('GPU');
+      } catch {
+        // no usable graphics chip: use the processor below
+      }
     }
+    return create('CPU');
   })();
   loading.catch(() => { loading = null; }); // offline: allow another try later
   return loading;
 }
 
-/** The hand in the current video frame as { points, handedness }, or null. */
+/**
+ * The hand in the current video frame as { points, handedness }, or null. Never throws: when the tracker fails on a
+ * frame it switches to a processor tracker in the background, so the caller's camera loop keeps running.
+ */
 export function detect(tracker, video) {
-  const result = tracker.detectForVideo(video, performance.now());
-  const points = result.landmarks?.[0];
-  if (!points) return null;
-  return { points, handedness: (result.handedness ?? result.handednesses)?.[0]?.[0]?.categoryName };
+  try {
+    const result = (replacement ?? tracker).detectForVideo(video, performance.now());
+    const points = result.landmarks?.[0];
+    if (!points) return null;
+    return { points, handedness: (result.handedness ?? result.handednesses)?.[0]?.[0]?.categoryName };
+  } catch {
+    if (!switching && !replacement) {
+      switching = true;
+      create('CPU')
+        .then((cpu) => { replacement = cpu; })
+        .catch(() => undefined)
+        .finally(() => { switching = false; });
+    }
+    return null;
+  }
 }

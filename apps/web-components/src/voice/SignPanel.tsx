@@ -114,7 +114,7 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
   const startCamera = async () => {
     if (streamRef.current) return true;
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { width: { ideal: 320 }, height: { ideal: 240 } }, audio: false });
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: { ideal: 320 }, height: { ideal: 240 } }, audio: false });
       streamRef.current = stream;
       setCamera('on');
       say(t('sign.cameraOn'));

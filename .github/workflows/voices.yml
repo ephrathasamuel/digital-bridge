@@ -1,0 +1,41 @@
+name: Voices
+
+# Run by hand: converts Meta's MMS voices to ONNX and attaches them to a GitHub Release,
+# where the voice server (apps/voice-space) downloads them when it builds.
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag
+        default: voices-v1
+      langs:
+        description: Voices to convert (comma separated)
+        default: om,am,ti,so,en
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install tools
+        run: |
+          pip install torch==2.5.1 --index-url https://download.pytorch.org/whl/cpu
+          pip install -r apps/voice-space/export-requirements.txt
+      - name: Convert and check voices
+        run: python apps/voice-space/export_onnx.py voices "$LANGS"
+        env:
+          LANGS: ${{ inputs.langs }}
+      - name: Publish release
+        run: |
+          cd voices && sha256sum * > SHA256SUMS && cd ..
+          gh release create "$TAG" voices/* --title "Voices ($TAG)" --notes "Meta MMS text to speech voices (facebook/mms-tts-*) converted to ONNX by .github/workflows/voices.yml for apps/voice-space. License: CC BY-NC 4.0 (non commercial), from Meta AI."
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}

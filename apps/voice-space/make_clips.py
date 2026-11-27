@@ -18,7 +18,7 @@ from mms_text import MmsText, clip_key, pieces
 
 ROOT = os.path.join(os.path.dirname(__file__), "..", "..")
 PLACEHOLDER = re.compile(r"\{[a-zA-Z_]+\}")
-PACK_LINE = re.compile(r'^\s*"([^"]+)":\s*"((?:[^"\]|\.)*)"', re.M)
+PACK_LINE = re.compile(r'^\s*"([^"]+)":\s*"((?:[^"\\]|\\.)*)"', re.M)
 
 
 def strings(lang: str) -> list[str]:

@@ -509,4 +509,9 @@ export const TI: Record<string, string> = {
   "voice.failed": "ነቲ ድምጺ ምውራድ ኣይተኻእለን። ርክብኩም ኣረጋግጹ እሞ እንደገና ፈትኑ።",
   "assist.goesInto": "ዝኣትወሉ ቦታ፦ {field}",
   "assist.minimise": "ኣንእስ",
+  "voice.choice": "ድምጺ",
+  "voice.auto": "ብገዛእ ርእሱ (ካብ ዘሎ ዝበለጸ)",
+  "voice.device": "ድምጺ ናይዚ መሳርሒ",
+  "voice.ours": "ድምጺ Digital Bridge (ኣብ ኩሉ መሳርሒ ሓደ)",
+  "voice.changed": "ድምጺ፦ {voice}",
 };

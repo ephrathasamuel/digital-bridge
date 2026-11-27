@@ -10,6 +10,7 @@ import { setVisionMode, useVisionMode, VISION_LABEL_KEYS, VISION_MODES, type Vis
 import type { I18nKey } from '../i18n';
 import { cleanId, ui } from './ui';
 import { ChoiceMenu } from './ChoiceMenu';
+import { getVoiceChoice, onVoiceChoice, setVoiceChoice, VOICE_CHOICES, type VoiceChoice } from '../tts/voiceSource';
 
 export interface HelpClusterProps {
   lang: Lang;
@@ -55,6 +56,8 @@ export const HelpCluster: React.FC<HelpClusterProps> = ({
   const guideText = guide.map((key) => plainKeys(t(lang, key))).join(' ');
   const signId = `${cleanId(useId())}-sign`;
   const vision = useVisionMode();
+  const [voiceChoice, setVoiceChoiceState] = useState<VoiceChoice>(getVoiceChoice);
+  useEffect(() => onVoiceChoice(setVoiceChoiceState), []);
   const visionLabel = (mode: VisionMode) => t(lang, VISION_LABEL_KEYS[mode] as I18nKey);
   const dialogRef = useRef<HTMLDialogElement>(null);
   const openerRef = useRef<HTMLButtonElement>(null);
@@ -143,6 +146,17 @@ export const HelpCluster: React.FC<HelpClusterProps> = ({
         <ShieldCheck aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />
         {t(lang, 'help.privacy')}
       </button>
+
+      {/* Voice: which voice reads aloud (PCs and phones have different voices; "Digital Bridge" sounds the same on both). */}
+      <ChoiceMenu
+        label={t(lang, 'voice.choice')}
+        value={voiceChoice}
+        onChoose={(value) => {
+          setVoiceChoice(value as VoiceChoice);
+          announce(t(lang, 'voice.changed', { voice: t(lang, `voice.${value}` as I18nKey) }));
+        }}
+        choices={VOICE_CHOICES.map((choice) => ({ value: choice, label: t(lang, `voice.${choice}` as I18nKey) }))}
+      />
 
       {/* Colour mode: same place on every step (3.2.6), visible label, our own picker (not the phone's dialog). */}
       <ChoiceMenu

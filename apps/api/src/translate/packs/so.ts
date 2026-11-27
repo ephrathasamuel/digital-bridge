@@ -508,4 +508,9 @@ export const SO: Record<string, string> = {
   "voice.failed": "Codka lama soo dejin karin. Hubi xiriirkaaga oo isku day mar kale.",
   "assist.goesInto": "Wuxuu galayaa: {field}",
   "assist.minimise": "Yaree",
+  "voice.choice": "Cod",
+  "voice.auto": "Si toos ah (kan ugu fiican ee jira)",
+  "voice.device": "Codka qalabkan",
+  "voice.ours": "Codka Digital Bridge (isku mid qalab kasta)",
+  "voice.changed": "Cod: {voice}",
 };

@@ -60,8 +60,52 @@ export function getVoiceConfig(): VoiceConfig {
   return config;
 }
 
+/**
+ * The person's own choice in the Voice menu, remembered on this device. "auto" keeps what the site set up (the
+ * default); "device" uses the voices installed on the device; "ours" uses the Digital Bridge clips and downloaded
+ * voice first, so a PC and a phone sound the same.
+ */
+export type VoiceChoice = 'auto' | 'device' | 'ours';
+export const VOICE_CHOICES: VoiceChoice[] = ['auto', 'device', 'ours'];
+const CHOICE_KEY = 'db-voice-choice';
+const choiceListeners = new Set<(choice: VoiceChoice) => void>();
+
+export function getVoiceChoice(): VoiceChoice {
+  try {
+    const saved = localStorage.getItem(CHOICE_KEY) as VoiceChoice | null;
+    return saved && VOICE_CHOICES.includes(saved) ? saved : 'auto';
+  } catch {
+    return 'auto';
+  }
+}
+
+export function setVoiceChoice(choice: VoiceChoice): void {
+  try {
+    localStorage.setItem(CHOICE_KEY, choice);
+  } catch {
+    // storage blocked: the choice lasts for this page only
+  }
+  sessionChoice = choice;
+  choiceListeners.forEach((listener) => listener(choice));
+}
+
+export function onVoiceChoice(listener: (choice: VoiceChoice) => void): () => void {
+  choiceListeners.add(listener);
+  return () => choiceListeners.delete(listener);
+}
+
+let sessionChoice: VoiceChoice | null = null;
+
+/** The site's voice setup with the person's choice applied. */
+export function effectiveVoiceConfig(): VoiceConfig {
+  const choice = sessionChoice ?? getVoiceChoice();
+  if (choice === 'device') return { ...config, source: 'device' };
+  if (choice === 'ours') return { ...config, source: 'server', customUrl: undefined };
+  return config;
+}
+
 /** Whether a device voice should be tried before any remote voice. */
-export function deviceVoiceFirst(cfg: VoiceConfig = config): boolean {
+export function deviceVoiceFirst(cfg: VoiceConfig = effectiveVoiceConfig()): boolean {
   return cfg.source === 'auto' || cfg.source === 'device';
 }
 
@@ -88,7 +132,7 @@ function remoteRequest(text: string, lang: string, cfg: VoiceConfig): { url: str
 export async function fetchRemoteSpeech(
   text: string,
   lang: string,
-  cfg: VoiceConfig = config,
+  cfg: VoiceConfig = effectiveVoiceConfig(),
   fetcher: typeof fetch = fetch,
 ): Promise<string | null> {
   // Ready made clips of the pack text come first (instant, a few KB), then a voice the person downloaded into this

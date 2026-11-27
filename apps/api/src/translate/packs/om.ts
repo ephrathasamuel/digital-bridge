@@ -509,4 +509,9 @@ export const OM: Record<string, string> = {
   "voice.failed": "Sagalee buusuun hin danda'amne. Quunnamtii kee ilaali, irra deebi'ii yaali.",
   "assist.goesInto": "Kan itti galu: {field}",
   "assist.minimise": "Xiqqeessi",
+  "voice.choice": "Sagalee",
+  "voice.auto": "Ofumaan (isa jiru keessaa caalu)",
+  "voice.device": "Sagalee meeshaa kanaa",
+  "voice.ours": "Sagalee Digital Bridge (meeshaa hundarratti tokko)",
+  "voice.changed": "Sagalee: {voice}",
 };

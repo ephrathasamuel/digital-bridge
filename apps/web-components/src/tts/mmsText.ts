@@ -1,4 +1,5 @@
 import { ETHIOPIC_ROMAN } from './ethiopicRoman';
+import { spellNumbers } from './numberWords';
 
 /**
  * Text to MMS voice token ids in the browser: the same rules as apps/voice-space/mms_text.py (checked against
@@ -26,11 +27,13 @@ export function romanise(text: string): string {
   return out;
 }
 
-export function mmsIds(text: string, cfg: MmsVoiceConfig): number[] {
+/** lang (om, am, ti, so) turns digits into number words first; the voices skip digits. */
+export function mmsIds(text: string, cfg: MmsVoiceConfig, lang?: string): number[] {
   const vocab = cfg.vocab;
   const has = (s: string) => Object.prototype.hasOwnProperty.call(vocab, s);
   const words = Object.keys(vocab).filter((w) => Array.from(w).length > 1).sort((a, b) => b.length - a.length);
-  let s = cfg.is_uroman ? romanise(text) : text;
+  const spelled = lang ? spellNumbers(text, lang) : text;
+  let s = cfg.is_uroman ? romanise(spelled) : spelled;
   if (cfg.normalize) {
     // Keep anything the vocabulary has as is (also multi letter entries), lower case the rest.
     let out = '';

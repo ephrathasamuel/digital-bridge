@@ -123,16 +123,110 @@ export function encodeWav(samples: Float32Array, rate: number): Blob {
   return new Blob([view], { type: 'audio/wav' });
 }
 
+// ---- Background worker ---------------------------------------------------------------------------------------
+// The voice runs in a Web Worker, so the page keeps answering taps while a sentence is made (it takes a few seconds
+// on phones). A site whose security rules block workers falls back to the page itself (open() above).
+const WORKER_CODE = `
+let ort = null;
+let session = null;
+self.onmessage = async (event) => {
+  const { id, cmd } = event.data;
+  try {
+    if (cmd === 'load') {
+      ort = ort || (await import('${ORT_BASE}ort.wasm.min.mjs'));
+      ort.env.wasm.wasmPaths = '${ORT_BASE}';
+      ort.env.wasm.numThreads = 1;
+      if (session) await session.release();
+      session = null;
+      session = await ort.InferenceSession.create(new Uint8Array(event.data.model));
+      self.postMessage({ id, ok: true });
+    } else {
+      const ids = event.data.ids;
+      const input = new ort.Tensor('int64', BigInt64Array.from(ids, (n) => BigInt(n)), [1, ids.length]);
+      const wave = (await session.run({ input_ids: input })).waveform.data;
+      self.postMessage({ id, ok: true, wave }, [wave.buffer]);
+    }
+  } catch (error) {
+    self.postMessage({ id, ok: false, error: String(error) });
+  }
+};
+`;
+
+type Reply = { ok: boolean; wave?: Float32Array; error?: string };
+let worker: Worker | null | undefined; // undefined: not tried yet; null: not available here
+let workerLang: string | null = null;
+let seq = 0;
+const pending = new Map<number, (reply: Reply) => void>();
+
+function getWorker(): Worker | null {
+  if (worker !== undefined) return worker;
+  try {
+    const url = URL.createObjectURL(new Blob([WORKER_CODE], { type: 'text/javascript' }));
+    worker = new Worker(url, { type: 'module' });
+    worker.onmessage = (event: MessageEvent<Reply & { id: number }>) => {
+      pending.get(event.data.id)?.(event.data);
+      pending.delete(event.data.id);
+    };
+    worker.onerror = () => {
+      pending.forEach((reply) => reply({ ok: false, error: 'worker failed' }));
+      pending.clear();
+      worker?.terminate();
+      worker = null;
+    };
+  } catch {
+    worker = null;
+  }
+  return worker;
+}
+
+function ask(message: Record<string, unknown>, transfer: Transferable[] = []): Promise<Reply> {
+  return new Promise((resolve) => {
+    const id = ++seq;
+    pending.set(id, resolve);
+    getWorker()!.postMessage({ ...message, id }, transfer);
+  });
+}
+
+async function voiceConfig(lang: string): Promise<MmsVoiceConfig> {
+  const response = await (await caches.open(CACHE)).match(urls(lang).config);
+  if (!response) throw new Error('voice not downloaded');
+  return (await response.json()) as MmsVoiceConfig;
+}
+
+/** One sentence's sound from the worker, or null when the worker cannot be used (then the page does it). */
+async function runInWorker(lang: string, ids: number[]): Promise<Float32Array | null> {
+  if (!getWorker()) return null;
+  if (workerLang !== lang) {
+    const model = await (await caches.open(CACHE)).match(urls(lang).model);
+    if (!model) return null;
+    const bytes = await model.arrayBuffer();
+    const loaded = await ask({ cmd: 'load', model: bytes }, [bytes]);
+    if (!loaded.ok) {
+      worker?.terminate();
+      worker = null;
+      return null;
+    }
+    workerLang = lang;
+  }
+  const reply = await ask({ cmd: 'run', ids });
+  return reply.ok && reply.wave ? reply.wave : null;
+}
+
 async function synthesise(text: string, lang: string): Promise<string | null> {
-  const { cfg, session, ort } = await open(lang);
+  const cfg = await voiceConfig(lang);
   const pause = new Float32Array(Math.round(cfg.sampling_rate * 0.25));
   const pieces: Float32Array[] = [];
   for (const part of splitSentences(text)) {
-    const ids = mmsIds(part, cfg);
+    const ids = mmsIds(part, cfg, lang);
     if (ids.length <= 1) continue;
-    const input = new ort.Tensor('int64', BigInt64Array.from(ids, (id) => BigInt(id)), [1, ids.length]);
-    const output = await session.run({ input_ids: input });
-    pieces.push(output.waveform.data as Float32Array, pause);
+    let wave = await runInWorker(lang, ids);
+    if (!wave) {
+      // No worker here: run on the page (slower to respond, but it still speaks).
+      const { session, ort } = await open(lang);
+      const input = new ort.Tensor('int64', BigInt64Array.from(ids, (id) => BigInt(id)), [1, ids.length]);
+      wave = (await session.run({ input_ids: input })).waveform.data as Float32Array;
+    }
+    pieces.push(wave, pause);
   }
   if (!pieces.length) return null;
   const all = new Float32Array(pieces.reduce((n, p) => n + p.length, 0));

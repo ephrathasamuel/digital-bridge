@@ -50,7 +50,7 @@ export async function clipSpeech(text: string, lang: string, fetcher: typeof fet
   const index = natural ?? (await loadIndex(lang));
   if (!index) return null;
   const keys = pieces(text)
-    .map((piece) => mmsIds(piece, index.cfg))
+    .map((piece) => mmsIds(piece, index.cfg, lang))
     .filter((ids) => ids.length > 1)
     .map(clipKey);
   if (!keys.length || keys.some((key) => !index.keys.has(key))) return null;

@@ -31,3 +31,15 @@ describe('MMS text to ids (same as apps/voice-space/mms_text.py)', () => {
     expect(new DataView(bytes.buffer).getInt16(46, true)).toBe(32767);
   });
 });
+
+import numberFixtures from './numberWords.fixtures.json';
+import { spellNumbers } from './numberWords';
+
+describe('numbers as words (same as apps/voice-space/numbers_words.py)', () => {
+  for (const [lang, { text, spelled, ids }] of Object.entries(numberFixtures)) {
+    it(`spells and encodes numbers like Python for ${lang}`, () => {
+      expect(spellNumbers(text, lang)).toBe(spelled);
+      expect(mmsIds(text, configs[lang], lang)).toEqual(ids);
+    });
+  }
+});

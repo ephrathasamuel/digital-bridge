@@ -58,7 +58,7 @@ def load(lang: str):
     options.add_session_config_entry("session.disable_prepacking", "1")
     options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_BASIC
     session = ort.InferenceSession(os.path.join(VOICES, f"mms-{lang}.onnx"), options, providers=["CPUExecutionProvider"])
-    _voices[lang] = (MmsText(cfg), session, cfg["sampling_rate"])
+    _voices[lang] = (MmsText(cfg, lang.split("-")[0]), session, cfg["sampling_rate"])
     print(f"loaded {lang}: memory peak {peak_mb()} MB", flush=True)
     return _voices[lang]
 

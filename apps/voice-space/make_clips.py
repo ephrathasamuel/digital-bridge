@@ -47,12 +47,14 @@ def mp3(wave: np.ndarray, rate: int, path: str) -> None:
 def make(lang: str, voices: str, out: str) -> None:
     with open(os.path.join(voices, f"mms-{lang}.json"), encoding="utf-8") as f:
         cfg = json.load(f)
-    text = MmsText(cfg)
+    text = MmsText(cfg, lang.split("-")[0])  # digits become number words, like in the browser
     session = ort.InferenceSession(os.path.join(voices, f"mms-{lang}.onnx"), providers=["CPUExecutionProvider"])
     rate = cfg["sampling_rate"]
     gap = np.zeros(int(rate * 0.12), dtype=np.float32)
     todo: dict[str, list[int]] = {}
-    for s in strings(lang):
+    # Templates with an item number ("Item {n}: ...") get a clip for each number up to 40.
+    texts = [v for s in strings(lang) for v in ([s.replace("{n}", str(i)) for i in range(1, 41)] if "{n}" in s else [s])]
+    for s in texts:
         for piece in pieces(PLACEHOLDER.sub(",", s)):
             ids = text.ids(piece)
             if len(ids) > 1:

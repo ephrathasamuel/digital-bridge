@@ -27,7 +27,9 @@ _uroman = None
 class MmsText:
     """cfg is the voice's .json file written by export_onnx.py."""
 
-    def __init__(self, cfg: dict):
+    def __init__(self, cfg: dict, lang: str | None = None):
+        # lang (om, am, ti, so) turns digits into number words first; the voices skip digits.
+        self.lang = lang
         self.vocab: dict = cfg["vocab"]
         self.words = sorted((w for w in self.vocab if len(w) > 1), key=len, reverse=True)
         self.normalize = cfg.get("normalize", True)
@@ -50,6 +52,10 @@ class MmsText:
         return "".join(out)
 
     def ids(self, text: str) -> list[int]:
+        if self.lang:
+            from numbers_words import spell_numbers
+
+            text = spell_numbers(text, self.lang)
         if self.is_uroman:
             text = romanise(text)
         if self.normalize:

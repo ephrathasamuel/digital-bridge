@@ -17,7 +17,7 @@ RUN mkdir voices && cd voices \
       "$VOICES_URL" SHA256SUMS $(for l in $VOICE_LANGS; do echo mms-$l.onnx mms-$l.json; done) \
  && grep -E "mms-($(echo $VOICE_LANGS | tr ' ' '|'))\." SHA256SUMS | sha256sum -c -
 
-COPY --chown=user mms_text.py app.py ./
+COPY --chown=user mms_text.py numbers_words.py app.py ./
 
 # Render sets PORT; a Hugging Face Space uses 7860.
 EXPOSE 7860

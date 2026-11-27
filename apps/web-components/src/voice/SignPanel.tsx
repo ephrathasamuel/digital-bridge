@@ -316,6 +316,15 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
     return () => cancelAnimationFrame(frame);
   }, [reading, camera]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Moving through the choices with the hand: the chosen one scrolls into view (phones show only a few at a time).
+  const panelRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!wave) return;
+    panelRef.current
+      ?.querySelector<HTMLElement>('[aria-current="true"]')
+      ?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+  }, [current, wave]);
+
   const card = (item: string, index: number) => (
     <button
       key={item}
@@ -325,14 +334,15 @@ export const SignPanel: React.FC<SignPanelProps> = ({ lang, fieldLabel, voiceNot
         addCard(item);
       }}
       aria-current={wave && index === current ? 'true' : undefined}
-      className={cx(ui.btnSecondary, 'min-w-[48px] text-lg', item.length > 1 && 'text-base', wave && index === current && 'ring-4 ring-offset-2 ring-ink')}
+      data-vc-active={wave && index === current ? 'true' : undefined}
+      className={cx(ui.btnSecondary, 'min-w-[48px] text-lg', item.length > 1 && 'text-base', wave && index === current && 'scale-110 ring-4 ring-offset-2 ring-ink')}
     >
       {item}
     </button>
   );
 
   return (
-    <div role="group" aria-labelledby={titleId} className="mt-3 rounded-xl border-2 border-terracotta bg-white p-3 shadow-card" data-db-aux="">
+    <div ref={panelRef} role="group" aria-labelledby={titleId} className="mt-3 rounded-xl border-2 border-terracotta bg-white p-3 shadow-card" data-db-aux="">
       <div className="flex items-start justify-between gap-2">
         <h3 id={titleId} className="flex items-center gap-2 text-lg font-bold">
           <Hand aria-hidden="true" focusable="false" className="h-5 w-5 shrink-0" />

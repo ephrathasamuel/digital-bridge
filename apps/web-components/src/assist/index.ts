@@ -105,7 +105,10 @@ function pageCss(s: Settings): string {
       ? '*:focus-visible, *:focus { outline: 4px solid #ffd43b !important; outline-offset: 2px !important; box-shadow: 0 0 0 7px #0b0f19 !important; }'
       : '',
     s.links ? 'a, a * { text-decoration: underline !important; text-underline-offset: 3px; }' : '',
-    '[data-db-assist-target] { outline: 4px dashed #0b3c8c !important; outline-offset: 3px !important; background: #fff4cc !important; color: #0b0f19 !important; }',
+    // The field being filled: dashed outline plus a tint that matches the page mode (no white flash in dark mode).
+    s.darkContrast
+      ? '[data-db-assist-target] { outline: 4px dashed #ffff00 !important; outline-offset: 3px !important; background: #1f1f00 !important; color: #ffffff !important; }'
+      : '[data-db-assist-target] { outline: 4px dashed #0b3c8c !important; outline-offset: 3px !important; background: #fff4cc !important; color: #0b0f19 !important; }',
     s.contrast ? highContrast('#ffffff', '#000000', '#0000cc', '#000000') : '',
     s.darkContrast ? highContrast('#000000', '#ffffff', '#ffff00', '#ffff00') : '',
     s.readMove ? '[data-db-assist-stop]:focus { outline: 4px solid #0b3c8c !important; outline-offset: -2px !important; background: #fff4cc !important; color: #0b0f19 !important; }' : '',

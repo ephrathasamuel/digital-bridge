@@ -239,10 +239,15 @@ db-employer-accommodations {
 
 .db-topbar-lang {
   display: inline-flex;
+  max-width: 100%;
   border: 2px solid var(--ink);
   border-radius: 0.5rem;
-  overflow: hidden;
+  /* Phones: five languages do not fit, so the row scrolls sideways (names stay on one line). */
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
 }
+
+.db-topbar-lang button { flex: 0 0 auto; white-space: nowrap; }
 
 .db-topbar-lang button {
   min-width: 44px;
@@ -413,7 +418,7 @@ db-employer-accommodations {
 
 /* Colours picker made from the select by host.js (enhanceSelect): our own list instead of the phone's dialog. */
 .db-pick { position: relative; max-width: 100%; }
-.db-pick > button { min-height: 44px; max-width: 100%; padding: 0.5rem 1rem; border: 2px solid var(--ink); border-radius: 0.75rem;
+.db-pick > button { min-height: 44px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0.5rem 1rem; border: 2px solid var(--ink); border-radius: 0.75rem;
   background: #ffffff; color: var(--ink); font: inherit; font-weight: 600; text-align: start; cursor: pointer; }
 .db-pick > button::after { content: ' ▾'; content: ' ▾' / ''; }
 .db-pick > button[aria-expanded='true']::after { content: ' ▴'; content: ' ▴' / ''; }

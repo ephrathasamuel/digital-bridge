@@ -245,6 +245,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
     document.querySelectorAll('[data-vc-active]').forEach((node) => node.removeAttribute('data-vc-active'));
     const holder = ((el as HTMLInputElement).labels?.[0] as HTMLElement | undefined) ?? el;
     holder.setAttribute('data-vc-active', 'true');
+    holder.scrollIntoView?.({ block: 'center', behavior: 'smooth' }); // follow the item on small screens
     const n = numberOf(el);
     const label = describe(el);
     setActiveItem(n ? t('vc.active', { n, label }) : label);

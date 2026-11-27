@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag to copy
-        default: voices-v1
+        description: Release tag to copy (leave as all to copy every voices release)
+        default: all
       repo:
         description: Hugging Face model repo name (under the token's account)
         default: digital-bridge-voices
@@ -24,8 +24,18 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install huggingface_hub==0.26.5
-      - name: Download the release
-        run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir voices
+      - name: Download the release(s)
+        run: |
+          if [ "$TAG" = "all" ]; then
+            tags=$(gh release list --repo "$GITHUB_REPOSITORY" --limit 50 --json tagName --jq '.[].tagName | select(startswith("voices-"))')
+          else
+            tags="$TAG"
+          fi
+          for t in $tags; do
+            echo "Copying release $t"
+            gh release download "$t" --repo "$GITHUB_REPOSITORY" --dir voices --pattern 'mms-*' --clobber
+          done
+          ls -la voices
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ inputs.tag }}

@@ -1,0 +1,61 @@
+name: Voices to Hugging Face
+
+# Run by hand after "Voices": copies the release files to a public Hugging Face model repo, which browsers can
+# download from (GitHub release files have no CORS header). Needs the repo secret HF_TOKEN (a Write token).
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to copy
+        default: voices-v1
+      repo:
+        description: Hugging Face model repo name (under the token's account)
+        default: digital-bridge-voices
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
+      - run: pip install huggingface_hub==0.26.5
+      - name: Download the release
+        run: gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir voices
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ inputs.tag }}
+      - name: Upload to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          REPO: ${{ inputs.repo }}
+          TAG: ${{ inputs.tag }}
+        run: |
+          python - <<'EOF'
+          import os
+          from huggingface_hub import HfApi
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          repo = f"{api.whoami()['name']}/{os.environ['REPO']}"
+          api.create_repo(repo, repo_type="model", exist_ok=True)
+          source = f"https://github.com/{os.environ['GITHUB_REPOSITORY']}"
+          readme = f"""---
+          license: cc-by-nc-4.0
+          tags: [text-to-speech, onnx, mms]
+          ---
+          # Digital Bridge voices
+
+          Meta's MMS text to speech voices (facebook/mms-tts-orm, -amh, -tir, -som, -eng) converted to ONNX for
+          the read aloud feature of [Digital Bridge]({source}), which runs them in the browser.
+          Made by {source}/blob/main/.github/workflows/voices.yml (release {os.environ['TAG']}).
+
+          License: CC BY-NC 4.0 (non commercial), from Meta AI.
+          """.replace("\n          ", "\n")
+          api.upload_file(path_or_fileobj=readme.encode(), path_in_repo="README.md", repo_id=repo)
+          api.upload_folder(folder_path="voices", repo_id=repo, commit_message=f"Voices {os.environ['TAG']}")
+          print(f"::notice::Uploaded to https://huggingface.co/{repo}")
+          EOF

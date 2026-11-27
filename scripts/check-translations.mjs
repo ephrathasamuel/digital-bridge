@@ -13,7 +13,7 @@ if (!KEY) throw new Error('GEMINI_API_KEY is not set');
 const langs = (process.argv[2] ?? 'om,ti,so').split(',');
 const model = process.argv[3] || 'gemini-3.8-flash';
 const NAMES = { om: 'Afaan Oromoo', ti: 'Tigrinya', so: 'Somali', am: 'Amharic' };
-const BATCH = 40;
+const BATCH = 20;
 const PAUSE_MS = 7000; // free tier: stay under about 10 requests a minute
 
 const english = JSON.parse(readFileSync('apps/web-components/src/i18n/en.json', 'utf8'));
@@ -39,7 +39,7 @@ async function ask(lang, items) {
     '',
     JSON.stringify(items.map(([key, source, target]) => ({ key, english: source, target }))),
   ].join('\n');
-  for (let attempt = 0; attempt < 4; attempt++) {
+  for (let attempt = 0; attempt < 6; attempt++) {
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': KEY },
@@ -49,7 +49,13 @@ async function ask(lang, items) {
       }),
     });
     if (response.status === 429 || response.status >= 500) {
-      await sleep(30000 * (attempt + 1)); // free tier limit or busy: wait and try again
+      // Free tier limit or busy: show Google's reason, wait as long as it asks (RetryInfo), then try again.
+      const body = await response.text();
+      const asked = Number(/"retryDelay":\s*"(\d+(?:\.\d+)?)s"/.exec(body)?.[1] ?? 0);
+      const wait = Math.max(asked * 1000 + 2000, 20000 * (attempt + 1));
+      const reason = (/"message":\s*"([^"]*)"/.exec(body)?.[1] ?? body).slice(0, 300);
+      console.log(`::warning::Gemini ${response.status} (try ${attempt + 1}), waiting ${Math.round(wait / 1000)} s: ${reason}`);
+      await sleep(wait);
       continue;
     }
     if (!response.ok) throw new Error(`Gemini ${response.status}: ${(await response.text()).slice(0, 300)}`);
@@ -69,8 +75,16 @@ for (const lang of langs) {
     .filter(([key, text]) => english[key] && text && !key.startsWith('loc.'))
     .map(([key, text]) => [key, english[key], text]);
   const rows = [];
+  let stopped = '';
   for (let i = 0; i < items.length; i += BATCH) {
-    rows.push(...(await ask(lang, items.slice(i, i + BATCH))));
+    try {
+      rows.push(...(await ask(lang, items.slice(i, i + BATCH))));
+    } catch (error) {
+      // Keep what was checked so far (the report says where it stopped) instead of losing it all.
+      stopped = `stopped at ${i} of ${items.length}: ${error.message}`;
+      console.log(`::error::${lang}: ${stopped}`);
+      break;
+    }
     console.log(`${lang}: ${Math.min(i + BATCH, items.length)}/${items.length}`);
     await sleep(PAUSE_MS);
   }
@@ -80,7 +94,7 @@ for (const lang of langs) {
     lines.push([r.key, english[r.key], target[r.key], r.back, r.meaning, r.natural, r.note, r.suggestion].map(csv).join(','));
   }
   writeFileSync(`translation-check/${lang}.csv`, `${lines.join('\n')}\n`);
-  summary.push(`## ${NAMES[lang]}: ${flagged.length} of ${rows.length} flagged`, '', '| key | meaning | natural | note |', '|---|---|---|---|');
+  summary.push(`## ${NAMES[lang]}: ${flagged.length} of ${rows.length} flagged${stopped ? ` (${stopped})` : ''}`, '', '| key | meaning | natural | note |', '|---|---|---|---|');
   for (const r of flagged.slice(0, 40)) summary.push(`| ${r.key} | ${r.meaning} | ${r.natural} | ${String(r.note ?? '').replace(/\|/g, '/')} |`);
   summary.push('');
   console.log(`::notice::${lang}: ${flagged.length} of ${rows.length} strings flagged`);

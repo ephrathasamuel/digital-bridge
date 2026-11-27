@@ -150,6 +150,7 @@ export const HelpCluster: React.FC<HelpClusterProps> = ({
       {/* Voice: which voice reads aloud (PCs and phones have different voices; "Digital Bridge" sounds the same on both). */}
       <ChoiceMenu
         label={t(lang, 'voice.choice')}
+        even
         value={voiceChoice}
         onChoose={(value) => {
           setVoiceChoice(value as VoiceChoice);
@@ -161,6 +162,7 @@ export const HelpCluster: React.FC<HelpClusterProps> = ({
       {/* Colour mode: same place on every step (3.2.6), visible label, our own picker (not the phone's dialog). */}
       <ChoiceMenu
         label={t(lang, 'vision.label')}
+        even
         value={vision}
         onChoose={(value) => {
           const mode = value as VisionMode;

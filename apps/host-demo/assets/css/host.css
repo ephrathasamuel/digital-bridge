@@ -235,11 +235,15 @@ db-employer-accommodations {
   align-items: center;
   gap: 0.75rem;
   margin-left: auto;
+  /* Never wider than the bar: the language and colour rows inside scroll sideways instead. */
+  min-width: 0;
+  max-width: 100%;
 }
 
 .db-topbar-lang {
   display: inline-flex;
   max-width: 100%;
+  min-width: 0;
   border: 2px solid var(--ink);
   border-radius: 0.5rem;
   /* Phones: five languages do not fit, so the row scrolls sideways (names stay on one line). */
@@ -416,20 +420,16 @@ db-employer-accommodations {
   }
 }
 
-/* Colours picker made from the select by host.js (enhanceSelect): our own list instead of the phone's dialog. */
-.db-pick { position: relative; max-width: 100%; }
-.db-pick > button { min-height: 44px; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0.5rem 1rem; border: 2px solid var(--ink); border-radius: 0.75rem;
-  background: #ffffff; color: var(--ink); font: inherit; font-weight: 600; text-align: start; cursor: pointer; }
-.db-pick > button::after { content: ' ▾'; content: ' ▾' / ''; }
-.db-pick > button[aria-expanded='true']::after { content: ' ▴'; content: ' ▴' / ''; }
-.db-pick ul { margin: 0.5rem 0 0; padding: 0.5rem; list-style: none; border: 2px solid var(--ink); border-radius: 0.75rem;
-  background: #ffffff; max-height: 60vh; overflow-y: auto; }
-.db-pick li + li { margin-top: 0.25rem; }
-.db-pick ul button { display: block; width: 100%; min-height: 48px; padding: 0.5rem 0.75rem; border: 2px solid transparent;
-  border-radius: 0.5rem; background: transparent; color: var(--ink); font: inherit; text-align: start; cursor: pointer; }
-.db-pick ul button[aria-pressed='true'] { border-color: var(--ink); background: var(--brand-soft); font-weight: 700; }
-.db-pick ul button[aria-pressed='true']::before { content: '✓ '; content: '✓ ' / ''; }
-.db-pick button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
-.db-dark .db-pick > button, .db-dark .db-pick ul, .db-dark .db-pick ul button { background: #09090b; color: #fafafa; border-color: #a1a1aa; }
-.db-dark .db-pick ul button[aria-pressed='true'] { background: #27272a; border-color: #fafafa; }
-.db-dark .db-pick ul button:not([aria-pressed='true']) { border-color: transparent; }
+/* Colours choices made from the select by host.js (enhanceSelect): a row of equal buttons, two lines each, that
+   scrolls sideways on phones like the nav tabs. */
+.db-topbar-vision { display: block; flex: 1 1 100%; width: 100%; min-width: 0; max-width: 100%; }
+.db-topbar-vision label { display: block; margin-bottom: 0.25rem; font-weight: 700; }
+.db-pick-row { display: flex; gap: 0.5rem; max-width: 100%; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 0.5rem; scroll-snap-type: x proximity; }
+.db-pick-row button { flex: 0 0 14rem; min-height: 3.5rem; padding: 0.4rem 0.75rem; border: 2px solid var(--line); border-radius: 1rem;
+  background: var(--brand-soft); color: var(--ink); font: inherit; font-size: 0.95rem; font-weight: 600; line-height: 1.25; text-align: center;
+  cursor: pointer; scroll-snap-align: start; white-space: normal; }
+.db-pick-row button[aria-pressed='true'] { border-color: var(--brand); background: var(--brand); color: var(--brand-ink, #ffffff); }
+.db-pick-row button[aria-pressed='true']::before { content: '✓ '; content: '✓ ' / ''; }
+.db-pick-row button:focus-visible { outline: 3px solid var(--focus, var(--brand)); outline-offset: 2px; }
+/* Safety net: nothing on the demo pages may make the page wider than a phone screen. */
+html, body { max-width: 100%; overflow-x: clip; }

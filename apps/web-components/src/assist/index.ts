@@ -91,6 +91,8 @@ function highContrast(bg: string, fg: string, link: string, accent: string): str
     `  border: 2px solid ${accent} !important; }`,
     `body ::placeholder { color: ${fg} !important; opacity: 0.8 !important; }`,
     `body svg { fill: currentColor; }`,
+    // Pinned headers and bars stay solid, or the page would show through them while scrolling.
+    `body *:not(#${HOST_ID})[data-db-assist-solid] { background-color: ${bg} !important; }`,
     `body *:focus, body *:focus-visible { outline: 4px solid ${accent} !important; outline-offset: 2px !important; }`,
   ].join('\n');
 }
@@ -103,6 +105,7 @@ function pageCss(s: Settings): string {
       ? '*:focus-visible, *:focus { outline: 4px solid #ffd43b !important; outline-offset: 2px !important; box-shadow: 0 0 0 7px #0b0f19 !important; }'
       : '',
     s.links ? 'a, a * { text-decoration: underline !important; text-underline-offset: 3px; }' : '',
+    '[data-db-assist-target] { outline: 4px dashed #0b3c8c !important; outline-offset: 3px !important; background: #fff4cc !important; color: #0b0f19 !important; }',
     s.contrast ? highContrast('#ffffff', '#000000', '#0000cc', '#000000') : '',
     s.darkContrast ? highContrast('#000000', '#ffffff', '#ffff00', '#ffff00') : '',
     s.readMove ? '[data-db-assist-stop]:focus { outline: 4px solid #0b3c8c !important; outline-offset: -2px !important; background: #fff4cc !important; color: #0b0f19 !important; }' : '',
@@ -128,6 +131,9 @@ button[aria-pressed='true']::before { content: '✓'; }
 .panel { width: min(23rem, calc(100vw - 2rem)); max-height: min(80vh, 40rem); overflow: auto; padding: 1rem; background: #fff;
   border: 2px solid #0b0f19; border-radius: .9rem; box-shadow: 0 6px 24px rgba(11,15,25,.3); }
 .panel[hidden] { display: none; }
+@media (max-width: 40rem) { .panel { max-height: 60vh; } }
+.head { display: flex; align-items: flex-start; justify-content: space-between; gap: .5rem; }
+.where { margin: 0 0 .5rem; font-weight: 700; }
 h2 { margin: 0 0 .25rem; font-size: 1.15rem; } h3 { margin: .9rem 0 .4rem; font-size: 1rem; }
 p { margin: 0 0 .6rem; } .hint { color: #2f3a4d; font-size: .9rem; }
 .row { display: flex; flex-wrap: wrap; gap: .5rem; }
@@ -172,13 +178,31 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
   const t = (key: I18nKey, vars: Record<string, string> = {}) =>
     Object.entries(vars).reduce((text, [k, v]) => text.replace(`{${k}}`, v), lookup(key));
 
+  // Names the field that "Put into the field" will fill (the line is rebuilt with the panel).
+  let fidelWhere: HTMLElement | null = null;
+  const showWhere = () => {
+    if (fidelWhere) fidelWhere.textContent = lastField?.isConnected ? t('assist.goesInto', { field: fieldLabel(lastField) }) : t('assist.noField');
+  };
+
   // Remember the last form field used on the page, so a click on the bar still knows which field is meant.
   document.addEventListener('focusin', (event) => {
     const path = event.composedPath();
     const target = path[0] as Element | null;
     // composedPath crosses shadow roots; host.contains() does not, so it would count the bar's own inputs.
-    if (target && !path.includes(host) && isFormField(target)) lastField = target;
+    if (target && !path.includes(host) && isFormField(target)) {
+      lastField = target;
+      showWhere();
+    }
   }, true);
+
+  /** Marks pinned (sticky or fixed) page elements, so the contrast modes keep them solid. */
+  const markPinned = () => {
+    for (const node of Array.from(document.body.querySelectorAll<HTMLElement>('*'))) {
+      if (node === host) continue;
+      const position = getComputedStyle(node).position;
+      if (position === 'sticky' || position === 'fixed') node.setAttribute('data-db-assist-solid', '');
+    }
+  };
 
   const style = el('style', {}, BAR_CSS);
   const bar = el('div', { class: `bar ${options.position === 'left' ? 'left' : 'right'}` });
@@ -240,6 +264,7 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
   const dictateButton = el('button', { type: 'button', 'aria-pressed': 'false' });
   // Review box: live words while speaking, editable, and nothing reaches the page field until "Use this".
   const review = el('div', { class: 'review', hidden: '' });
+  const reviewWhere = el('p', { class: 'where' });
   const reviewLabel = el('label', { for: 'db-assist-live' });
   const reviewHint = el('p', { class: 'hint', id: 'db-assist-live-hint' });
   const reviewText = el('textarea', { id: 'db-assist-live', 'aria-describedby': 'db-assist-live-hint' });
@@ -247,7 +272,7 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
   const retryButton = el('button', { type: 'button' });
   const reviewActions = el('div', { class: 'row', style: 'margin-top:.5rem' });
   reviewActions.append(useButton, retryButton);
-  review.append(reviewLabel, reviewHint, reviewText, reviewActions);
+  review.append(reviewWhere, reviewLabel, reviewHint, reviewText, reviewActions);
   let reviewTarget: FormField | null = null;
   let silence: ReturnType<typeof setTimeout> | undefined;
 
@@ -258,6 +283,7 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
   const closeReview = () => {
     review.hidden = true;
     reviewText.value = '';
+    reviewTarget?.removeAttribute('data-db-assist-target');
   };
   const dictate = () => {
     if (recognition) return stopDictation();
@@ -271,7 +297,12 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     engine.continuous = true; // keep listening through short pauses
     engine.interimResults = true; // words appear while the person speaks
     engine.maxAlternatives = 3;
+    reviewTarget?.removeAttribute('data-db-assist-target');
     reviewTarget = target;
+    // Show which field the words will go into, on the bar and on the page (phones: the field may be off screen).
+    reviewWhere.textContent = t('assist.goesInto', { field: fieldLabel(target) });
+    target.setAttribute('data-db-assist-target', '');
+    target.scrollIntoView({ block: 'center', behavior: 'smooth' });
     review.hidden = false;
     reviewText.value = '';
     let heard = '';
@@ -385,10 +416,19 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     toggle.setAttribute('aria-expanded', String(settings.open));
     panel.hidden = !settings.open;
     panel.lang = settings.lang;
+    if (settings.contrast || settings.darkContrast) markPinned();
     pageStyle.textContent = pageCss(settings);
     panel.replaceChildren();
 
     const title = el('h2', { id: 'db-assist-title' }, t('assist.title'));
+    const minimise = el('button', { type: 'button' }, t('assist.minimise'));
+    minimise.addEventListener('click', () => {
+      settings.open = false;
+      update();
+      toggle.focus();
+    });
+    const head = el('div', { class: 'head' });
+    head.append(title, minimise);
     const intro = el('p', { class: 'hint' }, t('assist.intro'));
 
     const langLabel = el('label', { for: 'db-assist-lang' }, t('assist.language'));
@@ -433,6 +473,11 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
     const fidelInput = el('input', { id: 'db-assist-fidel', type: 'text', autocomplete: 'off', 'aria-describedby': 'db-assist-fidel-hint' });
     const fidelOut = el('p', { class: 'fidel-out', lang: 'am', 'aria-live': 'polite' });
     fidelInput.addEventListener('input', () => { fidelOut.textContent = toFidel(fidelInput.value); });
+    fidelWhere = el('p', { class: 'where' });
+    showWhere();
+    // While typing letters, the field they will go into is outlined on the page.
+    fidelInput.addEventListener('focus', () => lastField?.setAttribute('data-db-assist-target', ''));
+    fidelInput.addEventListener('blur', () => lastField?.removeAttribute('data-db-assist-target'));
     const fidelInsert = el('button', { type: 'button' }, t('assist.fidelInsert'));
     fidelInsert.addEventListener('click', () => {
       const target = field();
@@ -461,8 +506,8 @@ export function mountAssist(options: AssistOptions = readOptions()): void {
       display.append(button);
     }
 
-    panel.append(title, intro, ...note, langLabel, langSelect, actions, review, readMove, readMoveHint, fidelLabel, fidelHint,
-      fidelInput, fidelOut, fidelInsert, displayTitle, display, status);
+    panel.append(head, intro, ...note, langLabel, langSelect, actions, review, readMove, readMoveHint, fidelLabel, fidelHint,
+      fidelInput, fidelOut, fidelWhere, fidelInsert, displayTitle, display, status);
   };
 
   const update = () => {

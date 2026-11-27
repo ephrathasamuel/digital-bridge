@@ -90,7 +90,20 @@ export const AskPanel: React.FC<AskPanelProps> = ({ lang = 'en', audioBaseUrl, a
 
   const stopListening = () => {
     clearTimeout(silenceTimer.current);
-    recognition.current?.stop();
+    const engine = recognition.current;
+    if (!engine) return;
+    // Phones can take a long time to finish a stopped recognition, so the button answers at once: the words heard so
+    // far are already in the box, and the engine is cut off if it has not ended within a second.
+    setListening(false);
+    setFieldListening(false);
+    setStatus(question.trim() ? t('ask.heard', { text: question.trim() }) : t('ask.voiceNothing'));
+    engine.stop();
+    setTimeout(() => {
+      if (recognition.current !== engine) return;
+      engine.onend = null;
+      engine.abort();
+      recognition.current = null;
+    }, 1000);
   };
 
   const startListening = (voiceLang: Lang) => {

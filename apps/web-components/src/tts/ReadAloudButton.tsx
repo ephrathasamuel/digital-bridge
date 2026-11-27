@@ -257,7 +257,7 @@ export const ReadAloudButton: React.FC<ReadAloudButtonProps> = ({
 
   const panel =
     active ? (
-      <div className="mt-3 basis-full rounded-2xl border-2 border-terracotta bg-white p-4 shadow-card">
+      <div className="mt-3 basis-full max-h-[70vh] overflow-y-auto rounded-2xl border-2 border-terracotta bg-white p-4 shadow-card">
         <p className="flex flex-wrap items-center justify-between gap-2 text-sm font-semibold text-terracotta-dark">
           <span>{t(lang, 'readAloud.visualTitle')}</span>
           <span>{t(lang, 'readAloud.phraseOf', { current: index + 1, total: phrases.length })}</span>

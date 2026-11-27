@@ -502,4 +502,11 @@ export const OM: Record<string, string> = {
   "wizard.saved": "Deebiin kee meeshaa kana irratti olkaa'ameera.",
   "wizard.stepHeading": "Tarkaanfii {current} keessaa {total}: {title}",
   "wizard.stepOf": "Tarkaanfii {current} keessaa {total}",
+  "voice.download": "Sagalee afaan kanaa buusi ({size} MB, al tokko qofa)",
+  "voice.downloadNote": "Sagaleen meeshaa kana irratti hafa, achiis interneetii malee hojjeta. Wanti dubbifamu bakka kamittuu hin ergamu.",
+  "voice.downloading": "Sagaleen buufamaa jira: {percent}%",
+  "voice.ready": "Sagaleen meeshaa kana irratti qophaa'eera.",
+  "voice.failed": "Sagalee buusuun hin danda'amne. Quunnamtii kee ilaali, irra deebi'ii yaali.",
+  "assist.goesInto": "Kan itti galu: {field}",
+  "assist.minimise": "Xiqqeessi",
 };

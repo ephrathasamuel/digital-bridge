@@ -816,7 +816,7 @@ export const VoiceControl: React.FC<VoiceControlProps> = ({ lang, rootRef, annou
         </button>
         <p id={hintId} className="text-sm text-stone-700">
           {t('vc.hint')}{' '}
-          <kbd lang="en" className="rounded border border-stone-500 bg-white px-1.5 py-0.5 font-mono text-xs text-ink">
+          <kbd lang="en" className="inline-block whitespace-nowrap rounded border border-stone-500 bg-white px-1.5 py-0.5 font-mono text-xs text-ink">
             Alt + V
           </kbd>
         </p>

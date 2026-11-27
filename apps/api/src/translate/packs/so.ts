@@ -501,4 +501,11 @@ export const SO: Record<string, string> = {
   "field.description": "Sharaxaadda shaqada",
   "field.description.hint": "Qofku maxuu qabanayaa? Isticmaal weedho gaagaaban oo fudud.",
   "field.contactEmail": "Iimaylka xiriirka ee codsiyada",
+  "voice.download": "Soo deji cod luqaddan ({size} MB, hal mar oo keliya)",
+  "voice.downloadNote": "Codku wuxuu ku jirayaa qalabkan, kadibna wuxuu shaqeynayaa internet la'aan. Waxa la akhriyo meelna looma diro.",
+  "voice.downloading": "Codka waa la soo dejinayaa: {percent}%",
+  "voice.ready": "Codku wuu diyaar yahay qalabkan.",
+  "voice.failed": "Codka lama soo dejin karin. Hubi xiriirkaaga oo isku day mar kale.",
+  "assist.goesInto": "Wuxuu galayaa: {field}",
+  "assist.minimise": "Yaree",
 };

@@ -502,4 +502,11 @@ export const TI: Record<string, string> = {
   "field.description": "መግለጺ ስራሕ",
   "field.description.hint": "እቲ ሰብ እንታይ ክገብር እዩ? ሓጸርቲ ቀለልቲ ምሉኣት ሓሳባት ተጠቐሙ።",
   "field.contactEmail": "ንሕቶ ስራሕ ዝኸውን ኢመይል",
+  "voice.download": "ድምጺ ናይዚ ቋንቋ ኣውርድ ({size} MB፣ ሓንሳብ ጥራይ)",
+  "voice.downloadNote": "እቲ ድምጺ ኣብዚ መሳርሒ ይጸንሕ፣ ድሕሪኡ ብዘይ ኢንተርነት ይሰርሕ። ዝንበብ ጽሑፍ ናብ ዝኾነ ቦታ ኣይለኣኽን።",
+  "voice.downloading": "እቲ ድምጺ ይወርድ ኣሎ፦ {percent}%",
+  "voice.ready": "እቲ ድምጺ ኣብዚ መሳርሒ ድሉው እዩ።",
+  "voice.failed": "ነቲ ድምጺ ምውራድ ኣይተኻእለን። ርክብኩም ኣረጋግጹ እሞ እንደገና ፈትኑ።",
+  "assist.goesInto": "ዝኣትወሉ ቦታ፦ {field}",
+  "assist.minimise": "ኣንእስ",
 };

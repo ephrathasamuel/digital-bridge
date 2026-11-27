@@ -199,6 +199,36 @@ db-employer-accommodations {
   text-decoration-thickness: 3px;
 }
 
+/* Phones: one row of small rounded tabs that scrolls sideways, instead of links wrapping over several lines. */
+@media (max-width: 40rem) {
+  .db-topbar-nav { width: 100%; }
+  .db-topbar-nav ul {
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    padding: 0.25rem 0.125rem 0.5rem;
+    scrollbar-width: thin;
+  }
+  .db-topbar-nav li { flex: 0 0 auto; scroll-snap-align: start; }
+  .db-topbar-nav a {
+    min-height: 44px;
+    padding: 0 1rem;
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    background: var(--brand-soft);
+    white-space: nowrap;
+    font-size: 0.95rem;
+  }
+  .db-topbar-nav a[aria-current='page'] {
+    border-color: var(--brand);
+    background: var(--brand);
+    color: var(--brand-ink, #ffffff);
+    text-decoration: none;
+  }
+}
+
 .db-topbar-tools {
   display: flex;
   flex-wrap: wrap;
@@ -380,3 +410,21 @@ db-employer-accommodations {
     animation: none !important;
   }
 }
+
+/* Colours picker made from the select by host.js (enhanceSelect): our own list instead of the phone's dialog. */
+.db-pick { position: relative; max-width: 100%; }
+.db-pick > button { min-height: 44px; max-width: 100%; padding: 0.5rem 1rem; border: 2px solid var(--ink); border-radius: 0.75rem;
+  background: #ffffff; color: var(--ink); font: inherit; font-weight: 600; text-align: start; cursor: pointer; }
+.db-pick > button::after { content: ' ▾'; content: ' ▾' / ''; }
+.db-pick > button[aria-expanded='true']::after { content: ' ▴'; content: ' ▴' / ''; }
+.db-pick ul { margin: 0.5rem 0 0; padding: 0.5rem; list-style: none; border: 2px solid var(--ink); border-radius: 0.75rem;
+  background: #ffffff; max-height: 60vh; overflow-y: auto; }
+.db-pick li + li { margin-top: 0.25rem; }
+.db-pick ul button { display: block; width: 100%; min-height: 48px; padding: 0.5rem 0.75rem; border: 2px solid transparent;
+  border-radius: 0.5rem; background: transparent; color: var(--ink); font: inherit; text-align: start; cursor: pointer; }
+.db-pick ul button[aria-pressed='true'] { border-color: var(--ink); background: var(--brand-soft); font-weight: 700; }
+.db-pick ul button[aria-pressed='true']::before { content: '✓ '; content: '✓ ' / ''; }
+.db-pick button:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; }
+.db-dark .db-pick > button, .db-dark .db-pick ul, .db-dark .db-pick ul button { background: #09090b; color: #fafafa; border-color: #a1a1aa; }
+.db-dark .db-pick ul button[aria-pressed='true'] { background: #27272a; border-color: #fafafa; }
+.db-dark .db-pick ul button:not([aria-pressed='true']) { border-color: transparent; }

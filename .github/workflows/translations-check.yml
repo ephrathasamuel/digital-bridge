@@ -1,0 +1,37 @@
+name: Translation check
+
+# Run by hand: Gemini back translates the language packs and flags lines whose meaning drifted or that read word for
+# word (scripts/check-translations.mjs). Only the fixed interface text is sent. Needs the repo secret GEMINI_API_KEY.
+# The report is in the run summary, and the full CSV per language is attached as an artifact.
+on:
+  workflow_dispatch:
+    inputs:
+      langs:
+        description: Languages (comma separated)
+        default: om,ti,so
+      model:
+        description: Gemini model
+        default: gemini-2.5-flash
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - run: node scripts/check-translations.mjs "$LANGS" "$MODEL"
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          LANGS: ${{ inputs.langs }}
+          MODEL: ${{ inputs.model }}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: translation-check
+          path: translation-check/

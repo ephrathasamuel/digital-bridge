@@ -514,4 +514,5 @@ export const TI: Record<string, string> = {
   "voice.device": "ድምጺ ናይዚ መሳርሒ",
   "voice.ours": "ድምጺ Digital Bridge (ኣብ ኩሉ መሳርሒ ሓደ)",
   "voice.changed": "ድምጺ፦ {voice}",
+  "voice.natural": "ተፈጥሮኣዊ ድምጺ ኣምሓርኛ (ኣብ ፈተነ)",
 };

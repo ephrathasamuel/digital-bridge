@@ -65,8 +65,9 @@ export function getVoiceConfig(): VoiceConfig {
  * default); "device" uses the voices installed on the device; "ours" uses the Digital Bridge clips and downloaded
  * voice first, so a PC and a phone sound the same.
  */
-export type VoiceChoice = 'auto' | 'device' | 'ours';
-export const VOICE_CHOICES: VoiceChoice[] = ['auto', 'device', 'ours'];
+export type VoiceChoice = 'auto' | 'device' | 'ours' | 'natural';
+/** "natural": a community Amharic voice being tested (only offered in Amharic). */
+export const VOICE_CHOICES: VoiceChoice[] = ['auto', 'device', 'ours', 'natural'];
 const CHOICE_KEY = 'db-voice-choice';
 const choiceListeners = new Set<(choice: VoiceChoice) => void>();
 
@@ -100,7 +101,7 @@ let sessionChoice: VoiceChoice | null = null;
 export function effectiveVoiceConfig(): VoiceConfig {
   const choice = sessionChoice ?? getVoiceChoice();
   if (choice === 'device') return { ...config, source: 'device' };
-  if (choice === 'ours') return { ...config, source: 'server', customUrl: undefined };
+  if (choice === 'ours' || choice === 'natural') return { ...config, source: 'server', customUrl: undefined };
   return config;
 }
 

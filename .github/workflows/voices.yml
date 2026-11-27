@@ -9,7 +9,7 @@ on:
         description: Release tag
         default: voices-v1
       langs:
-        description: Voices to convert (comma separated)
+        description: Voices to convert (comma separated; name=model for another MMS based voice, e.g. am-natural=natidotnet/mms-tts-amharic-finetuned)
         default: om,am,ti,so,en
 
 permissions:

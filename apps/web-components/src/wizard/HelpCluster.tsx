@@ -155,7 +155,7 @@ export const HelpCluster: React.FC<HelpClusterProps> = ({
           setVoiceChoice(value as VoiceChoice);
           announce(t(lang, 'voice.changed', { voice: t(lang, `voice.${value}` as I18nKey) }));
         }}
-        choices={VOICE_CHOICES.map((choice) => ({ value: choice, label: t(lang, `voice.${choice}` as I18nKey) }))}
+        choices={VOICE_CHOICES.filter((c) => c !== 'natural' || lang === 'am').map((choice) => ({ value: choice, label: t(lang, `voice.${choice}` as I18nKey) }))}
       />
 
       {/* Colour mode: same place on every step (3.2.6), visible label, our own picker (not the phone's dialog). */}

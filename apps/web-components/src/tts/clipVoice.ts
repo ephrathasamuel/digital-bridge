@@ -1,5 +1,6 @@
 import { BROWSER_VOICES, VOICE_BASE } from './browserVoice';
 import { mmsIds, type MmsVoiceConfig } from './mmsText';
+import { getVoiceChoice } from './voiceSource';
 
 /**
  * Ready made read aloud clips for the fixed text of the language packs (made by .github/workflows/voice-clips.yml
@@ -43,7 +44,10 @@ function loadIndex(lang: string): Promise<ClipIndex | null> {
 /** The phrase as one sound from ready made clips (an object URL), or null when a piece has no clip. */
 export async function clipSpeech(text: string, lang: string, fetcher: typeof fetch = fetch): Promise<string | null> {
   if (!(lang in BROWSER_VOICES) || typeof fetch === 'undefined') return null;
-  const index = await loadIndex(lang);
+  // The natural Amharic voice has its own clips (made as "am-natural"); until they exist, the usual ones play.
+  const natural = lang === 'am' && getVoiceChoice() === 'natural' ? await loadIndex('am-natural') : null;
+  const voice = natural ? 'am-natural' : lang;
+  const index = natural ?? (await loadIndex(lang));
   if (!index) return null;
   const keys = pieces(text)
     .map((piece) => mmsIds(piece, index.cfg))
@@ -53,7 +57,7 @@ export async function clipSpeech(text: string, lang: string, fetcher: typeof fet
   try {
     const parts = await Promise.all(
       keys.map(async (key) => {
-        const response = await fetcher(`${VOICE_BASE}/clips/${lang}/${key}.mp3`);
+        const response = await fetcher(`${VOICE_BASE}/clips/${voice}/${key}.mp3`);
         if (!response.ok) throw new Error(String(response.status));
         return response.blob();
       }),

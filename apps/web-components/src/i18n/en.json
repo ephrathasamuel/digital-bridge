@@ -501,6 +501,7 @@
   "voice.failed": "The voice could not be downloaded. Check your connection and try again.",
   "voice.heard": "Heard: {text}",
   "voice.listening": "Listening… speak now.",
+  "voice.natural": "Natural Amharic voice (being tested)",
   "voice.nothing": "We did not hear anything. Try again or type your answer.",
   "voice.ours": "Digital Bridge voice (same on every device)",
   "voice.readBack": "Read back my answer",

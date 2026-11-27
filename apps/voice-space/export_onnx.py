@@ -44,8 +44,8 @@ class Wave(torch.nn.Module):
         return self.model(input_ids=input_ids).waveform
 
 
-def export(lang: str, code: str, out: str) -> None:
-    name = f"facebook/mms-tts-{code}"
+def export(lang: str, name: str, out: str) -> None:
+    base = lang.split("-")[0]  # am-natural uses the am samples
     tok = AutoTokenizer.from_pretrained(name)
     model = VitsModel.from_pretrained(name).eval()
     cfg = {
@@ -63,7 +63,7 @@ def export(lang: str, code: str, out: str) -> None:
     # The blanks are added like Meta's original MMS code (one between every letter): transformers drops one
     # when a letter shares id 0 with the blank (Somali "u" in "buuxi"), so it is not the reference for that part.
     tok.add_blank = False
-    for sample in SAMPLES[lang] + [SAMPLES[lang][0].upper() + " 123 ?!", "buuxi uu aa"]:
+    for sample in SAMPLES[base] + [SAMPLES[base][0].upper() + " 123 ?!", "buuxi uu aa"]:
         letters = tok(romanise(sample) if cfg["is_uroman"] else sample).input_ids
         theirs = [0] * (len(letters) * 2 + 1) if cfg["add_blank"] else letters
         if cfg["add_blank"]:
@@ -73,7 +73,7 @@ def export(lang: str, code: str, out: str) -> None:
             fail(f"{lang}: token ids differ for {sample!r} theirs {theirs} ours {ours}")
 
     path = os.path.join(out, f"mms-{lang}.onnx")
-    example = torch.tensor([text.ids(SAMPLES[lang][1])])
+    example = torch.tensor([text.ids(SAMPLES[base][1])])
     with torch.no_grad():
         torch.onnx.export(
             Wave(model), (example,), path, input_names=["input_ids"], output_names=["waveform"],
@@ -85,7 +85,7 @@ def export(lang: str, code: str, out: str) -> None:
     # with some randomness on every run, so compare the middle value of several runs, not one run.
     session = ort.InferenceSession(path, providers=["CPUExecutionProvider"])
     lengths = []
-    for sample in SAMPLES[lang]:
+    for sample in SAMPLES[base]:
         ids = torch.tensor([text.ids(sample)])
         with torch.no_grad():
             want = np.median([model(input_ids=ids).waveform.shape[-1] for _ in range(RUNS)])
@@ -95,7 +95,7 @@ def export(lang: str, code: str, out: str) -> None:
             fail(f"{lang}: ONNX gave {got:.0f} samples (middle of {RUNS}), original {want:.0f}, for {sample!r}")
         lengths.append(int(got))
     # A single letter must work too (the attention padding was traced with a long example).
-    for word in ("a", SAMPLES[lang][0][:2]):
+    for word in ("a", SAMPLES[base][0][:2]):
         ids = text.ids(word)
         try:
             ok = len(ids) <= 1 or np.isfinite(session.run(None, {"input_ids": np.array([ids])})[0]).all()
@@ -115,5 +115,8 @@ def export(lang: str, code: str, out: str) -> None:
 if __name__ == "__main__":
     out = sys.argv[1] if len(sys.argv) > 1 else "voices"
     os.makedirs(out, exist_ok=True)
-    for lang in (sys.argv[2].split(",") if len(sys.argv) > 2 else LANGS):
-        export(lang, LANGS[lang], out)
+    # Each entry is a language code (Meta's voice) or name=model for another MMS based voice,
+    # e.g. am-natural=natidotnet/mms-tts-amharic-finetuned.
+    for entry in (sys.argv[2].split(",") if len(sys.argv) > 2 else LANGS):
+        lang, _, model = entry.partition("=")
+        export(lang, model or f"facebook/mms-tts-{LANGS[lang]}", out)

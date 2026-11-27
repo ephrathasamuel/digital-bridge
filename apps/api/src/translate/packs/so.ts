@@ -513,4 +513,5 @@ export const SO: Record<string, string> = {
   "voice.device": "Codka qalabkan",
   "voice.ours": "Codka Digital Bridge (isku mid qalab kasta)",
   "voice.changed": "Cod: {voice}",
+  "voice.natural": "Cod Amxaari dabiici ah (tijaabo)",
 };

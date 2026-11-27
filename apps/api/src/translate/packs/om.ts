@@ -514,4 +514,5 @@ export const OM: Record<string, string> = {
   "voice.device": "Sagalee meeshaa kanaa",
   "voice.ours": "Sagalee Digital Bridge (meeshaa hundarratti tokko)",
   "voice.changed": "Sagalee: {voice}",
+  "voice.natural": "Sagalee Amaariffaa uumamaa (qorannoo irra)",
 };

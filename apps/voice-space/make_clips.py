@@ -22,6 +22,7 @@ PACK_LINE = re.compile(r'^\s*"([^"]+)":\s*"((?:[^"\\]|\\.)*)"', re.M)
 
 
 def strings(lang: str) -> list[str]:
+    lang = lang.split("-")[0]  # am-natural reads the am texts
     if lang == "am":
         with open(os.path.join(ROOT, "apps/web-components/src/i18n/am.json"), encoding="utf-8") as f:
             return list(json.load(f).values())

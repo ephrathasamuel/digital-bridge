@@ -11,7 +11,7 @@ import { appendFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 const KEY = process.env.GEMINI_API_KEY;
 if (!KEY) throw new Error('GEMINI_API_KEY is not set');
 const langs = (process.argv[2] ?? 'om,ti,so').split(',');
-const model = process.argv[3] ?? 'gemini-2.5-flash';
+const model = process.argv[3] || 'gemini-3.8-flash';
 const NAMES = { om: 'Afaan Oromoo', ti: 'Tigrinya', so: 'Somali', am: 'Amharic' };
 const BATCH = 40;
 const PAUSE_MS = 7000; // free tier: stay under about 10 requests a minute
